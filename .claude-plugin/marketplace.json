@@ -1,0 +1,46 @@
+{
+  "name": "labdados-skills",
+  "owner": {
+    "name": "lab-dados",
+    "url": "https://github.com/lab-dados"
+  },
+  "metadata": {
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, busca de literatura academica, enriquecimento de DataFrames com LLMs.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "juscraper",
+      "source": "./plugins/juscraper",
+      "description": "Raspar dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) via biblioteca juscraper.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["scraping", "tribunais", "cnj", "jurisprudencia", "direito", "brasil"],
+      "category": "data-collection",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/juscraper"
+    },
+    {
+      "name": "dataframeit",
+      "source": "./plugins/dataframeit",
+      "description": "Enriquecer DataFrames com LLMs: extracao estruturada via Pydantic, classificacao, busca web, multi-provedor.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["llm", "dataframe", "pydantic", "extracao", "classificacao", "pandas"],
+      "category": "data-enrichment",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/dataframeit"
+    },
+    {
+      "name": "openalex",
+      "source": "./plugins/openalex",
+      "description": "Buscar e baixar artigos academicos do OpenAlex (460M+ obras): API + CLI para revisoes sistematicas.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["openalex", "literatura", "revisao-sistematica", "bibliometria", "academia"],
+      "category": "literature-search",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/openalex"
+    }
+  ]
+}

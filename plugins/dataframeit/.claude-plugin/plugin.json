@@ -1,0 +1,9 @@
+{
+  "name": "dataframeit",
+  "description": "Enriquecer DataFrames com LLMs: extracao estruturada via Pydantic, classificacao, busca web, multi-provedor.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/dataframeit",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["llm", "dataframe", "pydantic", "extracao", "classificacao"]
+}

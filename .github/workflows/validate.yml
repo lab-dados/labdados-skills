@@ -1,0 +1,67 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate marketplace.json is valid JSON
+        run: python -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+
+      - name: Validate each plugin.json is valid JSON
+        run: |
+          for f in plugins/*/.claude-plugin/plugin.json; do
+            echo "Validating $f"
+            python -c "import json; json.load(open('$f'))"
+          done
+
+      - name: Verify each plugin source path exists
+        run: |
+          python - <<'PYEOF'
+          import json, sys, os
+          with open('.claude-plugin/marketplace.json') as f:
+              mp = json.load(f)
+          missing = []
+          for p in mp['plugins']:
+              src = p.get('source')
+              if isinstance(src, str) and src.startswith('./'):
+                  if not os.path.isdir(src):
+                      missing.append((p['name'], src))
+          if missing:
+              for name, src in missing:
+                  print(f"ERROR: plugin {name} source {src} does not exist")
+              sys.exit(1)
+          print("All plugin source paths exist.")
+          PYEOF
+
+      - name: Verify each plugin has a SKILL.md under skills/
+        run: |
+          python - <<'PYEOF'
+          import json, sys, os, glob
+          with open('.claude-plugin/marketplace.json') as f:
+              mp = json.load(f)
+          errors = []
+          for p in mp['plugins']:
+              src = p['source'] if isinstance(p['source'], str) else None
+              if not src or not src.startswith('./'):
+                  continue
+              skills_dir = os.path.join(src, 'skills')
+              if not os.path.isdir(skills_dir):
+                  errors.append(f"{p['name']}: missing {skills_dir}")
+                  continue
+              found = glob.glob(os.path.join(skills_dir, '*', 'SKILL.md'))
+              if not found:
+                  errors.append(f"{p['name']}: no SKILL.md under {skills_dir}")
+          if errors:
+              for e in errors:
+                  print('ERROR:', e)
+              sys.exit(1)
+          print("All plugins have at least one SKILL.md.")
+          PYEOF
