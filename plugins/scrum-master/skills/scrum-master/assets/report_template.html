@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>LabDados — Semana de {{DATA_SEGUNDA}}</title>
+<style>
+  @page { size: A4; margin: 14mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.42;
+    color: #1f2328;
+  }
+  h1 {
+    font-size: 19pt;
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 12pt;
+    margin: 16px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1.5px solid #e5e7eb;
+    font-weight: 650;
+    color: #0f172a;
+  }
+  h3 {
+    font-size: 10pt;
+    margin: 8px 0 3px;
+    color: #334155;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  p, ul, ol { margin: 4px 0; }
+  ul { padding-left: 18px; }
+  li { margin: 2px 0; }
+  .lead {
+    color: #64748b;
+    font-size: 9pt;
+    margin: 0 0 14px;
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin: 2px 0 16px;
+  }
+  .metric {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 6px 4px;
+    text-align: center;
+  }
+  .metric .val {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.05;
+  }
+  .metric .lbl {
+    font-size: 7.5pt;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 7.5pt;
+    padding: 0 4px;
+    border-radius: 3px;
+    margin-right: 3px;
+    font-weight: 700;
+    vertical-align: 1px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  .tag.K { background: #eef2ff; color: #3730a3; }
+  .tag.W { background: #ecfdf5; color: #065f46; }
+  .tag.D { background: #fef3c7; color: #92400e; }
+  .tag.R { background: #fce7f3; color: #9f1239; }
+  .tag.C { background: #e0f2fe; color: #075985; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    font-size: 8pt; color: #64748b;
+    margin: 0 0 6px; padding: 4px 6px;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;
+  }
+  .legend .tag { margin-right: 0; }
+  .callout-ok, .callout-warn {
+    border-left: 3px solid;
+    padding: 3px 8px;
+    margin: 4px 0;
+    font-size: 9.5pt;
+  }
+  .callout-ok { border-color: #10b981; background: #f0fdf4; }
+  .callout-warn { border-color: #ef4444; background: #fef2f2; }
+  .person {
+    margin: 6px 0;
+    padding: 5px 8px;
+    background: #f9fafb;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .person-name {
+    font-weight: 600;
+    font-size: 9.5pt;
+    color: #111827;
+  }
+  .person-name .handle {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 8.5pt;
+  }
+  .person ul { margin: 2px 0 0; padding-left: 18px; }
+  .person li { font-size: 9pt; }
+  .muted { color: #94a3b8; }
+  footer {
+    margin-top: 18px;
+    padding-top: 6px;
+    border-top: 1px solid #e5e7eb;
+    color: #94a3b8;
+    font-size: 7.5pt;
+    display: flex;
+    justify-content: space-between;
+  }
+  a { color: #2563eb; text-decoration: none; }
+  @media print {
+    body { font-size: 9.8pt; }
+    h2 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!--
+  PLACEHOLDERS (Claude preenche ao gerar o relatório):
+    {{DATA_SEGUNDA}}  ex.: 2026-04-13
+    {{DATA_INICIO}} / {{DATA_FIM}}  ex.: 2026-04-13 / 2026-04-19
+    {{FONTES}}  ex.: Kanban · WhatsApp · Drive
+    {{M1..M6}} + {{LBL1..LBL6}}  seis métricas curtas (val + label)
+    Demais blocos (HTML livre): SUMARIO, FEITO, DESTAQUES, PRECISA_ACAO, PAUTA, POR_PESSOA
+
+  Princípios:
+  - Conciso. Objetivo: caber em 2 páginas A4 impressas.
+  - Frases curtas. Nada de parágrafo; listas de uma linha.
+  - Tags [K]/[W]/[D]/[R]/[C] usam <span class="tag K">K</span> etc. (C = código: commits/PRs em repositórios)
+  - Se uma seção não tiver conteúdo, escreva uma linha neutra (ex.: "Sem sinais de alerta na semana.").
+-->
+
+<h1>LabDados · Semana de {{DATA_SEGUNDA}}</h1>
+<div class="lead">{{DATA_INICIO}} a {{DATA_FIM}} · Fontes: {{FONTES}}</div>
+
+<div class="metrics">
+  <div class="metric"><div class="val">{{M1}}</div><div class="lbl">{{LBL1}}</div></div>
+  <div class="metric"><div class="val">{{M2}}</div><div class="lbl">{{LBL2}}</div></div>
+  <div class="metric"><div class="val">{{M3}}</div><div class="lbl">{{LBL3}}</div></div>
+  <div class="metric"><div class="val">{{M4}}</div><div class="lbl">{{LBL4}}</div></div>
+  <div class="metric"><div class="val">{{M5}}</div><div class="lbl">{{LBL5}}</div></div>
+  <div class="metric"><div class="val">{{M6}}</div><div class="lbl">{{LBL6}}</div></div>
+</div>
+
+<h2>Sumário</h2>
+{{SUMARIO}}
+
+<h2>O que foi feito</h2>
+<div class="legend">
+  <span><span class="tag K">K</span> Kanban</span>
+  <span><span class="tag W">W</span> WhatsApp</span>
+  <span><span class="tag D">D</span> Drive</span>
+  <span><span class="tag R">R</span> Reunião</span>
+  <span><span class="tag C">C</span> Código (repos)</span>
+</div>
+{{FEITO}}
+
+<h2>Leitura da semana</h2>
+<div class="grid-2">
+  <div>
+    <h3>Destaques</h3>
+    {{DESTAQUES}}
+  </div>
+  <div>
+    <h3>Precisa ação</h3>
+    {{PRECISA_ACAO}}
+  </div>
+</div>
+
+<h2>Próximos passos</h2>
+<h3>Pauta sugerida</h3>
+{{PAUTA}}
+
+<h3>Por pessoa</h3>
+{{POR_PESSOA}}
+
+<footer>
+  <span>Gerado em {{TIMESTAMP}} · skill <code>scrum-master</code></span>
+  <span>Versão completa (com cards propostos) no <code>.md</code> do repo.</span>
+</footer>
+
+</body>
+</html>
