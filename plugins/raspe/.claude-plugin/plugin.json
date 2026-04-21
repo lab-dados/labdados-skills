@@ -1,0 +1,9 @@
+{
+  "name": "raspe",
+  "description": "Coletar dados de fontes oficiais brasileiras e imprensa (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis, Folha, NYT) via biblioteca raspe — retorna DataFrame pandas.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspe",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["scraping", "legislacao", "anvisa", "ans", "folha", "nyt", "cnj", "playwright", "pandas", "brasil"]
+}

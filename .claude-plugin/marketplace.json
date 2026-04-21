@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, busca de literatura academica, enriquecimento de DataFrames com LLMs.",
-    "version": "1.0.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs.",
+    "version": "1.1.0"
   },
   "plugins": [
     {
@@ -41,6 +41,17 @@
       "category": "literature-search",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/openalex"
+    },
+    {
+      "name": "raspe",
+      "source": "./plugins/raspe",
+      "description": "Raspar dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) via biblioteca raspe — retorna DataFrame pandas pronto para analise.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["scraping", "legislacao", "anvisa", "ans", "folha", "nyt", "cnj", "playwright", "pandas", "brasil"],
+      "category": "data-collection",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspe"
     }
   ]
 }
