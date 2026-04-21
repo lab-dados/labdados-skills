@@ -1,9 +1,9 @@
 {
   "name": "dataframeit",
-  "description": "Enriquecer DataFrames com LLMs: extracao estruturada via Pydantic, classificacao, busca web, multi-provedor.",
+  "description": "Aplicar LLM linha a linha em DataFrames com Pydantic: classificacao, extracao estruturada, busca web, checkpointing retomavel, multi-provedor (Gemini/OpenAI/Anthropic/Groq).",
   "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
   "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/dataframeit",
   "repository": "https://github.com/lab-dados/labdados-skills",
   "license": "MIT",
-  "keywords": ["llm", "dataframe", "pydantic", "extracao", "classificacao"]
+  "keywords": ["llm", "dataframe", "pydantic", "extracao", "classificacao", "pandas", "groq", "checkpointing"]
 }

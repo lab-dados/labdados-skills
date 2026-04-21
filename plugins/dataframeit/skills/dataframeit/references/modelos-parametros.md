@@ -13,7 +13,7 @@ antes de executar — provedores ajustam parametros silenciosamente.
 
 | Modelo | Provider | `temperature` | `seed` | `max_output_tokens` | Config recomendada (extracao) |
 |---|---|---|---|---|---|
-| **Gemini 3 Flash** (default global) | `google_genai` | Aceita 0.0-2.0, **manter 1.0** | Sim | Sim | `{'temperature': 1.0, 'seed': 42}` |
+| **Gemini 3 Flash** (`gemini-3-flash-preview`, default global) | `google_genai` | Aceita 0.0-2.0, **manter 1.0** | Sim | Sim | `{'temperature': 1.0, 'seed': 42}` |
 | Gemini 2.5 Pro | `google_genai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
 | Gemini 2.5 Flash | `google_genai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
 | gpt-4o-mini | `openai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
@@ -29,6 +29,8 @@ antes de executar — provedores ajustam parametros silenciosamente.
 | Mistral Large | `mistral` | Aceita 0.0-1.5 | `random_seed` | Sim | `{'temperature': 0, 'random_seed': 42}` |
 | Cohere Command R | `cohere` | Aceita 0.0-5.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
 | Cohere Command R+ | `cohere` | Aceita 0.0-5.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
+| Groq Llama 3.3 70B Versatile | `groq` | Aceita 0.0-2.0 | Sim | `max_tokens` | `{'temperature': 0, 'seed': 42}` |
+| Groq Llama 3.1 8B Instant | `groq` | Aceita 0.0-2.0 | Sim | `max_tokens` | `{'temperature': 0, 'seed': 42}` |
 
 **Regra geral**:
 
@@ -62,7 +64,7 @@ resultado = dataframeit(
 resultado = dataframeit(
     df, CodificacaoDecisao, "...",
     provider='google_genai',
-    model='gemini-3.0-flash',
+    model='gemini-3-flash-preview',
     model_kwargs={'temperature': 1.0, 'seed': 42},
 )
 
@@ -240,14 +242,84 @@ mas para extracao estruturada isso e irrelevante — use 0.
 
 Modo especial — delega as chamadas ao `claude-agent-sdk` e consome
 tokens do plano Claude Code do usuario. Modelos disponiveis seguem o
-plano: Haiku 4.5, Sonnet 4.6, Opus 4.7 (conforme tier). Hiperparametros
-seguem a regra da familia Anthropic acima.
+plano: Haiku 4.5, Sonnet 4.6, Opus 4.7 (conforme tier). Zero custo
+incremental de API, mas consome quota do plano.
 
-Nao suporta `use_search=True` — para busca web, usar
-`provider='google_genai'` ou `'openai'`.
+### Quando (nao) usar
 
-Defaults de protecao de custo: `max_turns=1`, `max_budget_usd=0.50`
-por linha.
+**NAO assumir como default.** Antes de configurar `provider='claude_code'`,
+faca a pergunta:
+
+> "Para a codificacao via LLM, voce prefere: (a) usar tokens do seu plano
+> Claude Code via `provider='claude_code'` (zero custo de API, consome
+> quota do plano), ou (b) pagar via API tradicional com um provedor
+> especifico (Gemini/OpenAI/Anthropic)?"
+
+Alguns usuarios preferem (b) por razoes de billing (separar custos de
+desenvolvimento de custos de pipelines de dados). Outros preferem (a)
+por aproveitar melhor o plano.
+
+### Requisitos
+
+- `pip install claude-agent-sdk`
+- Rodar dentro de um ambiente Claude Code com subscription ativa
+- Nao suporta `use_search=True` — para busca web, use `provider='google_genai'`
+  ou `'openai'`
+
+### Aliases de modelo
+
+**Aliases aceitos**: `'haiku'`, `'sonnet'`, `'opus'` — o SDK resolve
+para a versao atual da familia no plano. Alternativa: passar o ID
+completo (ex: `'claude-haiku-4-5-20251001'`) quando voce precisa fixar
+uma versao especifica para reprodutibilidade.
+
+### Hiperparametros (via `model_kwargs`)
+
+| Parametro | Valores | O que faz |
+|---|---|---|
+| `effort` | `'low'`, `'medium'`, `'high'` | Profundidade do raciocinio no agente SDK. `'low'` adequado para extracao direta; `'medium'`/`'high'` consomem mais tokens do plano |
+| `max_turns` | int | Numero maximo de iteracoes do agente por linha (padrao: `1`). Subir so quando a codificacao exige ferramentas/raciocinio encadeado |
+| `max_budget_usd` | float | Teto de gasto por linha em USD (padrao: `0.50`). Linha ultrapassando o teto e marcada como erro |
+
+Parametros classicos de geracao (`temperature`, `top_p`) seguem a regra
+da familia Anthropic — na pratica, sao pouco expostos neste modo.
+
+### Exemplo
+
+```python
+resultado = dataframeit(
+    df, Codificacao, "Codifique: {texto}",
+    provider='claude_code',
+    model='haiku',                       # alias; equivalente ao ID completo da familia
+    # model='claude-haiku-4-5-20251001', # ou o ID completo se preferir fixar versao
+    model_kwargs={
+        'max_turns': 3,            # mais iteracoes de ferramenta/raciocinio
+        'max_budget_usd': 1.00,    # teto de gasto por linha
+        'effort': 'medium',        # profundidade do raciocinio
+    },
+)
+```
+
+---
+
+## §Groq (`provider='groq'`)
+
+### Llama 3.3 70B Versatile (default Groq) / Llama 3.1 8B Instant
+
+| Parametro | Aceita | Default | Recomendacao extracao |
+|---|---|---|---|
+| `temperature` | 0.0 – 2.0 | 1.0 | **0** |
+| `seed` | int | — | Fixar |
+| `top_p` | 0.0 – 1.0 | 1.0 | Nao alterar |
+| `max_tokens` | int | varia | Dimensionar conforme Pydantic |
+| `response_format` | dict | — | `{'type': 'json_object'}` quando aplicavel |
+
+Groq roda modelos open-weight (Llama, Mixtral, Gemma) em hardware
+proprio otimizado para latencia; tokens/s ficam bem acima dos
+provedores proprietarios, com custo competitivo. Bom default para
+classificacao em alto volume quando a qualidade de um Llama 70B basta.
+Para campos finitos (`Literal[...]`) com descricoes bem escritas,
+Llama 3.3 70B tipicamente iguala gpt-4o-mini.
 
 ---
 
@@ -256,7 +328,7 @@ por linha.
 Para reprodutibilidade (registre no protocolo de pesquisa):
 
 - `provider` (ex: `google_genai`, `anthropic`, `openai`)
-- `model` exato (ex: `gemini-3.0-flash`, `claude-haiku-4-5-20251001`)
+- `model` exato (ex: `gemini-3-flash-preview`, `claude-haiku-4-5-20251001`)
 - `temperature` (ou "nao suportado" em reasoning models)
 - `seed` / `random_seed` (ou "nao suportado")
 - `top_p`, `top_k` (se alterados do default)
