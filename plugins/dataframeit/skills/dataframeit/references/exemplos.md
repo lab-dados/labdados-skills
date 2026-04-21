@@ -42,9 +42,6 @@ resultado = dataframeit(df, Sentimento, "Analise o sentimento do texto: {texto}"
 
 # 4. Verificar
 print(resultado[['texto', 'sentimento', 'confianca']])
-# `_dataframeit_status` so existe quando ha erros — use .get() para checar
-status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
-print(f"Erros: {(status == 'error').sum()}")
 total_tokens = (
     resultado['_input_tokens']
     + resultado['_output_tokens']
@@ -118,8 +115,6 @@ resultado = dataframeit(
 
 # 4. Verificar
 print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede']])
-status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
-print(f"Erros: {(status == 'error').sum()}")
 ```
 
 ---
