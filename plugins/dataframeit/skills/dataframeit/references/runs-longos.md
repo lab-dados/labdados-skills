@@ -170,12 +170,14 @@ resultado_corrigido = dataframeit(
 ### Reprocessar linhas com erro
 
 ```python
-erros = resultado[resultado['_dataframeit_status'] == 'error']
+# `_dataframeit_status` so existe quando ha erros — use .get() antes de filtrar
+status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
+erros = resultado[status == 'error']
 print(f"{len(erros)} linhas com erro")
-print(erros['_error_details'].value_counts())
-
-resultado.loc[resultado['_dataframeit_status'] == 'error', '_dataframeit_status'] = None
-resultado_corrigido = dataframeit(resultado, Modelo, prompt)
+if len(erros) > 0:
+    print(erros['_error_details'].value_counts())
+    resultado.loc[status == 'error', '_dataframeit_status'] = None
+    resultado_corrigido = dataframeit(resultado, Modelo, prompt)
 ```
 
 ---

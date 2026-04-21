@@ -41,7 +41,10 @@ df = pd.DataFrame({
 resultado = dataframeit(df, Sentimento, "Analise o sentimento do texto: {texto}")
 
 # 4. Verificar
-print(resultado[['texto', 'sentimento', 'confianca', '_dataframeit_status']])
+print(resultado[['texto', 'sentimento', 'confianca']])
+# `_dataframeit_status` so existe quando ha erros — use .get() para checar
+status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
+print(f"Erros: {(status == 'error').sum()}")
 total_tokens = (
     resultado['_input_tokens']
     + resultado['_output_tokens']
@@ -114,7 +117,9 @@ resultado = dataframeit(
 )
 
 # 4. Verificar
-print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede', '_dataframeit_status']])
+print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede']])
+status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
+print(f"Erros: {(status == 'error').sum()}")
 ```
 
 ---
@@ -161,7 +166,9 @@ resultado = dataframeit(
 )
 
 # 5. Verificar erros
-erros = resultado[resultado['_dataframeit_status'] == 'error']
+# `_dataframeit_status` pode nao existir se nenhuma linha falhou
+status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
+erros = resultado[status == 'error']
 print(f"Processados: {len(resultado) - len(erros):,} | Erros: {len(erros):,}")
 total_tokens = (
     resultado['_input_tokens']
@@ -172,7 +179,7 @@ print(f"Tokens totais: {total_tokens:,}")
 
 # 6. Reprocessar erros se necessario
 if len(erros) > 0:
-    resultado.loc[resultado['_dataframeit_status'] == 'error', '_dataframeit_status'] = None
+    resultado.loc[status == 'error', '_dataframeit_status'] = None
     resultado_final = dataframeit(
         resultado, ClassificacaoEmenta,
         "Classifique esta ementa judicial: {texto}",

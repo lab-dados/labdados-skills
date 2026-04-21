@@ -139,7 +139,7 @@ Para usar outro modelo, especifique `model=` explicitamente:
 
 ```python
 resultado = dataframeit(df, Modelo, prompt, provider='openai', model='gpt-4o')
-resultado = dataframeit(df, Modelo, prompt, provider='anthropic', model='claude-sonnet-4-6-20251120')
+resultado = dataframeit(df, Modelo, prompt, provider='anthropic', model='claude-sonnet-4-6')
 resultado = dataframeit(df, Modelo, prompt, provider='groq', model='llama-3.1-8b-instant')
 ```
 
