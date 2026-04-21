@@ -14,6 +14,7 @@ Dentro do Claude Code, rode:
 /plugin install juscraper@labdados-skills
 /plugin install dataframeit@labdados-skills
 /plugin install openalex@labdados-skills
+/plugin install raspe@labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
@@ -26,6 +27,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
+| [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
 
 ## Pre-requisitos por skill
 
@@ -47,6 +49,13 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 - API key do OpenAlex (gratis, https://openalex.org/settings/api)
 - CLI `openalex-official` (apenas para downloads em massa)
+
+### raspe
+
+- Python >= 3.11
+- `pip install git+https://github.com/bdcdo/raspe.git`
+- Para ANS/ANVISA/SaudeLegis (Playwright): `pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"` + `python -m playwright install chromium`
+- Para NYT: API key gratuita em <https://developer.nytimes.com/get-started> (variavel `NYT_API_KEY`)
 
 ## Atualizacoes
 
