@@ -47,6 +47,7 @@ print(df.groupby("fonte").size())
 **Objetivo**: coletar atos normativos vigentes da ANVISA sobre "dispositivo medico", separar revogados de vigentes e salvar em Excel.
 
 ```python
+import pandas as pd
 import raspe
 
 # IMPORTANTE: ANVISA requer o extra [browser]. Se faltar:

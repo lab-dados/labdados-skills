@@ -194,4 +194,4 @@ Leia a referencia apropriada **antes** de gerar codigo. A tabela abaixo indica q
 | Revisao de literatura que motiva/dialoga com os dados | **openalex-skill** | Lista de artigos relevantes |
 | Se o pedido for sobre **tribunais, jurisprudencia, acordaos** | **juscraper-skill** | `raspe` nao cobre isso — redirecione |
 
-Se o usuario vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. Atencao a qual coluna contem o texto a enviar ao LLM: em `folha` e o `titulo`+`resumo`; em `nyt` e `titulo`+`resumo`; em `ans`/`anvisa` e `descricao`; em `presidencia` e `descricao`. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.
+Se o usuario vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (secao "Nomes de coluna em dataframeit / analise textual"), que cobre as 11 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.

@@ -57,7 +57,7 @@ Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando 
 - **CNJ Comunica**: intimacoes e comunicados processuais — nao e o mesmo que jurisprudencia. Para acordaos e julgados, use `juscraper-skill`.
 - **Imprensa**: Folha cobre desde 1994 para jornal impresso, online varia por periodo. NYT tem cobertura desde 1851 na API.
 
-## Nomes de coluna em datetimeit / analise textual
+## Nomes de coluna em dataframeit / analise textual
 
 Ao aplicar `dataframeit-skill` sobre um DataFrame coletado, identifique o campo com texto significativo:
 
