@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs.",
-    "version": "1.1.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e gestao do projeto LabDados.",
+    "version": "1.2.0"
   },
   "plugins": [
     {
@@ -52,6 +52,28 @@
       "category": "data-collection",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspe"
+    },
+    {
+      "name": "juscraper-builder",
+      "source": "./plugins/juscraper-builder",
+      "description": "Gerar scrapers Python para tribunais brasileiros (com e sem captcha) via engenharia reversa com Playwright MCP.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["scraping", "tribunais", "builder", "engenharia-reversa", "captcha", "playwright"],
+      "category": "data-collection",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/juscraper-builder"
+    },
+    {
+      "name": "scrum-master",
+      "source": "./plugins/scrum-master",
+      "description": "Relatorio executivo semanal do LabDados consolidando Kanban do GitHub, WhatsApp, Google Drive e reunioes gravadas.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["scrum", "weekly", "relatorio", "kanban", "labdados"],
+      "category": "project-management",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/scrum-master"
     }
   ]
 }

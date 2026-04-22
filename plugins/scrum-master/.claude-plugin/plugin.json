@@ -1,0 +1,9 @@
+{
+  "name": "scrum-master",
+  "description": "Relatorio executivo semanal do LabDados consolidando Kanban do GitHub, WhatsApp, Google Drive e reunioes gravadas.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/scrum-master",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["scrum", "weekly", "relatorio", "kanban", "labdados"]
+}

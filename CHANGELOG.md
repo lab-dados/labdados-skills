@@ -4,6 +4,19 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-04-22
+
+Adicionados dois novos plugins:
+
+- `juscraper-builder` — gera scrapers Python para tribunais brasileiros
+  seguindo a arquitetura do pacote juscraper. Inclui duas skills:
+  `juscraper-builder` (paginas sem captcha) e `juscraper-builder-captcha`
+  (paginas com captcha — text-based via `txtcaptcha`; desiste para
+  reCAPTCHA/hCaptcha/Turnstile). Requer Playwright MCP.
+- `scrum-master` — relatorio executivo semanal do LabDados, consolidando
+  movimentacao do Kanban do GitHub, mensagens do WhatsApp, documentos do
+  Google Drive e reunioes gravadas.
+
 ## [1.1.0] — 2026-04-20
 
 ### Adicionado

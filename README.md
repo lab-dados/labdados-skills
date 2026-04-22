@@ -3,7 +3,8 @@
 Marketplace de skills do [Claude Code](https://claude.com/claude-code) mantido
 pelo [lab-dados](https://github.com/lab-dados), voltado a pesquisa empirica
 em direito no Brasil. Agrupa ferramentas para **coleta de dados judiciais**,
-**enriquecimento de DataFrames com LLMs** e **busca de literatura academica**.
+**enriquecimento de DataFrames com LLMs**, **busca de literatura academica**,
+**construcao de scrapers** e **gestao do projeto LabDados**.
 
 ## Instalacao
 
@@ -15,6 +16,8 @@ Dentro do Claude Code, rode:
 /plugin install dataframeit@labdados-skills
 /plugin install openalex@labdados-skills
 /plugin install raspe@labdados-skills
+/plugin install juscraper-builder@labdados-skills
+/plugin install scrum-master@labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
@@ -28,6 +31,9 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
+| [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
+| [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
+| [scrum-master](plugins/scrum-master/skills/scrum-master/SKILL.md) | Relatorio executivo semanal do LabDados | Resumo semanal, weekly plan, fechamento da semana |
 
 ## Pre-requisitos por skill
 
@@ -56,6 +62,19 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - `pip install git+https://github.com/bdcdo/raspe.git`
 - Para ANS/ANVISA/SaudeLegis (Playwright): `pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"` + `python -m playwright install chromium`
 - Para NYT: API key gratuita em <https://developer.nytimes.com/get-started> (variavel `NYT_API_KEY`)
+
+### juscraper-builder
+
+- Playwright MCP configurado no Claude Code (para navegacao e captura de
+  requisicoes de rede durante a engenharia reversa)
+- Python >= 3.11
+- Para paginas com captcha text-based: `pip install txtcaptcha`
+
+### scrum-master
+
+- Acesso ao Kanban do GitHub do projeto LabDados (via `gh` CLI autenticado)
+- MCPs do Google Drive, Gmail e Google Calendar (para documentos e reunioes)
+- Exportacao de mensagens do WhatsApp em `.txt` quando aplicavel
 
 ## Atualizacoes
 
