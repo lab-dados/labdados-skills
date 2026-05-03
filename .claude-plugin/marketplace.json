@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e gestao do projeto LabDados.",
-    "version": "1.2.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados e producao de videos explicativos.",
+    "version": "1.3.0"
   },
   "plugins": [
     {
@@ -74,6 +74,17 @@
       "category": "project-management",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/scrum-master"
+    },
+    {
+      "name": "explainer-video",
+      "source": "./plugins/explainer-video",
+      "description": "Cria videos explicativos curtos de plataformas web (gravacao via Playwright + narracao TTS) a partir de um repositorio ou URL ao vivo, com upload opcional no YouTube.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["video", "explainer", "screencast", "playwright", "tts", "youtube", "demo"],
+      "category": "communication",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/explainer-video"
     }
   ]
 }

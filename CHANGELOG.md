@@ -4,6 +4,17 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-05-03
+
+Adicionado:
+
+- `explainer-video` — gera videos explicativos curtos (30s–3min) de ferramentas
+  web a partir de um repositorio ou URL ao vivo. Pipeline em 7 etapas: analise
+  do repo, definicao de escopo, roteiro, gravacao via Playwright (CDP screencast
+  H.264 ou `record_video_dir` legado), TTS (ElevenLabs/OpenAI/edge-tts com
+  fallback), sincronizacao audio+video via ffmpeg e upload opcional no YouTube
+  como nao-listado (OAuth Google Cloud).
+
 ## [1.2.0] — 2026-04-22
 
 Adicionados dois novos plugins:

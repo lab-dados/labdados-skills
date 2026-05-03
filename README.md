@@ -18,6 +18,7 @@ Dentro do Claude Code, rode:
 /plugin install raspe@labdados-skills
 /plugin install juscraper-builder@labdados-skills
 /plugin install scrum-master@labdados-skills
+/plugin install explainer-video@labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
@@ -34,6 +35,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
 | [scrum-master](plugins/scrum-master/skills/scrum-master/SKILL.md) | Relatorio executivo semanal do LabDados | Resumo semanal, weekly plan, fechamento da semana |
+| [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
 
 ## Pre-requisitos por skill
 
@@ -75,6 +77,14 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Acesso ao Kanban do GitHub do projeto LabDados (via `gh` CLI autenticado)
 - MCPs do Google Drive, Gmail e Google Calendar (para documentos e reunioes)
 - Exportacao de mensagens do WhatsApp em `.txt` quando aplicavel
+
+### explainer-video
+
+- Python >= 3.10
+- `pip install playwright edge-tts` + `python -m playwright install chromium`
+- `ffmpeg` no PATH (sincronizacao de audio + video)
+- Opcional (TTS de qualidade superior): `ELEVENLABS_API_KEY` ou `OPENAI_API_KEY`
+- Opcional (upload no YouTube): OAuth client do Google Cloud + `pip install google-api-python-client google-auth-oauthlib` + variavel `YT_CLIENT_SECRET_PATH` apontando para o `client_secret.json` (ver `references/youtube.md`)
 
 ## Atualizacoes
 
