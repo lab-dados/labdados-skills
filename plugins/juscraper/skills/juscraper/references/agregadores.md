@@ -125,7 +125,7 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 ### Gotchas
 
 - **Tamanho de pagina:** default de `5000` (subiu em v0.3.0). Em caso de `HTTP 504`/`Timeout`, o client refaz com `size // 4` automaticamente (1 retry com `UserWarning`); valores proximos de 10000 sao instaveis. Por isso `paginas=None` num tribunal grande pode demorar.
-- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning`; nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError`. `[unreleased]`
+- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning` (`[v0.3.0]`); nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError` (`[unreleased]`).
 - **CNJ com whitespace ou separadores** (vindos de CSV/Excel) sao limpos automaticamente antes do envio. `[v0.3.0]`
 - **Problemas de runtime** (CNJ invalido, tribunal nao mapeado, falha de API, JSON corrompido) emitem `warnings.warn(UserWarning)` alem do log — em Jupyter sem handler de logging, fica visivel. `[v0.3.0]`
 - **`RetryExhaustedError`**: `[unreleased]` o `DatajudScraper` agora herda de `HTTPScraper`; a forma de transporte central nao muda (504/timeout continua usando o retry especializado da `call_datajud_api`), mas algumas falhas podem propagar `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`. Para codigo defensivo, capturar ambas.
@@ -248,7 +248,7 @@ df = cnj.listar_comunicacoes(
 
 ## PDPJ — DATALAKE Processos `[unreleased]`
 
-Agregador novo `[unreleased]` para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Mesmo SSO do JusBR (JWT via SSO PJe), mas com endpoints granulares e suporte a busca por nome de parte / OAB.
+Agregador novo `[unreleased]` para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Sucessor parcial do JusBR. **Usa o JWT do SSO do PJe — nao e o mesmo token do JusBR**, que consome o JWT do SSO do gov.br. Sao tokens distintos, embora o fluxo de captura via DevTools seja analogo. Oferece endpoints granulares e suporte a busca por nome de parte / OAB.
 
 **Instalacao obrigatoria via dev:** `pip install git+https://github.com/jtrecenti/juscraper.git`
 
@@ -270,7 +270,7 @@ pdpj = jus.scraper('pdpj')
 pdpj.auth(token='eyJhbGciOiJSUzI1NiIs...')
 ```
 
-O token e o mesmo JWT do SSO PJe que o JusBR usa. Obter pelo portal PDPJ logado (DevTools > Network > capturar header `Authorization: Bearer <token>`).
+O token e um JWT emitido pelo SSO do PJe (diferente do JWT do gov.br que o JusBR usa — ver nota acima). Obter pelo portal PDPJ logado (DevTools > Network > capturar header `Authorization: Bearer <token>`).
 
 A autenticacao valida o formato e detecta tokens expirados antes de tentar usar:
 - Token malformado -> `ValueError("Token JWT invalido: ...")`.

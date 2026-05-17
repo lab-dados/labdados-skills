@@ -50,10 +50,12 @@ refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
   > Acesse https://www.jus.br, faca login via gov.br, e extraia o token
   > da aba Network do navegador (campo `access_token`).
   > Alternativamente, use `.auth_firefox()` se tiver sessao ativa no Firefox.
-- **PDPJ `[unreleased]`:** Autenticacao obrigatoria via JWT do SSO PJe (mesmo
-  esquema do JusBR; o token pode vir do portal PDPJ logado, DevTools >
-  Network > header `Authorization: Bearer <token>`). Token invalido ou expirado
-  vira `ValueError` ja em `pdpj.auth(token)`.
+- **PDPJ `[unreleased]`:** Autenticacao obrigatoria via JWT do SSO do PJe.
+  **Nao e o mesmo token do JusBR** (que usa o SSO do gov.br) — sao tokens
+  distintos, embora o fluxo de captura via DevTools seja analogo. O token vem
+  do portal PDPJ logado (DevTools > Network > header
+  `Authorization: Bearer <token>`). Token invalido ou expirado vira
+  `ValueError` ja em `pdpj.auth(token)`.
 
 ## Roteamento de decisao — o que usar?
 

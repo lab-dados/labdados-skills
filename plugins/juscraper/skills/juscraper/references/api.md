@@ -350,7 +350,7 @@ tjsp = jus.scraper('tjsp', download_path='./dados_brutos')
 |-------|---------------|
 | `range(1, 4)` | Baixa paginas 1, 2, 3 |
 | `3` | Equivale a `range(1, 4)` |
-| `[1, 3, 5]` | Baixa paginas 1, 3 e 5 (excecao Datajud — vira `range(1, 6)` contiguo, ver agregadores.md) |
+| `[1, 3, 5]` | Baixa paginas 1, 3 e 5 (excecao PDPJ — o cursor `searchAfter` em `pesquisa` e forwards-only e forca o range contiguo `range(1, 6)`, ver agregadores.md) |
 | `None` | Baixa TODAS as paginas (usar com cautela) |
 
 A paginacao e **1-based** em todos os scrapers. `range(0, 3)` NAO e valido.

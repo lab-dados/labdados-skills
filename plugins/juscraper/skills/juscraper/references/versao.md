@@ -83,8 +83,7 @@ Em ordem de menor para maior risco:
 # Conferir que toda sigla mencionada na skill bate com o factory real:
 python3 -c "
 import juscraper
-print(sorted(juscraper._SCRAPERS.keys()) if hasattr(juscraper, '_SCRAPERS')
-      else sorted(__import__('juscraper').__dict__.get('_SCRAPERS', {}).keys()))
+print(sorted(getattr(juscraper, '_SCRAPERS', {}).keys()))
 "
 grep -hoE "'(tj[a-z]+|trf[0-9]+|datajud|jusbr|pdpj|comunica_cnj)'" \
   plugins/juscraper/skills/juscraper/SKILL.md \
