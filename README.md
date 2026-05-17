@@ -18,6 +18,7 @@ Dentro do Claude Code, rode:
 /plugin install raspe@labdados-skills
 /plugin install juscraper-builder@labdados-skills
 /plugin install scrum-master@labdados-skills
+/plugin install ata-reuniao@labdados-skills
 /plugin install explainer-video@labdados-skills
 ```
 
@@ -35,6 +36,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
 | [scrum-master](plugins/scrum-master/skills/scrum-master/SKILL.md) | Relatorio executivo semanal do LabDados | Resumo semanal, weekly plan, fechamento da semana |
+| [ata-reuniao](plugins/ata-reuniao/skills/ata-reuniao/SKILL.md) | Gera ata de reuniao do LabDados a partir de gravacao/transcricao (transcreve via labdados-sdk) e salva em `reunioes/` no repo adm | Ata da reuniao, registrar/documentar reuniao, resumo da reuniao |
 | [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
 
 ## Pre-requisitos por skill
@@ -77,6 +79,13 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Acesso ao Kanban do GitHub do projeto LabDados (via `gh` CLI autenticado)
 - MCPs do Google Drive, Gmail e Google Calendar (para documentos e reunioes)
 - Exportacao de mensagens do WhatsApp em `.txt` quando aplicavel
+
+### ata-reuniao
+
+- Repo `lab-dados/adm` clonado localmente (as atas vao para `reunioes/`)
+- `pip install labdados` + API key do escritorio (`LABDADOS_API_KEY`) para transcricao em nuvem (WhisperX)
+- MCP do Google Drive (opcional — localizar gravacoes do Zoom)
+- `gh` CLI autenticado (linkar issues/PRs nas atas)
 
 ### explainer-video
 

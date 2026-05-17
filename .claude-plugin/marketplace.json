@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados e producao de videos explicativos.",
-    "version": "1.3.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao e producao de videos explicativos.",
+    "version": "1.4.0"
   },
   "plugins": [
     {
@@ -74,6 +74,17 @@
       "category": "project-management",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/scrum-master"
+    },
+    {
+      "name": "ata-reuniao",
+      "source": "./plugins/ata-reuniao",
+      "description": "Gera a ata de uma reuniao do LabDados a partir de gravacao/audio (Zoom, Google Drive) ou transcricao, transcrevendo via labdados-sdk (WhisperX) quando necessario, e salva em reunioes/AAAA-MM-DD-ata.md no repo lab-dados/adm.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["ata", "reuniao", "transcricao", "whisperx", "labdados"],
+      "category": "project-management",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/ata-reuniao"
     },
     {
       "name": "explainer-video",

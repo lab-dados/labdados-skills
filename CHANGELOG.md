@@ -4,6 +4,18 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-05-17
+
+Adicionado:
+
+- `ata-reuniao` — gera a ata de uma reuniao do LabDados a partir de gravacao/audio
+  (Zoom, Google Drive) ou transcricao. Quando so ha audio, transcreve e diariza
+  via `labdados-sdk` (WhisperX, modo nuvem do escritorio); resume num template
+  markdown padrao (participantes, decisoes, encaminhamentos com responsavel/prazo,
+  pendencias) e salva em `reunioes/AAAA-MM-DD-ata.md` no repo `lab-dados/adm`,
+  deixando o `git add` feito sem commitar. Trata conteudo sensivel (processo
+  seletivo, remuneracao) de forma neutra; modo degradado nao inventa atas.
+
 ## [1.3.0] — 2026-05-03
 
 Adicionado:
