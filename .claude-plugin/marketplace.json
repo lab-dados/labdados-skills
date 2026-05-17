@@ -12,10 +12,10 @@
     {
       "name": "juscraper",
       "source": "./plugins/juscraper",
-      "description": "Raspar dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) via biblioteca juscraper.",
-      "version": "1.0.0",
+      "description": "Raspar dados judiciais brasileiros (28 tribunais: 25 estaduais + 3 TRFs federais; 4 agregadores nacionais: Datajud, JusBR, ComunicaCNJ, PDPJ) via biblioteca juscraper.",
+      "version": "1.1.0",
       "author": { "name": "lab-dados" },
-      "keywords": ["scraping", "tribunais", "cnj", "jurisprudencia", "direito", "brasil"],
+      "keywords": ["scraping", "tribunais", "cnj", "jurisprudencia", "direito", "brasil", "trf", "pdpj", "comunica-cnj", "djen"],
       "category": "data-collection",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/juscraper"
