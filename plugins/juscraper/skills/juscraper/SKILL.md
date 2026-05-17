@@ -1,13 +1,20 @@
 ---
 name: juscraper
-description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg), ou consultas cross-tribunal via Datajud e JusBR. Cobre 22 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS) e 2 agregadores nacionais (Datajud, JusBR). Use esta skill sempre que o usuario mencionar tribunal brasileiro, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes judiciais, processos judiciais, eSAJ, poder judiciario, ou qualquer tarefa envolvendo coleta de dados de tribunais brasileiros — mesmo que nao mencione explicitamente "juscraper".
+description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg), coletar comunicacoes/DJe digital ou consultas cross-tribunal via Datajud, JusBR, ComunicaCNJ e PDPJ. Cobre 25 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ), 3 tribunais regionais federais (TRF1, TRF3, TRF5) e 4 agregadores nacionais (Datajud, JusBR, ComunicaCNJ, PDPJ). Use esta skill sempre que o usuario mencionar tribunal brasileiro, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes judiciais, processos judiciais, eSAJ, PJe, poder judiciario, justica federal, comunicacoes processuais, DJe, intimacoes publicas, ou qualquer tarefa envolvendo coleta de dados de tribunais brasileiros — mesmo que nao mencione explicitamente "juscraper".
 ---
 
 # JusScraper Skill
 
 juscraper e uma biblioteca Python para raspagem de dados do poder judiciario brasileiro.
-Cobre **22 tribunais estaduais** e **2 agregadores nacionais** (Datajud e JusBR),
-permitindo buscar jurisprudencia, consultar processos e baixar documentos.
+Cobre **25 tribunais estaduais**, **3 tribunais regionais federais** (TRF1, TRF3, TRF5) e
+**4 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ e PDPJ), permitindo buscar
+jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
+
+> **Atualizada para juscraper v0.3.0 (PyPI) e main HEAD em 2026-05-13.**
+> Recursos marcados `[unreleased]` (TRF1/TRF3/TRF5, PDPJ, alguns refactors)
+> exigem instalacao via `pip install git+https://github.com/jtrecenti/juscraper.git`.
+> Recursos marcados `[v0.3.0+]` exigem `pip install juscraper>=0.3.0`. Ver
+> `references/versao.md` para o changelog skill ↔ biblioteca.
 
 - Repositorio: https://github.com/jtrecenti/juscraper
 - Documentacao: https://jtrecenti.github.io/juscraper/
@@ -20,21 +27,33 @@ Complete este checklist antes de qualquer chamada.
 
 Verifique se `juscraper` esta instalado:
 1. `pip show juscraper` ou `python -c "import juscraper; print(juscraper.__version__)"`
-2. Se nao instalado: `pip install juscraper` ou `uv add juscraper`
-3. Python >= 3.11 obrigatorio.
-4. Para a versao mais recente (com todos os tribunais):
-   `pip install git+https://github.com/jtrecenti/juscraper.git`
+2. Python >= 3.11 obrigatorio.
+3. Escolha o modo de instalacao conforme o que vai usar:
+
+| Necessidade | Comando |
+|---|---|
+| Tudo que esta em PyPI (default, recomendado) | `pip install juscraper` ou `uv add juscraper` |
+| TJMG (captcha automatico) | `pip install 'juscraper[tjmg]'` |
+| TRF1, TRF3, TRF5 ou PDPJ (atualmente `[unreleased]`) | `pip install git+https://github.com/jtrecenti/juscraper.git` |
+
+Se a tarefa envolve algum recurso `[unreleased]` (TRFs federais, PDPJ, alguns
+refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
 
 ### 2. Autenticacao (condicional)
 
-- **Todos os 22 tribunais diretos:** Nenhuma autenticacao necessaria.
+- **Todos os 25 tribunais estaduais e 3 TRFs federais:** Nenhuma autenticacao necessaria.
 - **Datajud:** Tem API key publica embutida. Funciona sem configuracao.
+- **ComunicaCNJ:** API publica, sem autenticacao.
 - **JusBR:** Autenticacao obrigatoria (sem token, qualquer chamada falha com RuntimeError).
   Pergunte ao usuario:
   > Para usar o JusBR, voce precisa de um token JWT do gov.br.
   > Acesse https://www.jus.br, faca login via gov.br, e extraia o token
   > da aba Network do navegador (campo `access_token`).
   > Alternativamente, use `.auth_firefox()` se tiver sessao ativa no Firefox.
+- **PDPJ `[unreleased]`:** Autenticacao obrigatoria via JWT do SSO PJe (mesmo
+  esquema do JusBR; o token pode vir do portal PDPJ logado, DevTools >
+  Network > header `Authorization: Bearer <token>`). Token invalido ou expirado
+  vira `ValueError` ja em `pdpj.auth(token)`.
 
 ## Roteamento de decisao — o que usar?
 
@@ -42,21 +61,26 @@ Verifique se `juscraper` esta instalado:
 
 | Preciso de... | Metodo | Scrapers disponiveis |
 |---|---|---|
-| Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 22 tribunais |
+| Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais |
 | Buscar jurisprudencia (1o grau) | `cjpg(pesquisa)` | TJSP, TJES, TJTO |
-| Dados de processo por numero CNJ (1o grau) | `cpopg(id_cnj)` | TJSP (direto) ou JusBR (qualquer tribunal) |
+| Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP (direto), JusBR (qualquer tribunal), PDPJ `[unreleased]` |
+| Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` | TRF1, TRF3, TRF5 `[unreleased]` |
 | Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP |
-| Listar processos de qualquer tribunal | `listar_processos()` | Datajud |
-| Baixar documentos/pecas de um processo | `download_documents()` | JusBR |
+| Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
+| Baixar texto de documentos/pecas | `download_documents()` | JusBR; PDPJ `[unreleased]` |
+| Coletar comunicacoes/intimacoes publicadas no DJe | `listar_comunicacoes()` | ComunicaCNJ `[v0.3.0+]` |
+| Busca por nome de parte / OAB | `pesquisa()` | PDPJ `[unreleased]` |
 
 ### Passo 2: Qual tribunal?
 
-- Se o usuario especificou um tribunal e ele esta entre os 22 → use o scraper direto.
-- Se o tribunal nao tem scraper direto (ex: TJRJ, TJMG, TJGO) → use **Datajud**
-  para listar processos ou **JusBR** para consultar por CNJ e baixar documentos.
+- Se o usuario especificou um **tribunal estadual** e ele esta entre os 25 (incluindo agora **TJGO**, **TJMG** e **TJRJ** `[v0.3.0+]`) → use o scraper direto.
+- Se o usuario especificou um **tribunal federal** (TRF1, TRF3 ou TRF5) → use o scraper direto `[unreleased]` para `cpopg` ou o Datajud para metadados.
+- Se o tribunal estadual nao tem scraper direto (TJMA, TJSE — captcha server-side) → use **Datajud** para metadados ou **JusBR**/**PDPJ** para consultar por CNJ e baixar documentos.
 - Para jurisprudencia sem tribunal especificado → TJSP e o maior e mais completo.
-- Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam cjpg.
-- Consulte `references/tribunais.md` para a matriz completa de capacidades e parametros.
+- Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam `cjpg`.
+- Para buscar por nome de parte ou numero OAB → use **PDPJ** `[unreleased]` (`pdpj.pesquisa(nome_parte=..., oab_representante=...)`).
+- Para acompanhar publicacoes no DJe sobre um tema → use **ComunicaCNJ** `[v0.3.0+]`.
+- Consulte `references/tribunais.md` (tribunais) e `references/agregadores.md` (agregadores) para a matriz completa de capacidades e parametros.
 
 ## Vocabulario academico → endpoint juscraper
 
@@ -66,11 +90,13 @@ que nem sempre sao obvios ao implementar a coleta. Mapeamento:
 | Termo no artigo | Endpoint juscraper | Observacao |
 |---|---|---|
 | "banco de sentencas" / "decisoes de 1o grau" | `cjpg` | Consulta de Julgados de Primeiro Grau — **publico**, nao precisa login institucional. Disponivel apenas em TJSP, TJES, TJTO |
-| "jurisprudencia" / "acordaos" | `cjsg` | Consulta de Jurisprudencia (2a instancia). Disponivel em todos os 22 tribunais com scraper direto |
+| "jurisprudencia" / "acordaos" | `cjsg` | Consulta de Jurisprudencia (2a instancia). Disponivel em todos os 25 tribunais estaduais com scraper direto |
 | "portal eletronico do tribunal" | `cjpg` ou `cjsg` (contexto) | Verifique a serie temporal e instancia descrita |
 | "classificacao tematica do tribunal" / "assunto" | filtro de **assunto** (codigo DPJ/CNJ) | Preferir a busca textual para termos genericos — ver proxima secao |
 | "autos completos" / "inteiro teor" | `cpopg`/`cposg` por CNJ | Requer lista previa de numeros de processos |
-| "banco de dados do CNJ" / "DataJud" | `listar_processos` via Datajud | Metadados cross-tribunal |
+| "banco de dados do CNJ" / "DataJud" | `listar_processos` / `contar_processos` via Datajud | Metadados cross-tribunal |
+| "comunicacoes processuais" / "DJe digital" / "intimacoes publicas" / "publicacoes do tribunal" | `listar_comunicacoes` via ComunicaCNJ `[v0.3.0+]` | Util para acompanhar publicacoes em um tema sem percorrer Diarios |
+| "busca por advogado" / "OAB" / "nome de parte" | `pesquisa` via PDPJ `[unreleased]` | Substitui parcialmente buscas avancadas que JusBR nao oferece |
 
 **Importante**: quando o artigo menciona "login institucional" ou "credenciais
 do pesquisador", NAO assuma que os dados sao privados. Pesquisadores
@@ -225,25 +251,40 @@ Utilitarios para manipulacao: `from juscraper.utils.cnj import clean_cnj, split_
 **Padrao download/parse**: todo metodo tem variantes `_download()` e `_parse()` para
 controle granular sobre arquivos brutos. O metodo sem sufixo combina ambos.
 
-## Quando usar scrapers diretos vs Datajud vs JusBR
+## Quando usar scrapers diretos vs agregadores
 
-| Criterio | Scraper direto (22 tribunais) | Datajud | JusBR |
-|---|---|---|---|
-| Jurisprudencia (cjsg) | Sim — principal uso | Nao | Nao |
-| Consulta por CNJ | Apenas TJSP (cpopg/cposg) | Sim (listar_processos) | Sim (cpopg) |
-| Cross-tribunal | 1 tribunal por vez | Sim (detecta tribunal pelo CNJ) | Sim |
-| Documentos/pecas | Nao | Nao | Sim |
-| Autenticacao | Nenhuma | Nenhuma (key publica) | Obrigatoria (JWT) |
+| Criterio | Scrapers diretos (28 tribunais) | Datajud | JusBR | ComunicaCNJ `[v0.3.0+]` | PDPJ `[unreleased]` |
+|---|---|---|---|---|---|
+| Jurisprudencia (`cjsg`) | Sim — principal uso | Nao | Nao | Nao | Nao |
+| Consulta por CNJ | TJSP (cpopg/cposg), TRF1/TRF3/TRF5 (cpopg) | Sim (`listar_processos`) | Sim (`cpopg`) | Nao | Sim (`cpopg`) |
+| Cross-tribunal | 1 tribunal por vez | Sim (detecta tribunal pelo CNJ) | Sim | Sim (filtro `siglaTribunal`) | Sim (filtro `tribunal`) |
+| Documentos/pecas | Nao | Nao | Sim (texto) | Nao | Sim (texto e/ou binario) |
+| Busca por nome de parte / OAB | Nao | Nao | Nao | Nao | Sim (`pesquisa`) |
+| Comunicacoes / DJe | Nao | Nao | Nao | Sim (`listar_comunicacoes`) | Nao |
+| Contagem rapida | Nao | Sim (`contar_processos`) | Nao | Sim (campo `count`) | Sim (`contar`) |
+| Autenticacao | Nenhuma | Nenhuma (key publica) | Obrigatoria (JWT gov.br) | Nenhuma | Obrigatoria (JWT PDPJ) |
 
 Priorize sempre os scrapers diretos quando o tribunal estiver disponivel — eles fornecem
-dados mais ricos (ementas completas, filtros especificos) do que os agregadores.
+dados mais ricos (ementas completas, filtros especificos) do que os agregadores. Os
+agregadores entram quando o tribunal nao tem scraper direto, ou quando o caso de uso e
+especifico (busca por parte, comunicacoes, contagem pre-coleta).
+
+Detalhes completos dos 4 agregadores em `references/agregadores.md`.
 
 ## Tratamento de erros
 
 Se o scraper falhar (timeout, bloqueio, erro HTTP):
+
 - Aumente `sleep_time` e tente novamente com menos paginas.
 - Tribunais ficam mais lentos em horario comercial — sugira tentar em outro horario.
 - Se persistir, o Datajud e uma alternativa mais estavel para metadados de processos.
+
+**Excecoes a conhecer `[v0.3.0]` / `[unreleased]`:**
+
+- **`juscraper.core.exceptions.RetryExhaustedError`** `[unreleased]`: levantada quando 429/5xx persistente esgota `max_retries`. Vale para familia eSAJ (TJSP/TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`), TJRN/TJRO/TJRR `cjsg`, e todos os agregadores migrados para `HTTPScraper` (ComunicaCNJ, JusBR, Datajud). Substitui `requests.HTTPError` / `requests.RequestException` nesse cenario. Para codigo defensivo, capture ambas.
+- **`TypeError` por kwarg desconhecido** `[v0.3.0]`: todos os endpoints com schema pydantic wired (a maioria) rejeitam kwargs nao reconhecidos com mensagem amigavel e sugestao de typo via difflib (`(você quis dizer 'data_julgamento_inicio'?)`). Se aparecer, confira o nome canonico em `references/api.md` §"Aliases de parametros depreciados".
+- **`juscraper.courts.tjsp.exceptions.QueryTooLongError`** `[v0.3.0]`: no TJSP `cjsg`/`cjpg`, `pesquisa` com mais de 120 caracteres levanta erro antes do HTTP (antes, o backend silenciosamente truncava). Priorize os termos mais discriminativos.
+- **Datajud `ValueError`** `[v0.3.0]` **BREAKING**: chamar `listar_processos`/`contar_processos` sem `tribunal` nem `numero_processo`, ou com sigla nao mapeada, agora vira `ValueError` em vez de retornar DataFrame vazio.
 
 ## O que fazer com os dados
 
@@ -272,12 +313,25 @@ Apos a coleta:
 Leia a referencia apropriada antes de gerar codigo:
 
 - **`references/api.md`** — Referencia completa da API: factory function, construtores,
-  assinaturas dos metodos principais com parametros, tipos de retorno e exemplos de codigo.
-  Leia antes de qualquer tarefa.
+  assinaturas dos metodos principais com parametros, tipos de retorno, tabela de aliases
+  depreciados, validacao `extra="forbid"`. Leia antes de qualquer tarefa.
 
-- **`references/tribunais.md`** — Matriz de capacidades (22 tribunais), parametros especificos
-  de cada tribunal (cada um tem filtros proprios na cjsg), plataformas, e gotchas comuns.
-  Leia quando precisar escolher entre tribunais ou entender seus parametros especificos.
+- **`references/tribunais.md`** — Matriz de capacidades (25 estaduais + 3 federais),
+  parametros especificos de cada tribunal (cada um tem filtros proprios na cjsg),
+  plataformas, e gotchas comuns. Leia quando precisar escolher entre tribunais ou entender
+  seus parametros especificos. Inclui as secoes novas TJGO, TJMG, TJRJ e TRFs.
+
+- **`references/agregadores.md`** — Datajud, JusBR, ComunicaCNJ e PDPJ: construtores,
+  metodos, autenticacao, gotchas. Leia quando o caso de uso for cross-tribunal,
+  comunicacoes/DJe, contagem antes da coleta, ou download de pecas.
+
+- **`references/tjsp.md`** — Especificidades do TJSP: endpoints exclusivos (`cjpg`),
+  parametro `method` de `cpopg`/`cposg`, extras da `cjsg`, `pesquisa=""` `[unreleased]`,
+  `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
+
+- **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
+  `[unreleased]` / `[v0.3.0+]` / `[v0.3.0+, requer extra tjmg]` e procedimento para
+  bumps futuros.
 
 - **`references/assuntos-tjsp.md`** — Arvore oficial de assuntos (classificacao tematica)
   do TJSP, coletada diretamente do portal. Inclui metodologia de extracao, listagem completa
