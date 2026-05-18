@@ -2,11 +2,11 @@
 
 ## Fonte e escopo
 
-Portal ANVISALegis da Agencia Nacional de Vigilancia Sanitaria — `https://anvisalegis.datalegis.net/`. Indexa atos normativos da ANVISA: Resolucoes da Diretoria Colegiada (RDC), Instrucoes Normativas, Portarias, Resolucoes, e outros tipos. Infra Datalegis compartilhada com ANS.
+Portal ANVISALegis da Agência Nacional de Vigilância Sanitária — `https://anvisalegis.datalegis.net/`. Indexa atos normativos da ANVISA: Resoluções da Diretoria Colegiada (RDC), Instruções Normativas, Portarias, Resoluções, e outros tipos. Infra Datalegis compartilhada com ANS.
 
 ## Requisitos
 
-**Extra `[browser]` obrigatorio**:
+**Extra `[browser]` obrigatório**:
 
 ```bash
 pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
@@ -25,38 +25,38 @@ raspe.anvisa(
 ) -> pd.DataFrame
 ```
 
-A assinatura e **identica** a `raspe.ans()` — ambos herdam de `ScraperDatalegis`.
+A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDatalegis`.
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
 | `url` | URL absoluta para o ato. |
-| `titulo` | Tipo + numero + ano (ex.: "Resolucao Nº 34, de 25/02/2021"). |
+| `titulo` | Tipo + número + ano (ex.: "Resolução Nº 34, de 25/02/2021"). |
 | `descricao` | Ementa do ato. |
-| `situacao` | Status. **`None` = vigente**, caso contrario mostra "Revogado", "Revogado Tacitamente", etc. |
+| `situacao` | Status. **`None` = vigente**, caso contrário mostra "Revogado", "Revogado Tacitamente", etc. |
 | `termo_busca` | Adicionada automaticamente. |
 
-## Parametros especificos
+## Parâmetros específicos
 
 Iguais aos de `raspe.ans()`:
 
 - **`termo`**: texto do campo de busca.
-- `headless=False` e `debug=True` para diagnosticos.
+- `headless=False` e `debug=True` para diagnósticos.
 
 ## Gotchas
 
-- **Cloudflare + stealth**: igual a ANS. Sintomas de bloqueio: timeout em cima do campo de busca, pagina travada em challenge. Veja `references/playwright.md`.
-- **Paginacao via SELECT dropdown** (estrategia `SELECT_DROPDOWN`, `_max_pages=100`).
-- **Situacao vigente = `None`**: filtre explicitamente com `df[df["situacao"].isna()]`.
-- Tempo tipico: 15-30s por pagina.
+- **Cloudflare + stealth**: igual à ANS. Sintomas de bloqueio: timeout em cima do campo de busca, página travada em challenge. Veja `references/playwright.md`.
+- **Paginação via SELECT dropdown** (estratégia `SELECT_DROPDOWN`, `_max_pages=100`).
+- **Situação vigente = `None`**: filtre explicitamente com `df[df["situacao"].isna()]`.
+- Tempo típico: 15-30s por página.
 
 ## Exemplo
 
 ```python
 import raspe
 
-df = raspe.anvisa().raspar(termo="dispositivo medico", paginas=range(1, 4))
+df = raspe.anvisa().raspar(termo="dispositivo médico", paginas=range(1, 4))
 print(df.columns.tolist())
 
 # Concentrar em vigentes
@@ -67,6 +67,6 @@ print(f"{len(vigentes)} atos vigentes")
 df.to_parquet("anvisa_dispositivo_medico.parquet")
 ```
 
-## Diferenca tecnica vs ANS
+## Diferença técnica vs ANS
 
-Sob o capo, `anvisa` e `ans` compartilham 100% da logica em `ScraperDatalegis`. Mudam apenas os **codigos internos do portal** (`_dominio`, `_cod_modulo`, `_cod_menu`, `_sgl_tipos`), que a biblioteca ja tem hardcoded. Voce nao precisa conhecer esses detalhes — so use a factory certa para o orgao que o usuario quer.
+Sob o capô, `anvisa` e `ans` compartilham 100% da lógica em `ScraperDatalegis`. Mudam apenas os **códigos internos do portal** (`_dominio`, `_cod_modulo`, `_cod_menu`, `_sgl_tipos`), que a biblioteca já tem hardcoded. Você não precisa conhecer esses detalhes — só use a factory certa para o órgão que o usuário quer.

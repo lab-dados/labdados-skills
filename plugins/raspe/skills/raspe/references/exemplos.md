@@ -1,18 +1,18 @@
 # Exemplos ponta a ponta — raspe
 
-Tres workflows realistas. Cada um mostra **instalacao → coleta → filtro/transformacao → export**. Adapte termos e paginas conforme o pedido do usuario.
+Três workflows realistas. Cada um mostra **instalação → coleta → filtro/transformação → export**. Adapte termos e páginas conforme o pedido do usuário.
 
-## Exemplo 1 — Legislacao federal sobre um tema (Presidencia + Camara + Senado)
+## Exemplo 1 — Legislação federal sobre um tema (Presidência + Câmara + Senado)
 
-**Objetivo**: levantar o corpus de leis e proposicoes sobre "reforma tributaria" considerando a Presidencia, a Camara e o Senado, consolidar num DataFrame unico e salvar em parquet.
+**Objetivo**: levantar o corpus de leis e proposições sobre "reforma tributária" considerando a Presidência, a Câmara e o Senado, consolidar num DataFrame único e salvar em parquet.
 
 ```python
 import pandas as pd
 import raspe
 
-termo = "reforma tributaria"
+termo = "reforma tributária"
 
-# Coleta em cada fonte — comecamos com range pequeno para ver o volume
+# Coleta em cada fonte — começamos com range pequeno para ver o volume
 df_pres = raspe.presidencia().raspar(pesquisa=termo, paginas=range(1, 4))
 df_cam  = raspe.camara().raspar(pesquisa=termo, paginas=range(1, 4))
 df_sen  = raspe.senado().raspar(pesquisa=termo, paginas=range(1, 4))
@@ -27,7 +27,7 @@ df_pres["fonte"] = "presidencia"
 df_cam["fonte"]  = "camara"
 df_sen["fonte"]  = "senado"
 
-# Concatena (pandas preenche com NaN campos que so existem em uma das fontes)
+# Concatena (pandas preenche com NaN campos que só existem em uma das fontes)
 df = pd.concat([df_pres, df_cam, df_sen], ignore_index=True)
 
 # Snapshot da data da coleta (reprodutibilidade)
@@ -38,13 +38,13 @@ df.to_parquet("legislacao_reforma_tributaria.parquet")
 print(df.groupby("fonte").size())
 ```
 
-**Saida esperada**: dezenas a centenas de linhas por fonte. A coluna `termo_busca` fica preenchida com "reforma tributaria" em todas.
+**Saída esperada**: dezenas a centenas de linhas por fonte. A coluna `termo_busca` fica preenchida com "reforma tributária" em todas.
 
-**Proximo passo com `dataframeit-skill`**: rodar um classificador que extraia (`tema_especifico`, `fase_processo`, `ano_provavel`) a partir de `ementa`.
+**Próximo passo com `dataframeit-skill`**: rodar um classificador que extraia (`tema_especifico`, `fase_processo`, `ano_provavel`) a partir de `ementa`.
 
-## Exemplo 2 — Atos da ANVISA sobre dispositivo medico (Playwright + filtro por situacao)
+## Exemplo 2 — Atos da ANVISA sobre dispositivo médico (Playwright + filtro por situação)
 
-**Objetivo**: coletar atos normativos vigentes da ANVISA sobre "dispositivo medico", separar revogados de vigentes e salvar em Excel.
+**Objetivo**: coletar atos normativos vigentes da ANVISA sobre "dispositivo médico", separar revogados de vigentes e salvar em Excel.
 
 ```python
 import pandas as pd
@@ -54,14 +54,14 @@ import raspe
 #   pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
 #   python -m playwright install chromium
 
-# Coleta (comecar com 3 paginas — cada pagina Playwright leva ~20s)
-df = raspe.anvisa().raspar(termo="dispositivo medico", paginas=range(1, 4))
+# Coleta (começar com 3 páginas — cada página Playwright leva ~20s)
+df = raspe.anvisa().raspar(termo="dispositivo médico", paginas=range(1, 4))
 
 print(f"Total coletado: {len(df)}")
 print(df["situacao"].value_counts(dropna=False))
 
-# Filtra vigentes (a coluna 'situacao' vem com None quando o ato esta vigente,
-# ou com um rotulo como 'Revogado'/'Revogado Tacitamente' quando nao)
+# Filtra vigentes (a coluna 'situacao' vem com None quando o ato está vigente,
+# ou com um rótulo como 'Revogado'/'Revogado Tacitamente' quando não)
 vigentes = df[df["situacao"].isna()].copy()
 revogados = df[df["situacao"].notna()].copy()
 
@@ -73,13 +73,13 @@ with pd.ExcelWriter("anvisa_dispositivo_medico.xlsx") as w:
 print(f"Vigentes: {len(vigentes)} | Revogados: {len(revogados)}")
 ```
 
-**Saida esperada**: coleta ~30-60 registros nas 3 primeiras paginas. Se o usuario pedir a colecao completa, ajuste para `paginas=None` (ate 100 paginas, ~30 min).
+**Saída esperada**: coleta ~30-60 registros nas 3 primeiras páginas. Se o usuário pedir a coleção completa, ajuste para `paginas=None` (até 100 páginas, ~30 min).
 
 **Alerta**: se aparecer `DriverNotInstalledError` ou `BrowserError: Timeout`, consulte `references/playwright.md`.
 
-## Exemplo 3 — Cobertura midiatica (Folha + NYT) com `dataframeit` depois
+## Exemplo 3 — Cobertura midiática (Folha + NYT) com `dataframeit` depois
 
-**Objetivo**: comparar como Folha e NYT cobriram "reforma tributaria" em 2024, extrair temas com um LLM e exportar em Excel.
+**Objetivo**: comparar como Folha e NYT cobriram "reforma tributária" em 2024, extrair temas com um LLM e exportar em Excel.
 
 ```python
 import os
@@ -89,7 +89,7 @@ import raspe
 # NYT precisa de API key — obtenha em developer.nytimes.com/get-started
 os.environ.setdefault("NYT_API_KEY", "sua-chave-aqui")
 
-termo_pt = "reforma tributaria"
+termo_pt = "reforma tributária"
 termo_en = "Brazil tax reform"
 
 # Coleta
@@ -98,14 +98,14 @@ df_folha = raspe.folha().raspar(
     site="online",
     data_inicio="2024-01-01",
     data_fim="2024-12-31",
-    paginas=range(1, 6),  # 5 paginas x 25 = ate 125 materias
+    paginas=range(1, 6),  # 5 páginas x 25 = até 125 matérias
 )
 
 df_nyt = raspe.nyt().raspar(
     texto=termo_en,
     data_inicio="2024-01-01",
     data_fim="2024-12-31",
-    paginas=range(1, 6),  # 5 paginas x 10 = ate 50 artigos (NYT e mais lento por rate limit)
+    paginas=range(1, 6),  # 5 páginas x 10 = até 50 artigos (NYT é mais lento por rate limit)
 )
 
 # Normaliza colunas
@@ -123,29 +123,29 @@ df.to_excel("cobertura_reforma_tributaria_2024.xlsx", index=False)
 print(df.groupby("veiculo").size())
 ```
 
-**Saida esperada**: ~50 materias da Folha, ~50 do NYT. A coleta da Folha leva ~1 min; a do NYT leva ~6 min (5 req/min x 5 paginas).
+**Saída esperada**: ~50 matérias da Folha, ~50 do NYT. A coleta da Folha leva ~1 min; a do NYT leva ~6 min (5 req/min x 5 páginas).
 
-**Proximo passo com `dataframeit-skill`**: classificar cada materia em (`enfoque`, `stakeholder_principal`, `tom`). Passe `text_column="snippet"` explicitamente — o default de `dataframeit` usa a primeira coluna, que aqui e `titulo` e pode ser curta demais para classificacao.
+**Próximo passo com `dataframeit-skill`**: classificar cada matéria em (`enfoque`, `stakeholder_principal`, `tom`). Passe `text_column="snippet"` explicitamente — o default de `dataframeit` usa a primeira coluna, que aqui é `titulo` e pode ser curta demais para classificação.
 
 ```python
-# Pseudo-codigo — veja dataframeit-skill para detalhes
+# Pseudo-código — veja dataframeit-skill para detalhes
 from dataframeit import dataframeit
 from pydantic import BaseModel, Field
 from typing import Literal
 
 class Classificacao(BaseModel):
-    enfoque: Literal["economico", "politico", "juridico", "social"]
-    tom: Literal["positivo", "neutro", "negativo", "ambiguo"] = Field(...)
+    enfoque: Literal["econômico", "político", "jurídico", "social"]
+    tom: Literal["positivo", "neutro", "negativo", "ambíguo"] = Field(...)
 
 df_enriquecido = dataframeit(
     df,
     Classificacao,
-    "Leia a materia abaixo e classifique.\n\nTitulo: {titulo}\nResumo: {snippet}",
+    "Leia a matéria abaixo e classifique.\n\nTítulo: {titulo}\nResumo: {snippet}",
     text_column="snippet",
 )
 ```
 
-## Padrao recorrente: snapshot da coleta
+## Padrão recorrente: snapshot da coleta
 
 Em todos os exemplos, vale adicionar `data_coleta`:
 
@@ -153,4 +153,4 @@ Em todos os exemplos, vale adicionar `data_coleta`:
 df["data_coleta"] = pd.Timestamp.today().isoformat()
 ```
 
-Sites mudam conteudo e layout ao longo do tempo. Registrar quando a coleta aconteceu e essencial para reprodutibilidade em pesquisa.
+Sites mudam conteúdo e layout ao longo do tempo. Registrar quando a coleta aconteceu é essencial para reprodutibilidade em pesquisa.

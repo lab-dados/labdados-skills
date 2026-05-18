@@ -20,7 +20,21 @@ Adicionado:
   de requisicoes -> mapeamento -> geracao -> registro do factory ->
   testes offline -> validacao + documentacao. Inclui 6 references
   (arquitetura, protocolo Playwright MCP, padrao de testes, registro de
-  factory, sync com a skill `raspe` e checklist final).
+  factory, sync com a skill `raspe` e checklist final). Caminhos do repo
+  raspe e do marketplace agora ficam como placeholders (`<RASPE_REPO>`,
+  `<MARKETPLACE_ROOT>`) detectados em runtime, em vez de hardcoded.
+
+Atualizado:
+
+- `raspe` — adiciona referencia ao scraper `capes` (Portal de Periodicos
+  da CAPES, ~29M itens via OpenAlex) com 15 colunas (incluindo Work ID
+  do OpenAlex, DOI, acesso_aberto, producao_nacional, revisado_por_pares).
+  Novo `references/capes.md` documenta sintaxe `all:contains(...)` e cross
+  com `openalex-skill`. Matrizes em `references/fontes.md` atualizadas
+  (12 fontes).
+- `raspe` — converte SKILL.md e todos os 16 references para portugues
+  com acentuacao plena (substitui `paginacao`/`publicacao`/`producao`
+  pelas grafias corretas). Conteudo identico, apenas ortografia.
 
 ## [1.3.0] — 2026-05-03
 

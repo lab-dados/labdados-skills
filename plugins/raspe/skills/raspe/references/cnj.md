@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-API de **Comunicacoes Processuais** do CNJ — `https://comunicaapi.pje.jus.br/api/v1/comunicacao`. Retorna intimacoes, citacoes e comunicados publicados nos portais do PJe. **Nao e jurisprudencia** — para acordaos/julgados use `juscraper-skill`.
+API de **Comunicações Processuais** do CNJ — `https://comunicaapi.pje.jus.br/api/v1/comunicacao`. Retorna intimações, citações e comunicados publicados nos portais do PJe. **Não é jurisprudência** — para acórdãos/julgados use `juscraper-skill`.
 
 ## Assinatura
 
@@ -19,27 +19,27 @@ raspe.cnj().raspar(
 
 A API retorna JSON — o DataFrame tem as colunas nativas da API. As principais:
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
-| `texto` | Texto integral da comunicacao processual. |
-| `numero_processo` | Numero CNJ do processo. |
+| `texto` | Texto integral da comunicação processual. |
+| `numero_processo` | Número CNJ do processo. |
 | `siglaTribunal` | Tribunal emissor (ex.: "TJSP", "TRF1"). |
-| `dataDisponibilizacao` | Data em que a comunicacao foi publicada. |
+| `dataDisponibilizacao` | Data em que a comunicação foi publicada. |
 | `link` | URL para detalhes. |
 | (outras) | Campos variados da API oficial. |
 | `termo_busca` | Adicionada automaticamente. |
 
-A resposta da API pode incluir campos adicionais. Rode `df.columns.tolist()` apos a primeira coleta para ver tudo.
+A resposta da API pode incluir campos adicionais. Rode `df.columns.tolist()` após a primeira coleta para ver tudo.
 
-## Parametros especificos
+## Parâmetros específicos
 
-- `data_inicio`/`data_fim`: filtram por data de disponibilizacao. Aceitam `YYYY-MM-DD`, `DD/MM/YYYY` ou `YYYYMMDD`.
-- **5 itens por pagina** — a paginacao e mais granular que outras fontes.
+- `data_inicio`/`data_fim`: filtram por data de disponibilização. Aceitam `YYYY-MM-DD`, `DD/MM/YYYY` ou `YYYYMMDD`.
+- **5 itens por página** — a paginação é mais granular que outras fontes.
 
 ## Gotchas
 
-- **Distincao conceitual**: o CNJ Comunica e diferente do DataJud e de qualquer sistema de jurisprudencia. E apenas o *mural publico* de intimacoes. Se o usuario pede "quero acordaos do TJ" ou "jurisprudencia sobre dano moral", **redirecione para juscraper-skill**.
-- O endpoint e uma API JSON oficial — nao ha parsing HTML, entao o DataFrame vem direto com a estrutura do JSON (pode ter colunas aninhadas como dicts).
+- **Distinção conceitual**: o CNJ Comunica é diferente do DataJud e de qualquer sistema de jurisprudência. É apenas o *mural público* de intimações. Se o usuário pede "quero acórdãos do TJ" ou "jurisprudência sobre dano moral", **redirecione para juscraper-skill**.
+- O endpoint é uma API JSON oficial — não há parsing HTML, então o DataFrame vem direto com a estrutura do JSON (pode ter colunas aninhadas como dicts).
 
 ## Exemplo
 
@@ -47,7 +47,7 @@ A resposta da API pode incluir campos adicionais. Rode `df.columns.tolist()` apo
 import raspe
 
 df = raspe.cnj().raspar(
-    pesquisa="resolucao",
+    pesquisa="resolução",
     data_inicio="2024-01-01",
     data_fim="2024-03-31",
     paginas=range(1, 3),
