@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: Raspar dados de fontes oficiais brasileiras e imprensa com a biblioteca raspe. Cobre legislacao federal (Presidencia, Camara, Senado), agencias reguladoras (ANS, ANVISA, SaudeLegis, CFM), orgaos de pesquisa e controle (IPEA, CNJ) e imprensa (Folha de Sao Paulo, New York Times). Use esta skill sempre que o usuario mencionar coleta/raspagem de leis, decretos, portarias, resolucoes, projetos de lei, atos normativos, comunicados, diario oficial, agenda regulatoria, normas sanitarias, normas medicas, publicacoes do IPEA, noticias de jornal, "coletar dados do governo federal", "baixar legislacao", "atos da ANVISA", "resolucoes da ANS", "portarias do Ministerio da Saude", "materias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros e do NYT — mesmo que nao mencione explicitamente "raspe".
+description: Raspar dados de fontes oficiais brasileiras, bases academicas e imprensa com a biblioteca raspe. Cobre legislacao federal (Presidencia, Camara, Senado), agencias reguladoras (ANS, ANVISA, SaudeLegis, CFM), orgaos de pesquisa e controle (IPEA, CNJ), base bibliografica academica (CAPES Periodicos), e imprensa (Folha de Sao Paulo, New York Times). Use esta skill sempre que o usuario mencionar coleta/raspagem de leis, decretos, portarias, resolucoes, projetos de lei, atos normativos, comunicados, diario oficial, agenda regulatoria, normas sanitarias, normas medicas, publicacoes do IPEA, artigos academicos, revisao de literatura via CAPES, periodicos cientificos, noticias de jornal, "coletar dados do governo federal", "baixar legislacao", "atos da ANVISA", "resolucoes da ANS", "portarias do Ministerio da Saude", "buscador da CAPES", "Portal de Periodicos", "materias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que nao mencione explicitamente "raspe".
 ---
 
 # Raspe Skill
@@ -19,7 +19,7 @@ Esta skill cobre **uso** da biblioteca — escolher a fonte certa, chamar o scra
 
 Complete este checklist antes de qualquer chamada. Fonte a fonte, a instalacao muda.
 
-### 1. Instalacao basica (8 fontes HTTP)
+### 1. Instalacao basica (9 fontes HTTP)
 
 ```bash
 pip install git+https://github.com/bdcdo/raspe.git
@@ -27,7 +27,7 @@ pip install git+https://github.com/bdcdo/raspe.git
 
 Python >= 3.11. Verifique com `python -c "import raspe; print(raspe.__version__)"`.
 
-Cobre: `presidencia`, `camara`, `senado`, `cnj`, `ipea`, `cfm`, `folha`, `nyt`.
+Cobre: `presidencia`, `camara`, `senado`, `cnj`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
 
 ### 2. Instalacao com navegador (3 fontes Playwright)
 
@@ -61,6 +61,7 @@ Comece identificando a **natureza do dado** que o usuario quer, depois confirme 
 | Projetos e legislacao federal indexada pelo Senado | `raspe.senado()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
 | Comunicados e intimacoes processuais do CNJ | `raspe.cnj()` | HTTP (JSON) | `pesquisa`, `data_inicio`, `data_fim` | nenhuma |
 | Estudos e publicacoes do IPEA | `raspe.ipea()` | HTTP | `pesquisa` | nenhuma |
+| Artigos academicos no buscador do Portal de Periodicos da CAPES | `raspe.capes()` | HTTP | `pesquisa` | nenhuma |
 | Normas do CFM e conselhos regionais de medicina | `raspe.cfm()` | HTTP | `texto`, `uf`, `ano`, `numero` | nenhuma |
 | Noticias da Folha de Sao Paulo (online/jornal) | `raspe.folha()` | HTTP | `pesquisa`, `site`, `data_inicio`, `data_fim` | nenhuma |
 | Artigos do New York Times por termo/ano/secao | `raspe.nyt(api_key=...)` | HTTP (API) | `texto`, `ano`, `data_inicio`, `data_fim`, `filtro` | API key |
@@ -83,6 +84,7 @@ O usuario raramente diz "presidencia" ou "camara" diretamente. Traduza termos in
 | "RDC", "resolucoes da ANVISA", "portarias ANVISA", "registro sanitario" | `anvisa` |
 | "codigo de etica medica", "resolucao CFM", "parecer CFM" | `cfm` |
 | "estudo do IPEA", "texto para discussao", "publicacao do IPEA" | `ipea` |
+| "artigo academico", "paper", "revisao de literatura", "Portal de Periodicos da CAPES", "buscador da CAPES", "periodicos cientificos" | `capes` |
 | "intimacao processual", "comunicado oficial do tribunal" (nao jurisprudencia) | `cnj` |
 | "materia da Folha", "Folha de Sao Paulo escreveu sobre" | `folha` |
 | "NYT sobre Brasil", "materia do New York Times" | `nyt` |
@@ -176,6 +178,7 @@ Leia a referencia apropriada **antes** de gerar codigo. A tabela abaixo indica q
 | `references/senado.md` | Antes de chamar `raspe.senado()`. |
 | `references/cnj.md` | Antes de chamar `raspe.cnj()`. |
 | `references/ipea.md` | Antes de chamar `raspe.ipea()`. |
+| `references/capes.md` | Antes de chamar `raspe.capes()` — cobre sintaxe `all:contains(...)` e colunas. |
 | `references/cfm.md` | Antes de chamar `raspe.cfm()`. |
 | `references/folha.md` | Antes de chamar `raspe.folha()`. |
 | `references/nyt.md` | Antes de chamar `raspe.nyt()` — cobre API key, rate limit, sintaxe Lucene do `filtro`. |

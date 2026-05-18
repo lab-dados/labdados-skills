@@ -1,6 +1,6 @@
 # Matriz de fontes — raspe
 
-Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando precisar escolher entre fontes, estimar volume/limites, ou verificar se uma tarefa cabe na skill.
+Visao comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando precisar escolher entre fontes, estimar volume/limites, ou verificar se uma tarefa cabe na skill.
 
 ## Matriz geral
 
@@ -11,6 +11,7 @@ Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando 
 | Senado Federal | `raspe.senado()` | www6g.senado.leg.br/busca | HTTP GET | nenhuma | `pesquisa` |
 | CNJ (Comunica) | `raspe.cnj()` | comunicaapi.pje.jus.br | HTTP GET (JSON) | nenhuma | `pesquisa` |
 | IPEA | `raspe.ipea()` | ipea.gov.br/portal/.../busca-publicacoes | HTTP GET | nenhuma | `pesquisa` |
+| CAPES Periodicos | `raspe.capes()` | www.periodicos.capes.gov.br/.../buscador.html | HTTP GET | nenhuma | `pesquisa` |
 | CFM | `raspe.cfm()` | portal.cfm.org.br/buscar-normas-cfm-e-crm | HTTP GET | nenhuma | `texto` |
 | Folha de Sao Paulo | `raspe.folha()` | search.folha.uol.com.br | HTTP GET | nenhuma | `pesquisa` |
 | New York Times | `raspe.nyt(api_key=...)` | api.nytimes.com (Article Search API) | HTTP GET (JSON) | API key | `texto` |
@@ -27,6 +28,7 @@ Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando 
 | `senado` | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao` |
 | `cnj` | Campos do JSON oficial (`texto`, `numero_processo`, `siglaTribunal`, `dataDisponibilizacao`, etc.) |
 | `ipea` | `titulo`, `link`, `autores`, `data`, `assuntos` |
+| `capes` | `id` (OpenAlex Work ID), `tipo`, `titulo`, `link`, `autores`, `ano`, `revista`, `instituicao`, `topicos`, `resumo`, `doi`, `link_editor`, `acesso_aberto`, `producao_nacional`, `revisado_por_pares` |
 | `cfm` | `Tipo`, `UF`, `Nº/Ano`, `Situação`, `Ementa`, `Link` |
 | `folha` | `link`, `titulo`, `resumo`, `data` |
 | `nyt` | `titulo`, `url`, `data_publicacao`, `secao`, `desk`, `tipo`, `resumo`, `autor`, `palavras`, `imagem_url` |
@@ -43,6 +45,7 @@ Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando 
 | `senado` | nenhum explicito | — |
 | `cnj` | 5 itens/pagina | API de comunicacoes processuais. Paginacao implicita |
 | `ipea` | nenhum explicito | — |
+| `capes` | nenhum explicito; **default `_find_n_pags` calcula `total // 30`** | Buscas genericas retornam dezenas de milhoes de paginas — sempre use `paginas=range(1, N)` com N pequeno |
 | `cfm` | 15 itens/pagina, 1-based | — |
 | `folha` | **10.000 resultados (400 paginas)** | Biblioteca emite warning ao atingir o teto; divida por `data_inicio`/`data_fim` |
 | `nyt` | **1000 resultados (100 paginas), 5 req/min, 500 req/dia** | Scraper ja aplica `sleep_time=12s`. Divida por `ano` ou datas |
@@ -55,6 +58,7 @@ Visao comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando 
 - **Legislacao federal**: Presidencia (atos da chefia do executivo), Camara (proposicoes PLs, PECs), Senado (proposicoes do Senado). Buscas genericas como "saude" retornam >10.000 resultados por fonte. Use filtros.
 - **Atos regulatorios**: ANS (saude suplementar), ANVISA (vigilancia sanitaria), SaudeLegis (Ministerio da Saude em geral), CFM (etica medica). Juntos cobrem quase todo o universo normativo de saude publica no Brasil.
 - **CNJ Comunica**: intimacoes e comunicados processuais — nao e o mesmo que jurisprudencia. Para acordaos e julgados, use `juscraper-skill`.
+- **CAPES Periodicos**: base bibliografica academica indexada via OpenAlex, com 29+ milhoes de itens (artigos, livros, capitulos). Cobre tanto producao nacional quanto internacional, com flags para acesso aberto e revisao por pares. Acesso ao **texto completo** dos artigos geralmente exige login institucional via CAFe — o raspador coleta apenas metadados da pagina publica de busca.
 - **Imprensa**: Folha cobre desde 1994 para jornal impresso, online varia por periodo. NYT tem cobertura desde 1851 na API.
 
 ## Nomes de coluna em dataframeit / analise textual
@@ -68,6 +72,7 @@ Ao aplicar `dataframeit-skill` sobre um DataFrame coletado, identifique o campo 
 | `senado` | `descricao` |
 | `cnj` | `texto` |
 | `ipea` | `titulo` (nao ha abstract) |
+| `capes` | `resumo` (fallback: `titulo` + `topicos`) |
 | `cfm` | `Ementa` |
 | `folha` | `resumo` (fallback: `titulo`) |
 | `nyt` | `resumo` (`snippet` em ingles) |

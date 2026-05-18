@@ -65,7 +65,7 @@ Antes de iniciar, verifique:
 4. **Ler primeiro**. Antes de gerar qualquer código, leia:
    - `CLAUDE.md` do raspe (convenções do projeto).
    - Pelo menos dois scrapers existentes do mesmo tipo que você vai criar:
-     - Para HTTP/HTML: `src/raspe/scrapers/ipea.py` e `src/raspe/scrapers/folha.py`.
+     - Para HTTP/HTML: `src/raspe/scrapers/ipea.py` (modelo enxuto, 5 colunas) e `src/raspe/scrapers/capes.py` (modelo rico, 15 colunas, parsing condicional de campos por card).
      - Para HTTP/JSON: `src/raspe/scrapers/nyt.py`.
      - Para Playwright: `src/raspe/scrapers/anvisa.py` e `src/raspe/scrapers/saudelegis.py`.
    - `src/raspe/base_scraper.py` e `src/raspe/playwright_scraper.py` (a interface real, sempre).
@@ -143,6 +143,29 @@ Veja `references/playwright-mcp-recon.md` para o protocolo detalhado.
    - Nome do parâmetro de página: `page`, `pagina`, `offset`, `start`, `rg`, etc.
    - Tipo: número de página (1, 2, 3) ou offset (0, 10, 20).
    - Localização: query string ou body.
+
+   **Atenção — validar via `requests` antes de escrever o scraper.** A URL
+   que o navegador exibe ao clicar em "página 2" não prova que o parâmetro
+   seja respeitado pelo servidor. Alguns sites (Joomla, SPAs com paginação
+   client-side) montam URLs com `?page=2` via JS, mas o backend ignora o
+   parâmetro e devolve sempre a página 1 — a paginação real está num
+   handler JS que faz scroll/AJAX. Confirme assim:
+   ```python
+   import requests
+   url = "<endpoint capturado>"
+   p1 = requests.get(url, params={...}).text
+   p2 = requests.get(url, params={..., "<param_paginacao>": "2"}).text
+   # Comparar o primeiro título/registro:
+   import re
+   def primeiro(html):
+       m = re.search(r'<a[^>]*class="<sel-titulo>"[^>]*>\s*([^<]+)', html)
+       return m.group(1).strip()[:60] if m else None
+   assert primeiro(p1) != primeiro(p2), "Parâmetro não está paginando — o servidor ignora"
+   ```
+   Se os dois retornarem o mesmo primeiro registro, o parâmetro não é o
+   correto. Teste alternativos (`page` vs `pag` vs `start` vs `offset`,
+   às vezes com filtros default obrigatórios) e/ou retorne ao Playwright
+   MCP para inspecionar a URL real depois do `click`.
 
 6. **Captura de samples**. Salve o HTML completo das páginas 1 e 2 (e
    responses JSON, se for o caso) em
@@ -319,8 +342,8 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
 Regras obrigatórias HTTP/HTML:
 
 - Nome da classe: `Scraper{Fonte}` em CamelCase (ex: `ScraperTesouro`,
-  `IpeaScraper` — alguns scrapers antigos usam `<Nome>Scraper`; siga o
-  estilo dos vizinhos para manter coerência local).
+  `ScraperCapes`). Padrão único — não invente variações como
+  `{Nome}Scraper`.
 - `nome_buscador` em minúsculas curtas (ex: `"ipea"`, `"folha"`, `"nyt"`).
 - Headers `User-Agent` real (Firefox/Chrome) — sites brasileiros bloqueiam
   User-Agents genéricos.
