@@ -123,7 +123,7 @@ Conforme `references/raspe-skill-sync.md`:
 
 - [ ] Commit no repo `raspe`: `feat: adiciona scraper <fonte>` (ou
   estilo convencional do projeto — ver `git log --oneline` em
-  /home/brunodcdo/Desktop/dev/raspe)
+  `<RASPE_REPO>`)
 - [ ] Commit no repo `labdados-skills`: `docs(raspe): adiciona
   referência da fonte <fonte>` para a sincronização da skill
 

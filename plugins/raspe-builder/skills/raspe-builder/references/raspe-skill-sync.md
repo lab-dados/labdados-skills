@@ -2,7 +2,8 @@
 
 Após criar uma fonte nova no repo `raspe` e validar que os testes
 passam, atualize a skill `raspe` deste marketplace (em
-`/home/brunodcdo/Desktop/LabDados/labdados-skills/plugins/raspe/skills/raspe/`)
+`<MARKETPLACE_ROOT>/plugins/raspe/skills/raspe/`, onde
+`<MARKETPLACE_ROOT>` é o clone local de `lab-dados/labdados-skills`)
 para que ela ensine usuários a usar a fonte nova.
 
 Sem essa sincronização, a biblioteca tem a fonte mas a skill que

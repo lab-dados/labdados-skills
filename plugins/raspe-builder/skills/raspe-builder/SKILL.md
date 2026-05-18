@@ -51,13 +51,19 @@ Antes de iniciar, verifique:
    E reinicie o Claude Code.
    ```
 
-2. **Repositório raspe clonado**. O destino esperado é
-   `/home/brunodcdo/Desktop/dev/raspe`. Se outro caminho for usado,
-   pergunte ao usuário. Confirme que `src/raspe/` e `tests/` existem.
+2. **Repositório raspe clonado**. A skill se refere a esse caminho como
+   `<RASPE_REPO>` ao longo do documento. Para detectar:
+   - Pergunte ao usuário, ou
+   - Tente nesta ordem: `~/dev/raspe`, `~/Desktop/dev/raspe`,
+     `~/repos/raspe`, `~/code/raspe`.
+   - Confirme que `<RASPE_REPO>/src/raspe/` e `<RASPE_REPO>/tests/` existem.
+
+   Sempre que aparecer `<RASPE_REPO>` nesta skill ou nos references,
+   substitua pelo caminho confirmado com o usuário.
 
 3. **Dependências do raspe**:
    ```bash
-   cd /home/brunodcdo/Desktop/dev/raspe
+   cd <RASPE_REPO>
    uv pip install -e ".[dev,browser]"
    python -m playwright install chromium
    ```
@@ -235,8 +241,8 @@ COLUNAS EXTRAÍDAS DO PARSE:
 
 ### Etapa 4 — Geração de código
 
-Antes de escrever, leia novamente os scrapers de referência (Etapa 4 do
-pré-requisito) — o código real é a verdade canônica.
+Antes de escrever, leia novamente os scrapers de referência (item 4 da
+seção Pré-requisitos) — o código real é a verdade canônica.
 
 Localização: `src/raspe/scrapers/<fonte>.py`.
 
@@ -506,10 +512,17 @@ Ver `references/test-patterns.md`. Padrão canônico:
        @responses.activate
        def test_typical_paginacao(self, scraper, mocker):
            mocker.patch("time.sleep")
+           # BaseScraper.raspar faz 1 request para _find_n_pags + 1 por
+           # pagina. Para 2 paginas → 3 responses.add no total.
            responses.add(responses.GET, API_URL,
                body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
                status=200, content_type="text/html; charset=utf-8")
-           # Adicionar responses extras para página 2 etc.
+           responses.add(responses.GET, API_URL,
+               body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
+               status=200, content_type="text/html; charset=utf-8")
+           responses.add(responses.GET, API_URL,
+               body=load_sample_bytes("{fonte}", "raspar/page_02.html"),
+               status=200, content_type="text/html; charset=utf-8")
 
            df = scraper.raspar(pesquisa="economia")
 
@@ -530,7 +543,7 @@ caro e instável.
 
 1. Rodar testes:
    ```bash
-   cd /home/brunodcdo/Desktop/dev/raspe
+   cd <RASPE_REPO>
    pytest tests/{fonte}/ -v
    ```
 

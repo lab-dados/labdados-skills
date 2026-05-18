@@ -1,8 +1,10 @@
 # Arquitetura do raspe — interface real das classes-base
 
 Este documento resume a interface real das classes-base da biblioteca
-`raspe` (em `/home/brunodcdo/Desktop/dev/raspe/src/raspe/`). Sempre
-prefira ler o código real, mas use este resumo para orientar a geração.
+`raspe` (em `<RASPE_REPO>/src/raspe/`). Sempre prefira ler o código
+real, mas use este resumo para orientar a geração. O placeholder
+`<RASPE_REPO>` é o caminho do clone local de `bdcdo/raspe` — definido
+na Etapa de pré-requisitos do `SKILL.md`.
 
 ## Hierarquia
 
@@ -18,7 +20,7 @@ AbstractScraper (abstract_scraper.py)
 
 ## AbstractScraper
 
-`/home/brunodcdo/Desktop/dev/raspe/src/raspe/abstract_scraper.py`.
+`<RASPE_REPO>/src/raspe/abstract_scraper.py`.
 
 Construtor: `AbstractScraper(nome_buscador: str, debug: bool = True)`.
 
@@ -52,7 +54,7 @@ Subclasses podem sobrescrever `_validar_parametros`, mas devem chamar
 
 ## BaseScraper
 
-`/home/brunodcdo/Desktop/dev/raspe/src/raspe/base_scraper.py`.
+`<RASPE_REPO>/src/raspe/base_scraper.py`.
 
 Construtor: `BaseScraper(nome_buscador: str, debug: bool = True)`.
 
@@ -67,7 +69,9 @@ Atributos default configuráveis:
 - `query_page_increment: int = 0`.
 - `timeout: tuple = (10, 30)` — connect/read.
 - `old_page_name: str | None = None` — para sites que esperam ambos
-  `pagina_atual` e `pagina_anterior` no body.
+  o nome da página atual e o da página anterior no body (Presidência
+  envia `pagina` e `paginaAnterior` simultaneamente). Veja
+  `ScraperPresidencia` como modelo.
 - `max_retries: int = 3` — para 429 e 5xx.
 
 Properties abstratas (precisam ser implementadas):
@@ -112,8 +116,7 @@ A página inicial passada ao multiplicador é 1 (porque a base usa
 
 ## HTMLScraper
 
-`/home/brunodcdo/Desktop/dev/raspe/src/raspe/html_scraper.py`. Mixin
-simples:
+`<RASPE_REPO>/src/raspe/html_scraper.py`. Mixin simples:
 
 ```python
 class HTMLScraper:
@@ -127,7 +130,7 @@ Use em conjunto com `BaseScraper` quando o tipo for HTML:
 
 ## PlaywrightScraper
 
-`/home/brunodcdo/Desktop/dev/raspe/src/raspe/playwright_scraper.py`.
+`<RASPE_REPO>/src/raspe/playwright_scraper.py`.
 
 Construtor:
 `PlaywrightScraper(nome_buscador: str, debug: bool = True, headless: bool = True)`.

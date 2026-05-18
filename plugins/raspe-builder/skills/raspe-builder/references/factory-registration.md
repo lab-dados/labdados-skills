@@ -148,7 +148,7 @@ __all__ = [
 Depois de editar, valide:
 
 ```bash
-cd /home/brunodcdo/Desktop/dev/raspe
+cd <RASPE_REPO>
 python -c "import raspe; print(raspe.{fonte})"
 python -c "import raspe; assert '{fonte}' in raspe.__all__"
 ```

@@ -42,9 +42,12 @@ Durante a Etapa 2 (engenharia reversa), use `browser_evaluate`:
 () => document.documentElement.outerHTML
 ```
 
-Salve em `tests/<fonte>/samples/raspar/page_NN.html`. Se a fonte tem
-três cenários (paginação típica, página única, zero resultados), capture
-três samples — você pode acionar cada um com termos diferentes.
+Os samples capturados na Etapa 2 ficam temporariamente em
+`/tmp/raspe-recon/<fonte>/page_NN.html`. Para usar como teste, **mova**
+(ou copie) cada arquivo para `tests/<fonte>/samples/raspar/page_NN.html`
+no repositório raspe. Se a fonte tem três cenários (paginação típica,
+página única, zero resultados), capture três samples — você pode
+acionar cada um com termos diferentes durante a engenharia reversa.
 
 Para regerar samples a partir do site ao vivo no futuro, crie
 opcionalmente `tests/fixtures/capture/<fonte>.py` no padrão dos
@@ -205,7 +208,7 @@ Testes do scraper devem cobrir só o que é específico dele:
 ## Rodar
 
 ```bash
-cd /home/brunodcdo/Desktop/dev/raspe
+cd <RASPE_REPO>
 pytest tests/{fonte}/ -v
 ```
 
