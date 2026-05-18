@@ -4,6 +4,24 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-05-18
+
+Adicionado:
+
+- `raspe-builder` — gera scrapers Python para a biblioteca `raspe`
+  (`bdcdo/raspe`) via engenharia reversa com Playwright MCP. Cobre os tres
+  caminhos da arquitetura: HTTP/HTML (`BaseScraper` + `HTMLScraper`), HTTP/JSON
+  (`BaseScraper`) e Playwright/stealth (`PlaywrightScraper`). Output completo:
+  scraper em `src/raspe/scrapers/<fonte>.py`, registro de factory em
+  `src/raspe/__init__.py`, testes de contrato offline em `tests/<fonte>/` com
+  samples HTML versionados (padrao `responses` ja usado pelo repo), e sync
+  automatico com a skill `raspe` deste marketplace (linha em tabelas + novo
+  `references/<fonte>.md`). Workflow em 7 etapas: reconhecimento -> captura
+  de requisicoes -> mapeamento -> geracao -> registro do factory ->
+  testes offline -> validacao + documentacao. Inclui 6 references
+  (arquitetura, protocolo Playwright MCP, padrao de testes, registro de
+  factory, sync com a skill `raspe` e checklist final).
+
 ## [1.3.0] — 2026-05-03
 
 Adicionado:
