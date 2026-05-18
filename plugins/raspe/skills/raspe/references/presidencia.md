@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Portal da Legislacao da Presidencia da Republica — `https://legislacao.presidencia.gov.br/`. Cobre leis ordinarias, leis complementares, decretos, medidas provisorias e outros atos da chefia do executivo federal.
+Portal da Legislação da Presidência da República — `https://legislacao.presidencia.gov.br/`. Cobre leis ordinárias, leis complementares, decretos, medidas provisórias e outros atos da chefia do executivo federal.
 
 ## Assinatura
 
@@ -15,20 +15,20 @@ raspe.presidencia().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
-| `nome` | Tipo e numero do ato (ex.: "Lei nº 14.437, de 2022"). |
+| `nome` | Tipo e número do ato (ex.: "Lei nº 14.437, de 2022"). |
 | `link` | URL do ato completo. |
-| `ficha` | URL da ficha de tramitacao. |
-| `revogacao` | Texto com informacao de revogacao (ou vazio). |
-| `descricao` | Ementa/descricao do ato. |
+| `ficha` | URL da ficha de tramitação. |
+| `revogacao` | Texto com informação de revogação (ou vazio). |
+| `descricao` | Ementa/descrição do ato. |
 | `termo_busca` | Adicionada automaticamente pela biblioteca. |
 
 ## Gotchas
 
-- **Certificado SSL incompleto**: o servidor da Presidencia tem cadeia SSL quebrada. A biblioteca desabilita verificacao SSL **apenas para esta sessao** (`session.verify = False`) e suprime o warning do urllib3. Nao altere esse comportamento — e workaround necessario. Nao afeta outras fontes.
-- **Metodo HTTP e POST**: diferente das outras fontes HTTP, que usam GET.
-- **10 resultados por pagina**: paginacao interna usa parametro `posicao` em multiplos de 10.
+- **Certificado SSL incompleto**: o servidor da Presidência tem cadeia SSL quebrada. A biblioteca desabilita verificação SSL **apenas para esta sessão** (`session.verify = False`) e suprime o warning do urllib3. Não altere esse comportamento — é workaround necessário. Não afeta outras fontes.
+- **Método HTTP é POST**: diferente das outras fontes HTTP, que usam GET.
+- **10 resultados por página**: paginação interna usa parâmetro `posicao` em múltiplos de 10.
 
 ## Exemplo
 
@@ -39,6 +39,6 @@ df = raspe.presidencia().raspar(pesquisa="meio ambiente", paginas=range(1, 4))
 print(df.columns.tolist())
 # ['nome', 'link', 'ficha', 'revogacao', 'descricao', 'termo_busca']
 
-# Multiplos temas
-df = raspe.presidencia().raspar(pesquisa=["saude", "educacao"])
+# Múltiplos temas
+df = raspe.presidencia().raspar(pesquisa=["saúde", "educação"])
 ```

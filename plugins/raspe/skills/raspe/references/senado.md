@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Busca no portal do Senado Federal — `https://www6g.senado.leg.br/busca`. Retorna resultados filtrados pela colecao "Legislacao Federal" (proposicoes e atos).
+Busca no portal do Senado Federal — `https://www6g.senado.leg.br/busca`. Retorna resultados filtrados pela coleção "Legislação Federal" (proposições e atos).
 
 ## Assinatura
 
@@ -17,23 +17,23 @@ raspe.senado().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
-| `titulo` | Titulo do ato/proposicao. |
+| `titulo` | Título do ato/proposição. |
 | `link_norma` | URL direto da norma. |
-| `link_detalhes` | URL com metadados de tramitacao (pode ser `"NA"` se ausente). |
-| `descricao` | Descricao principal (tipicamente a ementa). |
+| `link_detalhes` | URL com metadados de tramitação (pode ser `"NA"` se ausente). |
+| `descricao` | Descrição principal (tipicamente a ementa). |
 | `trecho_descricao` | Trecho adicional com contexto de busca. |
 | `termo_busca` | Adicionada automaticamente. |
 
-## Parametros especificos
+## Parâmetros específicos
 
 - `ano`: filtra por ano do ato (ex.: `ano=2024`).
-- `tipo_materia`: filtra por tipo — valores aceitos pelo portal (`"LEI"`, `"DEC"`, `"PLS"`, etc.). Se em duvida, omita.
+- `tipo_materia`: filtra por tipo — valores aceitos pelo portal (`"LEI"`, `"DEC"`, `"PLS"`, etc.). Se em dúvida, omita.
 
 ## Gotchas
 
-- A pagina de resultados tem **duas estruturas possiveis** dependendo do tipo de busca: quando o primeiro paragrafo diz "Legislacao", a descricao real esta no segundo paragrafo. O parser ja trata isso, mas explica warnings do tipo "Erro ao processar item" em casos raros de paginas com layout atipico — os itens problematicos sao pulados e o warning vai ao log.
+- A página de resultados tem **duas estruturas possíveis** dependendo do tipo de busca: quando o primeiro parágrafo diz "Legislação", a descrição real está no segundo parágrafo. O parser já trata isso, mas explica warnings do tipo "Erro ao processar item" em casos raros de páginas com layout atípico — os itens problemáticos são pulados e o warning vai ao log.
 
 ## Exemplo
 
@@ -41,7 +41,7 @@ raspe.senado().raspar(
 import raspe
 
 df = raspe.senado().raspar(
-    pesquisa=["educacao", "saude"],
+    pesquisa=["educação", "saúde"],
     ano=2024,
     paginas=range(1, 3),
 )

@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Article Search API oficial do New York Times — `https://api.nytimes.com/svc/search/v2/articlesearch.json`. Retorna metadados de artigos (titulo, URL, secao, autor, resumo, imagem). **Nao retorna texto integral** — para o texto, siga o `url` retornado.
+Article Search API oficial do New York Times — `https://api.nytimes.com/svc/search/v2/articlesearch.json`. Retorna metadados de artigos (título, URL, seção, autor, resumo, imagem). **Não retorna texto integral** — para o texto, siga o `url` retornado.
 
 ## Assinatura
 
@@ -20,7 +20,7 @@ raspe.nyt(api_key: str | None = None).raspar(
 
 ## API key
 
-Obrigatoria. Obtencao gratuita:
+Obrigatória. Obtenção gratuita:
 
 1. Cadastre em <https://developer.nytimes.com/get-started>.
 2. Crie um app e **ative "Article Search API"**.
@@ -29,27 +29,27 @@ Obrigatoria. Obtencao gratuita:
 Passe de duas formas:
 
 ```python
-# Explicita no construtor
+# Explícita no construtor
 nyt = raspe.nyt(api_key="sua-chave")
 
-# Ou via env (mais seguro — nao vaza em logs/notebooks commitados)
+# Ou via env (mais seguro — não vaza em logs/notebooks commitados)
 import os
 os.environ["NYT_API_KEY"] = "sua-chave"
-nyt = raspe.nyt()  # le NYT_API_KEY automaticamente
+nyt = raspe.nyt()  # lê NYT_API_KEY automaticamente
 ```
 
-Sem chave: `APIKeyError` com o passo-a-passo no corpo da mensagem.
+Sem chave: `APIKeyError` com o passo a passo no corpo da mensagem.
 
-Se a chave for invalida/expirada, a primeira requisicao devolve 401 e a biblioteca levanta `APIKeyError` apontando para `https://developer.nytimes.com/my-apps`.
+Se a chave for inválida/expirada, a primeira requisição devolve 401 e a biblioteca levanta `APIKeyError` apontando para `https://developer.nytimes.com/my-apps`.
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
-| `titulo` | Titulo principal do artigo. |
-| `url` | URL canonica no NYT. |
+| `titulo` | Título principal do artigo. |
+| `url` | URL canônica no NYT. |
 | `data_publicacao` | ISO timestamp (`pub_date`). |
-| `secao` | Nome da secao (`section_name`). |
+| `secao` | Nome da seção (`section_name`). |
 | `desk` | "Desk" editorial. |
 | `tipo` | Tipo de material (`News`, `Op-Ed`, etc.). |
 | `resumo` | Snippet curto. |
@@ -58,9 +58,9 @@ Se a chave for invalida/expirada, a primeira requisicao devolve 401 e a bibliote
 | `imagem_url` | URL de imagem (prioriza tamanhos maiores). |
 | `termo_busca` | Adicionada automaticamente. |
 
-## Parametros especificos
+## Parâmetros específicos
 
-- **`texto`** (nao `pesquisa`): termo de busca. Aceita operadores simples ("Brazil election").
+- **`texto`** (não `pesquisa`): termo de busca. Aceita operadores simples ("Brazil election").
 - **`ano`**: atalho que seta `data_inicio=YYYY-01-01` e `data_fim=YYYY-12-31` automaticamente.
 - **`data_inicio`/`data_fim`**: aceitam `YYYY-MM-DD` etc. A API interna usa `YYYYMMDD` — a biblioteca converte.
 - **`sort`**:
@@ -68,23 +68,23 @@ Se a chave for invalida/expirada, a primeira requisicao devolve 401 e a bibliote
   - `"oldest"`.
   - `"best"` / `"relevance"`.
 - **`filtro`**: sintaxe Lucene para `fq`. Exemplos:
-  - `filtro='section.name:"Politics"'` — so secao Politics.
-  - `filtro='glocations:"Brazil"'` — materias geotagueadas com Brasil.
-  - `filtro='type_of_material:"Op-Ed"'` — so Op-Eds.
-  - Combinacoes: `filtro='section.name:"Business" AND glocations:"Brazil"'`.
+  - `filtro='section.name:"Politics"'` — só seção Politics.
+  - `filtro='glocations:"Brazil"'` — matérias geotagueadas com Brasil.
+  - `filtro='type_of_material:"Op-Ed"'` — só Op-Eds.
+  - Combinações: `filtro='section.name:"Business" AND glocations:"Brazil"'`.
 
-## Rate limits — **ATENCAO**
+## Rate limits — **ATENÇÃO**
 
 A API tem limites rigorosos:
 
-- **5 requisicoes por minuto**.
-- **500 requisicoes por dia**.
-- **10 resultados por pagina**.
-- **Maximo 100 paginas (1000 resultados) por busca**.
+- **5 requisições por minuto**.
+- **500 requisições por dia**.
+- **10 resultados por página**.
+- **Máximo 100 páginas (1000 resultados) por busca**.
 
-A biblioteca **ja aplica `sleep_time=12s`** automaticamente entre requisicoes para respeitar o limite de 5/min. Nao reduza.
+A biblioteca **já aplica `sleep_time=12s`** automaticamente entre requisições para respeitar o limite de 5/min. Não reduza.
 
-Se um termo retornar >1000 resultados potenciais, o scraper coleta ate 1000 e para. Para pegar mais, **divida por intervalos de datas**:
+Se um termo retornar >1000 resultados potenciais, o scraper coleta até 1000 e para. Para pegar mais, **divida por intervalos de datas**:
 
 ```python
 # Para coletar "Brazil" em 2024 inteiro, divida em trimestres
@@ -96,9 +96,9 @@ for q in [("2024-01-01","2024-03-31"), ("2024-04-01","2024-06-30"),
 
 ## Gotchas
 
-- **A chave `texto` e em ingles** — a API e em ingles. Para assuntos brasileiros, use termos como "Brazil", "Bolsonaro", "Lula", "Amazon rainforest".
-- **Pagina 0-based internamente** — a biblioteca normaliza para 1-based, entao voce passa `paginas=range(1, 6)` normalmente.
-- **`multimedia` mudou de formato**: versoes antigas do NYT retornavam estrutura diferente. A biblioteca trata o formato atual (objetos com `url`, `subtype`); se o NYT mudar de novo, o campo `imagem_url` pode vir vazio sem erro.
+- **A chave `texto` é em inglês** — a API é em inglês. Para assuntos brasileiros, use termos como "Brazil", "Bolsonaro", "Lula", "Amazon rainforest".
+- **Página 0-based internamente** — a biblioteca normaliza para 1-based, então você passa `paginas=range(1, 6)` normalmente.
+- **`multimedia` mudou de formato**: versões antigas do NYT retornavam estrutura diferente. A biblioteca trata o formato atual (objetos com `url`, `subtype`); se o NYT mudar de novo, o campo `imagem_url` pode vir vazio sem erro.
 
 ## Exemplo
 
