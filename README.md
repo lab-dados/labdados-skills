@@ -17,6 +17,7 @@ Dentro do Claude Code, rode:
 /plugin install openalex@labdados-skills
 /plugin install raspe@labdados-skills
 /plugin install juscraper-builder@labdados-skills
+/plugin install raspe-builder@labdados-skills
 /plugin install scrum-master@labdados-skills
 /plugin install ata-reuniao@labdados-skills
 /plugin install explainer-video@labdados-skills
@@ -35,6 +36,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
+| [raspe-builder](plugins/raspe-builder/skills/raspe-builder/SKILL.md) | Gera scraper Python para a biblioteca raspe (HTTP/HTML, HTTP/JSON, Playwright) — scraper + factory + testes offline + sync com a skill `raspe` | Adicionar fonte ao raspe, novo scraper para site governamental brasileiro, extender BaseScraper/PlaywrightScraper |
 | [scrum-master](plugins/scrum-master/skills/scrum-master/SKILL.md) | Relatorio executivo semanal do LabDados | Resumo semanal, weekly plan, fechamento da semana |
 | [ata-reuniao](plugins/ata-reuniao/skills/ata-reuniao/SKILL.md) | Gera ata de reuniao do LabDados a partir de gravacao/transcricao (transcreve via labdados-sdk) e salva em `reunioes/` no repo adm | Ata da reuniao, registrar/documentar reuniao, resumo da reuniao |
 | [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
@@ -73,6 +75,16 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
   requisicoes de rede durante a engenharia reversa)
 - Python >= 3.11
 - Para paginas com captcha text-based: `pip install txtcaptcha`
+
+### raspe-builder
+
+- Playwright MCP configurado no Claude Code (para engenharia reversa)
+- Repositorio `bdcdo/raspe` clonado localmente em qualquer caminho — a
+  skill pergunta o caminho na primeira invocacao (ou tenta defaults:
+  `~/dev/raspe`, `~/Desktop/dev/raspe`, `~/repos/raspe`, `~/code/raspe`)
+- `uv pip install -e ".[dev,browser]"` no repo raspe + `python -m playwright install chromium`
+- A skill gera codigo dentro do repo raspe (scraper, factory, testes offline com `responses`)
+  e tambem atualiza a skill `raspe` deste marketplace com a nova fonte
 
 ### scrum-master
 

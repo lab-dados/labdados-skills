@@ -2,11 +2,11 @@
 
 ## Fonte e escopo
 
-Portal ANSLegis da Agencia Nacional de Saude Suplementar — `https://anslegis.datalegis.net/`. Indexa atos normativos da ANS: Resolucoes Normativas (RN), Instrucoes Normativas, Sumulas, Portarias e outros. Infra Datalegis compartilhada com ANVISA.
+Portal ANSLegis da Agência Nacional de Saúde Suplementar — `https://anslegis.datalegis.net/`. Indexa atos normativos da ANS: Resoluções Normativas (RN), Instruções Normativas, Súmulas, Portarias e outros. Infra Datalegis compartilhada com ANVISA.
 
 ## Requisitos
 
-**Extra `[browser]` obrigatorio**, mesma instalacao de `anvisa` e `saudelegis`:
+**Extra `[browser]` obrigatório**, mesma instalação de `anvisa` e `saudelegis`:
 
 ```bash
 pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
@@ -27,40 +27,40 @@ raspe.ans(
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
 | `url` | URL absoluta para o ato. |
-| `titulo` | Tipo + numero + ano (ex.: "Resolucao Normativa Nº 465/2021"). |
-| `descricao` | Ementa/descricao do ato. |
-| `situacao` | Status (ex.: "Revogado", "Revogado Tacitamente", etc.). **Vem como `None` quando o ato esta vigente** — filtre com `df[df["situacao"].isna()]`. |
+| `titulo` | Tipo + número + ano (ex.: "Resolução Normativa Nº 465/2021"). |
+| `descricao` | Ementa/descrição do ato. |
+| `situacao` | Status (ex.: "Revogado", "Revogado Tacitamente", etc.). **Vem como `None` quando o ato está vigente** — filtre com `df[df["situacao"].isna()]`. |
 | `termo_busca` | Adicionada automaticamente. |
 
-## Parametros especificos
+## Parâmetros específicos
 
-- **`termo`** (nao `pesquisa` ou `assunto`): texto no campo de busca do portal.
+- **`termo`** (não `pesquisa` ou `assunto`): texto no campo de busca do portal.
 - `headless=False` para ver o navegador (debug).
-- `debug=True` mantem HTMLs brutos.
+- `debug=True` mantém HTMLs brutos.
 
 ## Gotchas
 
-- **Cloudflare**: o dominio `datalegis.net` tem bot detection. `playwright-stealth` e aplicado automaticamente pela classe base `ScraperDatalegis`. Se a stealth falhar (IP bloqueado, padrao de comportamento detectado), aparece `BrowserError: Timeout`. Veja `references/playwright.md` para diagnostico.
-- **Paginacao via SELECT dropdown**: a navegacao usa um `<select id="fieldPage">` com `onchange="openPage()"`. Voce nao interage com isso — so saiba que aparece em logs.
-- **Limite de 100 paginas** (`_max_pages=100`). Coleta completa de um termo generico pode atingir esse teto.
-- **Situacao vigente = `None`**: nao e um bug, e como a biblioteca reconhece a ausencia de rotulo. Filtre explicitamente:
+- **Cloudflare**: o domínio `datalegis.net` tem bot detection. `playwright-stealth` é aplicado automaticamente pela classe base `ScraperDatalegis`. Se a stealth falhar (IP bloqueado, padrão de comportamento detectado), aparece `BrowserError: Timeout`. Veja `references/playwright.md` para diagnóstico.
+- **Paginação via SELECT dropdown**: a navegação usa um `<select id="fieldPage">` com `onchange="openPage()"`. Você não interage com isso — só saiba que aparece em logs.
+- **Limite de 100 páginas** (`_max_pages=100`). Coleta completa de um termo genérico pode atingir esse teto.
+- **Situação vigente = `None`**: não é um bug, é como a biblioteca reconhece a ausência de rótulo. Filtre explicitamente:
 
   ```python
   vigentes = df[df["situacao"].isna()]
   revogados = df[df["situacao"].notna()]
   ```
 
-- Tempo tipico: ~15-30s por pagina. 100 paginas = ~30-60 min.
+- Tempo típico: ~15-30s por página. 100 páginas = ~30-60 min.
 
 ## Exemplo
 
 ```python
 import raspe
 
-df = raspe.ans().raspar(termo="doenca rara", paginas=range(1, 4))
+df = raspe.ans().raspar(termo="doença rara", paginas=range(1, 4))
 print(df.columns.tolist())
 # ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
 

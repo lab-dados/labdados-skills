@@ -47,13 +47,16 @@ implementado** — use `'html'`.
 ```python
 tjsp.cjpg(
     pesquisa='...', paginas=range(1, 4),
-    classes=None,        # list[str]
-    assuntos=None,       # list[str]
-    varas=None,          # list[str]
+    classe=None,         # int | str | list[int|str] — singular canonico [unreleased] (era `classes`)
+    assunto=None,        # int | str | list[int|str] — singular canonico [unreleased] (era `assuntos`)
+    vara=None,           # str | list[str] — singular canonico [unreleased] (era `varas`)
     id_processo=None,
-    data_julgamento_inicio=None, data_julgamento_fim=None
+    data_julgamento_inicio=None, data_julgamento_fim=None,
+    auto_chunk=True      # [v0.3.0] divide janela >366 dias automaticamente
 )
 ```
+
+`[unreleased]` Plurais (`classes`/`assuntos`/`varas`) ainda aceitos com `DeprecationWarning`. Passar plural + singular juntos -> `ValueError`.
 
 ### `cjsg` — extras em relacao ao eSAJ padrao
 
@@ -61,6 +64,7 @@ Alem dos parametros eSAJ documentados em `tribunais.md`, o TJSP aceita:
 - `comarca=None` — filtro por comarca (exclusivo TJSP na familia eSAJ)
 - `tipo_decisao='acordao'|'monocratica'`
 - `baixar_sg=True`
+- **`pesquisa=""` aceito `[unreleased]`** — antes era obrigatorio; agora `tjsp.cjsg(classe='...', assunto='...')` sem termo textual funciona, igualando o comportamento de `cjpg`.
 
 ## Cobertura temporal
 
@@ -99,27 +103,44 @@ outros tribunais sem testar.
 Tetos empiricos (validos em 2026-04) que afetam a implementacao de
 raspagens do primeiro grau:
 
-- **Janela temporal ≤ 1 ano por chamada.** Ranges maiores batem em um
-  teto interno do eSAJ e o `cjpg_n_pags` falha com "Nao foi possivel
-  encontrar o seletor de numero de paginas" (juscraper issue #91).
-  Para cobrir varios anos, itere por ano e concatene com dedup pela
-  combinacao `(id_processo, data_disponibilizacao)` — **nao** apenas
-  por `id_processo`, porque um mesmo processo pode ter mais de uma
-  sentenca publicada em datas distintas:
+- **Janela temporal > 1 ano: `auto_chunk=True` (default) `[v0.3.0]`.**
+  Antes, ranges maiores que 1 ano batiam num teto interno do eSAJ e o
+  `cjpg_n_pags` falhava com "Nao foi possivel encontrar o seletor de
+  numero de paginas" (issue #91). Agora a familia eSAJ (TJSP `cjpg`/`cjsg`,
+  TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`) divide automaticamente intervalos
+  `data_julgamento_*` que excedem 366 dias, baixa cada chunk e
+  concatena com dedup. Falhas em janelas individuais viram
+  `UserWarning` e o DataFrame retorna parcial.
+
   ```python
-  import pandas as pd
-  partes = [tjsp.cjpg(pesquisa=q, assuntos=c,
-                      data_julgamento_inicio=f"01/01/{ano}",
-                      data_julgamento_fim=f"31/12/{ano}")
-            for ano in range(2015, 2023)]
-  df = (pd.concat(partes, ignore_index=True)
-          .drop_duplicates(["id_processo", "data_disponibilizacao"]))
+  # [v0.3.0] funciona — divide internamente em chunks anuais e concatena
+  df = tjsp.cjpg(
+      pesquisa=q, assunto=c,
+      data_julgamento_inicio='01/01/2015',
+      data_julgamento_fim='31/12/2022',
+  )
   ```
-- **Campo `pesquisa` ≤ 120 caracteres** (issue #35). Priorize os
-  termos mais discriminativos. Use `OR`/aspas/parenteses:
+
+  Para o comportamento antigo (`ValueError` em janelas longas), passar
+  `auto_chunk=False`. Workaround manual em `pd.concat([cjpg(...) for
+  ano in range(...)])` continua funcionando — util para ter controle
+  granular sobre dedup, retry por chunk, ou progress reporting.
+
+  **Dedup interno usa `(id_processo, data_disponibilizacao)`** — nao
+  apenas `id_processo`, porque um mesmo processo pode ter mais de uma
+  sentenca publicada em datas distintas.
+
+- **Campo `pesquisa` ≤ 120 caracteres — `QueryTooLongError` `[v0.3.0]`.**
+  O backend do eSAJ trunca strings com mais de 120 chars silenciosamente.
+  Agora `cjpg_download` e `cjsg_download` levantam
+  `juscraper.courts.tjsp.exceptions.QueryTooLongError` (subclasse de
+  `ValueError`) antes da requisicao. Priorize os termos mais
+  discriminativos. Use `OR`/aspas/parenteses:
   `'criança OR adolescente OR "menor de idade"'`.
-- **Filtro de `assuntos` NAO e hierarquico** — aceita apenas codigos
+
+- **Filtro de `assunto` NAO e hierarquico** — aceita apenas codigos
   `selectable=True` da arvore do eSAJ. Agrupadores (ex: 6683) retornam
   zero. Ver `assuntos-tjsp.md`.
+
 - **Regex pos-coleta e redundante quando os termos cabem em
   `pesquisa=`**: passar ja ao endpoint corta volume baixado em 10-100×.

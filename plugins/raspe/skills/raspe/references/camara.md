@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Busca de legislacao federal no portal da Camara dos Deputados — `https://www.camara.leg.br/legislacao/busca`. Retorna proposicoes, projetos de lei e atos com ambito "Legislacao Federal" indexados pela Camara.
+Busca de legislação federal no portal da Câmara dos Deputados — `https://www.camara.leg.br/legislacao/busca`. Retorna proposições, projetos de lei e atos com âmbito "Legislação Federal" indexados pela Câmara.
 
 ## Assinatura
 
@@ -17,23 +17,23 @@ raspe.camara().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Conteudo |
+| Coluna | Conteúdo |
 |---|---|
-| `link` | URL para a proposicao/ato. |
-| `titulo` | Titulo exibido no resultado de busca. |
-| `descricao` | Descricao curta da proposicao. |
-| `ementa` | Situacao ou ementa resumida. |
+| `link` | URL para a proposição/ato. |
+| `titulo` | Título exibido no resultado de busca. |
+| `descricao` | Descrição curta da proposição. |
+| `ementa` | Situação ou ementa resumida. |
 | `termo_busca` | Adicionada automaticamente. |
 
-## Parametros especificos
+## Parâmetros específicos
 
 - `ano`: filtra por ano (ex.: `ano=2024`).
-- `tipo_materia`: filtra por tipo. Valores aceitos pelo portal incluem `"LEI"`, `"DEC"`, `"MPV"`, `"PLP"`, `"PL"`. Quando em duvida, omita — o filtro e aplicado apenas se fornecido.
+- `tipo_materia`: filtra por tipo. Valores aceitos pelo portal incluem `"LEI"`, `"DEC"`, `"MPV"`, `"PLP"`, `"PL"`. Quando em dúvida, omita — o filtro é aplicado apenas se fornecido.
 
 ## Gotchas
 
-- **Pre-estabelecimento de sessao**: o scraper acessa a pagina inicial (`camara.leg.br/`) antes de ir para a busca para nao ser tratado como bot. Isso ja e automatico — apenas nao instancie e descarte `raspe.camara()` repetidamente em loop.
-- **10 resultados por pagina**: paginacao via `pagina` 1-based.
+- **Pré-estabelecimento de sessão**: o scraper acessa a página inicial (`camara.leg.br/`) antes de ir para a busca para não ser tratado como bot. Isso já é automático — apenas não instancie e descarte `raspe.camara()` repetidamente em loop.
+- **10 resultados por página**: paginação via `pagina` 1-based.
 
 ## Exemplo
 
@@ -41,7 +41,7 @@ raspe.camara().raspar(
 import raspe
 
 df = raspe.camara().raspar(
-    pesquisa="educacao",
+    pesquisa="educação",
     ano=2024,
     paginas=range(1, 4),
 )
