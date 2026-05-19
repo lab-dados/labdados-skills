@@ -1,0 +1,9 @@
+{
+  "name": "ata-reuniao",
+  "description": "Gera a ata de uma reuniao do LabDados a partir de gravacao/audio (Zoom, Google Drive) ou transcricao, transcrevendo via labdados-sdk quando necessario, e salva em reunioes/AAAA-MM-DD-ata.md no repo lab-dados/adm.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/ata-reuniao",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["ata", "reuniao", "transcricao", "whisperx", "labdados"]
+}
