@@ -1,0 +1,119 @@
+---
+title: "TÍTULO DO RELATÓRIO"
+subtitle: "Subtítulo / período"
+lang: pt
+fig-align: center
+fig-cap-location: bottom
+fig-dpi: 300
+fig-format: png
+format:
+  docx:
+    reference-doc: _reference-fgv.docx
+    toc: true
+    toc-depth: 2
+    number-sections: false
+  gfm:
+    toc: true
+# Use `engine: jupyter` apenas se houver chunks {python}. Para relatório
+# só de prosa + tabelas em Markdown, remova a linha abaixo.
+engine: jupyter
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+<!--
+COMO USAR ESTE TEMPLATE
+- `reference-doc: _reference-fgv.docx` aplica tipografia, paleta e estilos de
+  tabela da FGV. Mantenha o arquivo ao lado do .qmd ao renderizar.
+- Tabelas: escreva em Markdown (pipe tables) OU gere via pandas
+  `Markdown(df.to_markdown(index=False))`. O stroke da ÚLTIMA linha é aplicado
+  no pós-processamento (scripts/fix_docx_tables.py) — NÃO tente desenhar a
+  borda à mão.
+- Figuras: plotnine + `fgv_theme()` (ver fgv_theme.py). Sem título embutido no
+  gráfico — a legenda da figura (`#| fig-cap`) cumpre esse papel.
+- Cross-references: `{#tbl-xxx}` / `{#fig-xxx}` e cite com `@tbl-xxx` / `@fig-xxx`.
+- Renderize com: quarto render <arquivo>.qmd --to docx (e --to gfm).
+  Depois rode: python scripts/fix_docx_tables.py <arquivo>.docx
+-->
+
+```{python}
+#| include: false
+# Só necessário se o relatório tiver gráficos. Coloque fgv_theme.py ao lado
+# do .qmd (ou ajuste o sys.path).
+import numpy as np
+import pandas as pd
+from plotnine import *
+from IPython.display import Markdown
+
+from fgv_theme import (
+    FGV_AZUL, FGV_AMARELO, FGV_VERMELHO, PALETA_PRINCIPAL, fgv_theme,
+)
+```
+
+## Resumo
+
+Um parágrafo denso e autossuficiente: o que foi feito, os números principais e
+a conclusão. Quem ler só o resumo tem que sair sabendo o essencial.
+
+## Contexto e objetivo
+
+O que motivou o trabalho e a pergunta que ele responde. Sem floreio.
+
+## Métodos / dados
+
+De onde vêm os dados, como foram tratados, quais recortes. Seja específico
+(fontes, datas, tamanhos de amostra).
+
+### Exemplo de tabela (Markdown)
+
+| Métrica              | Valor     |
+|----------------------|----------:|
+| Observações          | 2.000     |
+| Cobertura            | 98,9%     |
+
+: Legenda da tabela, ponto final. {#tbl-exemplo}
+
+A @tbl-exemplo resume os números principais.
+
+### Exemplo de tabela gerada em código
+
+```{python}
+#| label: tbl-codigo
+#| tbl-cap: "Tabela gerada a partir de um DataFrame."
+df = pd.DataFrame({"Grupo": ["A", "B"], "n": [120, 80]})
+Markdown(df.to_markdown(index=False))
+```
+
+### Exemplo de figura
+
+```{python}
+#| label: fig-exemplo
+#| fig-cap: "Legenda da figura — descreve o que se vê e a fonte."
+#| fig-width: 7.5
+#| fig-height: 4.2
+d = pd.DataFrame({"cat": ["Com dados", "Sem dados"], "n": [1978, 22]})
+(
+    ggplot(d, aes(x="cat", y="n", fill="cat"))
+    + geom_col(width=0.7)
+    + scale_fill_manual(values={"Com dados": FGV_AZUL, "Sem dados": FGV_VERMELHO})
+    + labs(x="", y="Processos", fill="")
+    + fgv_theme(legend_position="none")
+)
+```
+
+A @fig-exemplo ilustra a distribuição.
+
+## Resultados
+
+Texto interpretativo, sempre amarrando ao número da tabela/figura. Não repita a
+tabela em prosa — comente o que ela mostra e o que isso significa.
+
+## Conclusões
+
+O que se conclui, com as ressalvas honestas (limitações, vieses conhecidos).
+
+## Próximas etapas
+
+Lista curta e acionável do que vem a seguir.

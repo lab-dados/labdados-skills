@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao e producao de videos explicativos.",
-    "version": "1.4.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao, relatorios em docx via Quarto e producao de videos explicativos.",
+    "version": "1.5.0"
   },
   "plugins": [
     {
@@ -107,6 +107,17 @@
       "category": "communication",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/explainer-video"
+    },
+    {
+      "name": "relatorio",
+      "source": "./plugins/relatorio",
+      "description": "Gera relatorios em .docx (e Markdown) via Quarto com a identidade visual da FGV/LabDados: header qmd com reference-doc, tema de graficos plotnine FGV e pos-processamento de tabelas (stroke da ultima linha). Melhor que o docx padrao.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["relatorio", "quarto", "docx", "fgv", "plotnine", "academico", "labdados"],
+      "category": "communication",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio"
     }
   ]
 }

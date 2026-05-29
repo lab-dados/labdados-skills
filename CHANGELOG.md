@@ -4,6 +4,20 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-05-29
+
+Adicionado:
+
+- `relatorio` — gera relatorios em `.docx` (e Markdown gfm) via Quarto com a
+  identidade visual da FGV/LabDados. Inclui o template `relatorio_template.qmd`
+  (header com `reference-doc`, formatos docx+gfm, exemplos de tabela e figura),
+  o `_reference-fgv.docx` (tipografia Century Gothic, estilos de titulo,
+  paragrafo e tabela), o `fgv_theme.py` (paleta FGV + tema plotnine sem titulo
+  embutido) e o `fix_docx_tables.py`, que aplica o stroke da ultima linha das
+  tabelas (o Pandoc deixa a ultima linha sem borda inferior) e zera o
+  espacamento das celulas. Guia de escrita/formatacao em `references/estilo.md`.
+  Pensado para substituir o fluxo de docx padrao por documentos consistentes.
+
 ## [1.4.0] — 2026-05-17
 
 Adicionado:

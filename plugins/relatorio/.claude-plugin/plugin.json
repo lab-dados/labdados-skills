@@ -1,0 +1,9 @@
+{
+  "name": "relatorio",
+  "description": "Gera relatorios academicos/executivos em .docx (e Markdown) via Quarto, com template e identidade visual da FGV: header qmd com reference-doc, tema de graficos plotnine FGV e pos-processamento de tabelas (stroke da ultima linha). Substitui o fluxo de docx padrao por documentos com tipografia, paleta e tabelas consistentes.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["relatorio", "quarto", "docx", "fgv", "plotnine", "academico", "labdados"]
+}
