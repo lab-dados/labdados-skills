@@ -4,6 +4,39 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-05-30
+
+Adicionado:
+
+- `relatorio-atividades-labdados` — **skill INTERNA do LabDados** (assume as fontes,
+  frentes e o pipeline FGV deste laboratorio; nao e replicavel direto em outros projetos,
+  mas serve de guia). Gera os relatorios de prestacao de contas do LabDados que atendem a
+  issue `lab-dados/adm#45`, voltados a diretoria e coordenacoes da FGV Direito SP. Produz
+  os relatorios detalhados por frente (atividades/eventos; ferramentas/SDK; juscraper +
+  revisao de literatura) e o resumo executivo macro que cobre toda a historia do projeto.
+  A composicao da equipe muda com o tempo: quem esta em cada frente e dado de runtime, nao
+  premissa fixa da skill. Consolida seis fontes (board
+  e repos da org `lab-dados` + pessoais juscraper/dataframeit/dataframeitgui/raspe,
+  Google Drive, OneDrive, Slack, WhatsApp e as atas em `adm/reunioes/`) sem janela de
+  7 dias. **Fonte unica no Quarto:** um unico `.qmd` gera o PDF de alta diagramacao
+  (peca principal, via `--to typst` com os template-partials `typst-template.typ` +
+  `typst-show.typ` e as fontes de marca em `TYPST_FONT_PATHS`) e o `.docx` editavel
+  (via `--to docx` + `_reference-fgv.docx`); a arte so-PDF (chips das frentes, agenda,
+  skills, foto em 2 colunas, pull quotes) sai do mesmo arquivo por blocos `{=typst}`,
+  divs `.content-visible`/`.content-hidden when-format` e o filtro `labfoto.lua`. Nunca
+  manter um `.typ` de conteudo a mao em paralelo. Tres diagramas: estrutura por frentes
+  e mapa de entregas E1-E9 (Graphviz pelo pacote python `graphviz`, sem browser) e linha
+  do tempo (plotnine), com fallback de tabelas se o `dot` faltar. Estilo de escrita
+  ajustado a pedido: linguagem simples e natural, sem travessoes, pouco jargao. Salva em
+  `adm/relatorios/` e faz `git add` sem commitar. CCD (#43) e orcamento gerencial ficam
+  fora do escopo.
+- O plugin vendoriza copias de assets de outros plugins (isolamento de install):
+  `_reference-fgv.docx`, `fgv_theme.py`, `fix_docx_tables.py` (de `relatorio`) e
+  `parse_whatsapp.py` (de `scrum-master`), alem de references adaptadas de ambos. Cada
+  copia leva um cabecalho `# copia de plugins/<x> — manter em sync`. Ao mudar o
+  reference-doc da FGV ou o `fix_docx_tables.py`, propague manualmente aos tres plugins
+  (`relatorio`, `scrum-master`, `relatorio-atividades-labdados`).
+
 ## [1.5.0] — 2026-05-29
 
 Adicionado:

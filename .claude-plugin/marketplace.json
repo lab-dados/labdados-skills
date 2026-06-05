@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao, relatorios em docx via Quarto e producao de videos explicativos.",
-    "version": "1.5.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao, relatorios em docx via Quarto, relatorios de prestacao de contas para a diretoria e producao de videos explicativos.",
+    "version": "1.6.0"
   },
   "plugins": [
     {
@@ -118,6 +118,17 @@
       "category": "communication",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio"
+    },
+    {
+      "name": "relatorio-atividades-labdados",
+      "source": "./plugins/relatorio-atividades-labdados",
+      "description": "Skill INTERNA do LabDados: gera os relatorios de prestacao de contas e atividades para a diretoria da FGV Direito SP (detalhados por frente + resumo executivo macro), cobrindo toda a historia do projeto. Assume as fontes, frentes e o pipeline FGV deste laboratorio (nao e replicavel direto em outros projetos, mas serve de guia). Consolida repos da org lab-dados e pessoais, GitHub Project, Google Drive/OneDrive, Slack, WhatsApp e atas. Fonte unica Quarto: um .qmd gera PDF de alta diagramacao (template Typst, identidade FGV) e .docx editavel, com diagramas (frentes, mapa de entregas E1-E9, linha do tempo).",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["relatorio", "prestacao-de-contas", "diretoria", "quarto", "typst", "pdf", "docx", "fgv", "labdados", "diagramas"],
+      "category": "communication",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio-atividades-labdados"
     }
   ]
 }
