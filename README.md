@@ -4,7 +4,13 @@ Marketplace de skills do [Claude Code](https://claude.com/claude-code) mantido
 pelo [lab-dados](https://github.com/lab-dados), voltado a pesquisa empirica
 em direito no Brasil. Agrupa ferramentas para **coleta de dados judiciais**,
 **enriquecimento de DataFrames com LLMs**, **busca de literatura academica**,
-**construcao de scrapers** e **gestao do projeto LabDados**.
+**construcao de scrapers** e **producao de videos explicativos**.
+
+> As skills **institucionais** do LabDados (gestao semanal do projeto, atas de
+> reuniao, relatorios em docx via Quarto e prestacao de contas para a diretoria)
+> ficam no marketplace interno privado
+> [`lab-dados/labdados-skills-interno`](https://github.com/lab-dados/labdados-skills-interno),
+> acessivel a membros da org.
 
 ## Instalacao
 
@@ -18,11 +24,7 @@ Dentro do Claude Code, rode:
 /plugin install raspe@labdados-skills
 /plugin install juscraper-builder@labdados-skills
 /plugin install raspe-builder@labdados-skills
-/plugin install scrum-master@labdados-skills
-/plugin install ata-reuniao@labdados-skills
 /plugin install explainer-video@labdados-skills
-/plugin install relatorio@labdados-skills
-/plugin install relatorio-atividades-labdados@labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
@@ -39,11 +41,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
 | [raspe-builder](plugins/raspe-builder/skills/raspe-builder/SKILL.md) | Gera scraper Python para a biblioteca raspe (HTTP/HTML, HTTP/JSON, Playwright) — scraper + factory + testes offline + sync com a skill `raspe` | Adicionar fonte ao raspe, novo scraper para site governamental brasileiro, extender BaseScraper/PlaywrightScraper |
-| [scrum-master](plugins/scrum-master/skills/scrum-master/SKILL.md) | Relatorio executivo semanal do LabDados | Resumo semanal, weekly plan, fechamento da semana |
-| [ata-reuniao](plugins/ata-reuniao/skills/ata-reuniao/SKILL.md) | Gera ata de reuniao do LabDados a partir de gravacao/transcricao (transcreve via labdados-sdk) e salva em `reunioes/` no repo adm | Ata da reuniao, registrar/documentar reuniao, resumo da reuniao |
 | [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
-| [relatorio](plugins/relatorio/skills/relatorio/SKILL.md) | Gera relatorio em .docx (e Markdown) via Quarto com identidade FGV: reference-doc, tema plotnine e stroke da ultima linha das tabelas | Relatorio, gerar relatorio, passar pra docx, relatorio em Word, relatorio executivo/academico |
-| [relatorio-atividades-labdados](plugins/relatorio-atividades-labdados/skills/relatorio-atividades-labdados/SKILL.md) | **Skill interna do LabDados** (especifica deste lab; serve de guia para outros). Relatorios de prestacao de contas para a diretoria da FGV (detalhados por frente + resumo macro de toda a historia), em PDF de alta diagramacao e .docx editavel a partir de uma fonte unica Quarto (template Typst + reference-doc) com diagramas. Consolida repos, GitHub Project, Drive/OneDrive, Slack, WhatsApp e atas | Relatorio de atividades, prestacao de contas, relatorio para a diretoria/coordenacao, relatorio macro/institucional do LabDados, relatorio da issue #45 |
 
 ## Pre-requisitos por skill
 
@@ -90,19 +88,6 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - A skill gera codigo dentro do repo raspe (scraper, factory, testes offline com `responses`)
   e tambem atualiza a skill `raspe` deste marketplace com a nova fonte
 
-### scrum-master
-
-- Acesso ao Kanban do GitHub do projeto LabDados (via `gh` CLI autenticado)
-- MCPs do Google Drive, Gmail e Google Calendar (para documentos e reunioes)
-- Exportacao de mensagens do WhatsApp em `.txt` quando aplicavel
-
-### ata-reuniao
-
-- Repo `lab-dados/adm` clonado localmente (as atas vao para `reunioes/`)
-- `pip install labdados` + API key do escritorio (`LABDADOS_API_KEY`) para transcricao em nuvem (WhisperX)
-- MCP do Google Drive (opcional — localizar gravacoes do Zoom)
-- `gh` CLI autenticado (linkar issues/PRs nas atas)
-
 ### explainer-video
 
 - Python >= 3.10
@@ -111,22 +96,17 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Opcional (TTS de qualidade superior): `ELEVENLABS_API_KEY` ou `OPENAI_API_KEY`
 - Opcional (upload no YouTube): OAuth client do Google Cloud + `pip install google-api-python-client google-auth-oauthlib` + variavel `YT_CLIENT_SECRET_PATH` apontando para o `client_secret.json` (ver `references/youtube.md`)
 
-### relatorio
+## Skills institucionais (marketplace interno)
 
-- [Quarto](https://quarto.org/docs/get-started/) (`quarto --version`)
-- Apenas se o relatorio tiver graficos/tabelas geradas em codigo: Python com `pandas`, `plotnine`, `tabulate` e o engine Jupyter (`pip install jupyter nbclient`)
-- Relatorios so de prosa + tabelas em Markdown nao precisam de Python (remova `engine: jupyter` do header)
+As skills `scrum-master`, `ata-reuniao`, `relatorio` e
+`relatorio-atividades-labdados` sao especificas do LabDados e foram movidas para o
+marketplace interno privado
+[`lab-dados/labdados-skills-interno`](https://github.com/lab-dados/labdados-skills-interno).
+Membros da org instalam com:
 
-### relatorio-atividades-labdados
-
-- [Quarto](https://quarto.org/docs/get-started/) (`quarto --version`) — o typst que gera o PDF ja vem com o Quarto
-- Para o PDF de alta diagramacao: as fontes de marca (Source Sans 3) em `relatorios/fonts/`, renderizando com `TYPST_FONT_PATHS=<abs>/relatorios/fonts`
-- Python com `pandas`, `plotnine`, `tabulate` e o engine Jupyter (`pip install jupyter nbclient`)
-- Para os diagramas estruturais: `pip install graphviz` + o binario Graphviz instalado (`dot` no PATH). Sem ele, a skill cai para tabelas estruturadas
-- `gh` CLI autenticado (board v2 da org `lab-dados` + repos da org e pessoais: juscraper, dataframeit, dataframeitgui, raspe)
-- MCP do Google Drive e do Slack conectados (OneDrive: a skill pede o link/acesso em runtime)
-- Export `.zip` do WhatsApp quando aplicavel
-- Repo `lab-dados/adm` clonado localmente (os relatorios vao para `relatorios/`)
+```
+/plugin marketplace add lab-dados/labdados-skills-interno
+```
 
 ## Atualizacoes
 

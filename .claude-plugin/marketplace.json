@@ -5,8 +5,8 @@
     "url": "https://github.com/lab-dados"
   },
   "metadata": {
-    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers, gestao do projeto LabDados, atas de reuniao, relatorios em docx via Quarto, relatorios de prestacao de contas para a diretoria e producao de videos explicativos.",
-    "version": "1.6.0"
+    "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e producao de videos explicativos. As skills institucionais do LabDados (gestao do projeto, atas, relatorios e prestacao de contas) ficam no marketplace interno privado lab-dados/labdados-skills-interno.",
+    "version": "1.7.0"
   },
   "plugins": [
     {
@@ -76,28 +76,6 @@
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspe-builder"
     },
     {
-      "name": "scrum-master",
-      "source": "./plugins/scrum-master",
-      "description": "Relatorio executivo semanal do LabDados consolidando Kanban do GitHub, WhatsApp, Google Drive e reunioes gravadas.",
-      "version": "1.0.0",
-      "author": { "name": "lab-dados" },
-      "keywords": ["scrum", "weekly", "relatorio", "kanban", "labdados"],
-      "category": "project-management",
-      "license": "MIT",
-      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/scrum-master"
-    },
-    {
-      "name": "ata-reuniao",
-      "source": "./plugins/ata-reuniao",
-      "description": "Gera a ata de uma reuniao do LabDados a partir de gravacao/audio (Zoom, Google Drive) ou transcricao, transcrevendo via labdados-sdk (WhisperX) quando necessario, e salva em reunioes/AAAA-MM-DD-ata.md no repo lab-dados/adm.",
-      "version": "1.0.0",
-      "author": { "name": "lab-dados" },
-      "keywords": ["ata", "reuniao", "transcricao", "whisperx", "labdados"],
-      "category": "project-management",
-      "license": "MIT",
-      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/ata-reuniao"
-    },
-    {
       "name": "explainer-video",
       "source": "./plugins/explainer-video",
       "description": "Cria videos explicativos curtos de plataformas web (gravacao via Playwright + narracao TTS) a partir de um repositorio ou URL ao vivo, com upload opcional no YouTube.",
@@ -107,28 +85,6 @@
       "category": "communication",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/explainer-video"
-    },
-    {
-      "name": "relatorio",
-      "source": "./plugins/relatorio",
-      "description": "Gera relatorios em .docx (e Markdown) via Quarto com a identidade visual da FGV/LabDados: header qmd com reference-doc, tema de graficos plotnine FGV e pos-processamento de tabelas (stroke da ultima linha). Melhor que o docx padrao.",
-      "version": "1.0.0",
-      "author": { "name": "lab-dados" },
-      "keywords": ["relatorio", "quarto", "docx", "fgv", "plotnine", "academico", "labdados"],
-      "category": "communication",
-      "license": "MIT",
-      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio"
-    },
-    {
-      "name": "relatorio-atividades-labdados",
-      "source": "./plugins/relatorio-atividades-labdados",
-      "description": "Skill INTERNA do LabDados: gera os relatorios de prestacao de contas e atividades para a diretoria da FGV Direito SP (detalhados por frente + resumo executivo macro), cobrindo toda a historia do projeto. Assume as fontes, frentes e o pipeline FGV deste laboratorio (nao e replicavel direto em outros projetos, mas serve de guia). Consolida repos da org lab-dados e pessoais, GitHub Project, Google Drive/OneDrive, Slack, WhatsApp e atas. Fonte unica Quarto: um .qmd gera PDF de alta diagramacao (template Typst, identidade FGV) e .docx editavel, com diagramas (frentes, mapa de entregas E1-E9, linha do tempo).",
-      "version": "1.0.0",
-      "author": { "name": "lab-dados" },
-      "keywords": ["relatorio", "prestacao-de-contas", "diretoria", "quarto", "typst", "pdf", "docx", "fgv", "labdados", "diagramas"],
-      "category": "communication",
-      "license": "MIT",
-      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio-atividades-labdados"
     }
   ]
 }

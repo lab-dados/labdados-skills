@@ -4,6 +4,19 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-06-05
+
+Removido:
+
+- As skills **institucionais** do LabDados foram separadas deste marketplace publico
+  e migradas para o novo marketplace interno privado
+  `lab-dados/labdados-skills-interno` (issue #18): `scrum-master`, `ata-reuniao`,
+  `relatorio` e `relatorio-atividades-labdados`. Quem as instalava deve adicionar o
+  marketplace interno (`/plugin marketplace add lab-dados/labdados-skills-interno`,
+  acesso da org). O publico passa a conter so as skills de uso geral (juscraper,
+  dataframeit, openalex, raspe, juscraper-builder, raspe-builder, explainer-video).
+- `metadata.description` atualizada para refletir o escopo so-geral.
+
 ## [1.6.0] — 2026-05-30
 
 Adicionado:
