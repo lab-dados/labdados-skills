@@ -1,9 +1,18 @@
 ---
-name: relatorio-atividades
-description: Gera relatórios de prestação de contas e atividades do LabDados para a diretoria e coordenações da FGV Direito SP. Produz os relatórios detalhados por frente (atividades e eventos do Luiz, SDK e ferramentas do Julio, juscraper e revisão de literatura do Bruno) e o resumo executivo macro que cobre toda a história do projeto, em PDF de alta diagramação e .docx editável a partir de uma fonte única Quarto (identidade FGV via template Typst + reference-doc) e com diagramas (frentes, mapa de entregas E1 a E9, linha do tempo). Consolida os repositórios da org lab-dados e os pessoais (juscraper, dataframeit, dataframeitgui, raspe), o GitHub Project, Google Drive e OneDrive, Slack, WhatsApp e as atas de reunião. Use sempre que pedirem "relatório de atividades", "prestação de contas", "relatório para a diretoria", "relatório para a coordenação", "relatório institucional do LabDados", "relatório macro/geral do LabDados", "relatório da issue #45", ou um panorama de tudo que o laboratório fez desde o início. Não confundir: scrum-master é o relatório semanal interno (últimos 7 dias, HTML/PDF para o líder); relatorio é genérico (uma análise vira docx); ata-reuniao é a ata de uma reunião específica.
+name: relatorio-atividades-labdados
+description: Gera relatórios de prestação de contas e atividades do LabDados para a diretoria e coordenações da FGV Direito SP. Produz os relatórios detalhados por frente (atividades e eventos; ferramentas e SDK do laboratório; juscraper e revisão de literatura) e o resumo executivo macro que cobre toda a história do projeto, em PDF de alta diagramação e .docx editável a partir de uma fonte única Quarto (identidade FGV via template Typst + reference-doc) e com diagramas (frentes, mapa de entregas E1 a E9, linha do tempo). Consolida os repositórios da org lab-dados e os pessoais (juscraper, dataframeit, dataframeitgui, raspe), o GitHub Project, Google Drive e OneDrive, Slack, WhatsApp e as atas de reunião. Use sempre que pedirem "relatório de atividades", "prestação de contas", "relatório para a diretoria", "relatório para a coordenação", "relatório institucional do LabDados", "relatório macro/geral do LabDados", "relatório da issue #45", ou um panorama de tudo que o laboratório fez desde o início. É uma skill interna do LabDados (assume as fontes, frentes e o pipeline FGV deste laboratório). Não confundir: scrum-master é o relatório semanal interno (últimos 7 dias, HTML/PDF para o líder); relatorio é genérico (uma análise vira docx); ata-reuniao é a ata de uma reunião específica.
 ---
 
 # Relatório de atividades e prestação de contas (LabDados, diretoria)
+
+> **Skill interna do LabDados.** Foi feita para *este* laboratório: assume as fontes,
+> as frentes de atuação, a equipe e o pipeline de identidade FGV específicos do LabDados.
+> **Não é imediatamente replicável** para outros projetos ou instituições — mas serve de
+> **guia/referência** de como montar um relatório institucional de prestação de contas
+> (fonte única Quarto → PDF de alta diagramação + Word, coleta multi-fonte, diagramas).
+> **A composição da equipe muda com o tempo:** não fixe pessoas a frentes na lógica da
+> skill; trate quem está em cada frente como um dado de runtime (o snapshot atual fica em
+> `references/contexto-projetos.md`, que deve ser atualizado a cada execução).
 
 Você gera os relatórios de prestação de contas do LabDados que atendem a issue
 [lab-dados/adm#45](https://github.com/lab-dados/adm/issues/45). O público é a

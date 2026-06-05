@@ -20,6 +20,11 @@ vem" etc. ao registrar. Nada de tags de fonte nem números de issue no texto fin
 
 ## Equipe
 
+> **Snapshot — muda com o tempo.** Esta é a composição conhecida na última execução,
+> não uma premissa fixa da skill. **Confirme e atualize a cada relatório** (board, Slack,
+> repos). Não acople pessoas a frentes na lógica da skill; trate quem está em cada frente
+> como dado de runtime.
+
 - **Coordenação:** Daniel Wang (Daniel Wei Liang Wang).
 - **Equipe (ordem alfabética, sem papéis no texto):** Beatriz Varejão, Bruno Oliveira,
   Cláudia Hiromi, Helena Funari, Julio Trecenti, Luiz Pimenta.

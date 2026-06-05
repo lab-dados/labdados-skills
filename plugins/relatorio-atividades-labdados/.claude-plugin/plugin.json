@@ -1,0 +1,9 @@
+{
+  "name": "relatorio-atividades-labdados",
+  "description": "Skill interna do LabDados: gera os relatórios de prestação de contas e atividades para a diretoria da FGV Direito SP (detalhados por frente + resumo executivo macro). Fonte única Quarto: um .qmd gera PDF de alta diagramação (template Typst, identidade FGV) e .docx editável, com diagramas. Específica deste laboratório; serve de guia para outros.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/relatorio-atividades-labdados",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["relatorio", "prestacao-de-contas", "diretoria", "quarto", "typst", "pdf", "docx", "fgv", "labdados", "diagramas"]
+}

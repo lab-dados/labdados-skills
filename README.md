@@ -22,7 +22,7 @@ Dentro do Claude Code, rode:
 /plugin install ata-reuniao@labdados-skills
 /plugin install explainer-video@labdados-skills
 /plugin install relatorio@labdados-skills
-/plugin install relatorio-atividades@labdados-skills
+/plugin install relatorio-atividades-labdados@labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
@@ -43,7 +43,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [ata-reuniao](plugins/ata-reuniao/skills/ata-reuniao/SKILL.md) | Gera ata de reuniao do LabDados a partir de gravacao/transcricao (transcreve via labdados-sdk) e salva em `reunioes/` no repo adm | Ata da reuniao, registrar/documentar reuniao, resumo da reuniao |
 | [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
 | [relatorio](plugins/relatorio/skills/relatorio/SKILL.md) | Gera relatorio em .docx (e Markdown) via Quarto com identidade FGV: reference-doc, tema plotnine e stroke da ultima linha das tabelas | Relatorio, gerar relatorio, passar pra docx, relatorio em Word, relatorio executivo/academico |
-| [relatorio-atividades](plugins/relatorio-atividades/skills/relatorio-atividades/SKILL.md) | Relatorios de prestacao de contas do LabDados para a diretoria da FGV (detalhados por frente + resumo macro de toda a historia), em PDF de alta diagramacao e .docx editavel a partir de uma fonte unica Quarto (template Typst + reference-doc) com diagramas. Consolida repos, GitHub Project, Drive/OneDrive, Slack, WhatsApp e atas | Relatorio de atividades, prestacao de contas, relatorio para a diretoria/coordenacao, relatorio macro/institucional do LabDados, relatorio da issue #45 |
+| [relatorio-atividades-labdados](plugins/relatorio-atividades-labdados/skills/relatorio-atividades-labdados/SKILL.md) | **Skill interna do LabDados** (especifica deste lab; serve de guia para outros). Relatorios de prestacao de contas para a diretoria da FGV (detalhados por frente + resumo macro de toda a historia), em PDF de alta diagramacao e .docx editavel a partir de uma fonte unica Quarto (template Typst + reference-doc) com diagramas. Consolida repos, GitHub Project, Drive/OneDrive, Slack, WhatsApp e atas | Relatorio de atividades, prestacao de contas, relatorio para a diretoria/coordenacao, relatorio macro/institucional do LabDados, relatorio da issue #45 |
 
 ## Pre-requisitos por skill
 
@@ -117,7 +117,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Apenas se o relatorio tiver graficos/tabelas geradas em codigo: Python com `pandas`, `plotnine`, `tabulate` e o engine Jupyter (`pip install jupyter nbclient`)
 - Relatorios so de prosa + tabelas em Markdown nao precisam de Python (remova `engine: jupyter` do header)
 
-### relatorio-atividades
+### relatorio-atividades-labdados
 
 - [Quarto](https://quarto.org/docs/get-started/) (`quarto --version`) — o typst que gera o PDF ja vem com o Quarto
 - Para o PDF de alta diagramacao: as fontes de marca (Source Sans 3) em `relatorios/fonts/`, renderizando com `TYPST_FONT_PATHS=<abs>/relatorios/fonts`

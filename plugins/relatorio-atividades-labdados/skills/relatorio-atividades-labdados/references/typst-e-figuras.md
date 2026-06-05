@@ -4,7 +4,7 @@
 
 O relatório é **fonte única**: um **único `.qmd`** gera os três formatos. **Nunca**
 mantenha um `.typ` de conteúdo escrito à mão em paralelo (foi o que, no passado, saiu
-de sincronia e fez perder/parafrasear parágrafos — erro grave, o Julio teve que revisar
+de sincronia e fez perder/parafrasear parágrafos — erro grave, o usuário teve que revisar
 tudo). Edite só o `.qmd`.
 
 - **PDF (peça principal)** via `--to typst`, usando os **template-partials**
@@ -124,8 +124,8 @@ O manual da FGV usa **Frutiger** (primária, licenciada, raramente instalada) e 
   `context { if here().position().y > Xmm { pagebreak() } }` dispara o aviso **"layout did not
   converge within 5 attempts"** (instável, com hard e com weak pagebreak). Foi abandonado.
 - **Quebras manuais (`#pagebreak(weak: true)`) só onde NÃO criam vão.** Quebra manual num
-  ponto em que a página anterior não está cheia deixa um vão morto enorme no rodapé (o Julio
-  reclama disso). Mantenha o mínimo: o Sumário em página própria e uma quebra antes de uma
+  ponto em que a página anterior não está cheia deixa um vão morto enorme no rodapé (o
+  usuário reclama disso). Mantenha o mínimo: o Sumário em página própria e uma quebra antes de uma
   figura de tela cheia cuja página anterior já está preenchida (ex.: a de chips). Tirar as
   demais resolveu "páginas com muito espaço em branco".
 - Encha páginas-âncora pela altura do conteúdo (ex.: altura do `frente_chip`), não por quebra.

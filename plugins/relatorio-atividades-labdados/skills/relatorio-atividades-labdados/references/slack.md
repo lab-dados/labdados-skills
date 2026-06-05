@@ -2,7 +2,7 @@
 
 O Slack do laboratório guarda decisões, combinações sobre eventos e parcerias,
 andamento do processo seletivo e discussões de pesquisa. É uma fonte importante para
-os blocos de atividades (Luiz) e de pesquisa (Julio e Bruno).
+os blocos de atividades e de pesquisa.
 
 ## Tools MCP disponíveis
 

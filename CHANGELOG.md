@@ -8,11 +8,14 @@ segue [Semantic Versioning](https://semver.org/).
 
 Adicionado:
 
-- `relatorio-atividades` — gera os relatorios de prestacao de contas do LabDados que
-  atendem a issue `lab-dados/adm#45`, voltados a diretoria e coordenacoes da FGV
-  Direito SP. Produz os relatorios detalhados por frente (atividades/eventos do Luiz,
-  SDK/ferramentas do Julio, juscraper + revisao de literatura do Bruno) e o resumo
-  executivo macro que cobre toda a historia do projeto. Consolida seis fontes (board
+- `relatorio-atividades-labdados` — **skill INTERNA do LabDados** (assume as fontes,
+  frentes e o pipeline FGV deste laboratorio; nao e replicavel direto em outros projetos,
+  mas serve de guia). Gera os relatorios de prestacao de contas do LabDados que atendem a
+  issue `lab-dados/adm#45`, voltados a diretoria e coordenacoes da FGV Direito SP. Produz
+  os relatorios detalhados por frente (atividades/eventos; ferramentas/SDK; juscraper +
+  revisao de literatura) e o resumo executivo macro que cobre toda a historia do projeto.
+  A composicao da equipe muda com o tempo: quem esta em cada frente e dado de runtime, nao
+  premissa fixa da skill. Consolida seis fontes (board
   e repos da org `lab-dados` + pessoais juscraper/dataframeit/dataframeitgui/raspe,
   Google Drive, OneDrive, Slack, WhatsApp e as atas em `adm/reunioes/`) sem janela de
   7 dias. **Fonte unica no Quarto:** um unico `.qmd` gera o PDF de alta diagramacao
@@ -32,7 +35,7 @@ Adicionado:
   `parse_whatsapp.py` (de `scrum-master`), alem de references adaptadas de ambos. Cada
   copia leva um cabecalho `# copia de plugins/<x> — manter em sync`. Ao mudar o
   reference-doc da FGV ou o `fix_docx_tables.py`, propague manualmente aos tres plugins
-  (`relatorio`, `scrum-master`, `relatorio-atividades`).
+  (`relatorio`, `scrum-master`, `relatorio-atividades-labdados`).
 
 ## [1.5.0] — 2026-05-29
 

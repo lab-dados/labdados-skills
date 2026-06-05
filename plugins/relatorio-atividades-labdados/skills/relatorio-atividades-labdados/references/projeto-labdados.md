@@ -62,13 +62,17 @@ Se uma atividade não casar com nenhuma entrega, classifique como "Operação" o
 
 As frentes são a base do diagrama de estrutura do laboratório (ver `diagramas.md`).
 
-## Divisão de responsáveis (para os relatórios por frente)
+## Divisão por frente (para os relatórios por frente)
 
-Conforme a issue #45 (ver `issue-45.md`):
+Conforme a issue #45 (ver `issue-45.md`), os relatórios detalhados se dividem por frente:
 
-- **Luiz:** atividades, eventos, parcerias, processo seletivo.
-- **Julio:** ferramentas e SDK do laboratório, app de pesquisa.
-- **Bruno:** juscraper e revisão de literatura.
+- **Atividades:** atividades, eventos, parcerias, processo seletivo.
+- **Ferramentas e SDK:** ferramentas e SDK do laboratório, app de pesquisa.
+- **juscraper e literatura:** juscraper e revisão de literatura.
+
+Cada frente tem um responsável dentro da equipe, mas a composição muda com o tempo:
+quem está em cada frente é um dado de runtime (snapshot em `contexto-projetos.md`), não
+uma premissa fixa. Não fixe pessoas a frentes na lógica da skill.
 
 ## Papéis do time (para inferência)
 

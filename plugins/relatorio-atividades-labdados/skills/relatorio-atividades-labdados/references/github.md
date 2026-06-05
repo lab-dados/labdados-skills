@@ -55,14 +55,15 @@ gh repo list lab-dados --limit 100 --json name,pushedAt,isArchived,description \
 ```
 Inclui o repositório `adm`, que guarda as atas em `reunioes/` (ver `reunioes.md`).
 
-**Pessoais (autoria do time, relevantes ao laboratório):**
-- `jtrecenti/juscraper`, ferramenta que baixa dados de processos dos tribunais (Julio).
+**Pessoais (autoria de membros do time, relevantes ao laboratório):**
+- `jtrecenti/juscraper`, ferramenta que baixa dados de processos dos tribunais.
 - `bdcdo/dataframeit`, ferramenta que aplica modelos de linguagem linha a linha em
-  tabelas de dados (Bruno).
-- `bdcdo/dataframeitgui`, interface gráfica do dataframeit (Bruno).
-- `bdcdo/raspe`, ferramenta de raspagem estruturada de fontes oficiais (Bruno).
+  tabelas de dados.
+- `bdcdo/dataframeitgui`, interface gráfica do dataframeit.
+- `bdcdo/raspe`, ferramenta de raspagem estruturada de fontes oficiais.
 
-Se o usuário apontar outros repos, adicione à lista.
+Esses são os repos pessoais conhecidos hoje; a autoria/composição muda com o tempo. Se
+o usuário apontar outros repos (ou outras contas), adicione à lista.
 
 ### O que extrair, por repositório (toda a história)
 
