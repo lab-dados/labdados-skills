@@ -33,10 +33,10 @@ Esta reference cobre os **29 tribunais com scraper direto** (25 estaduais + 4 fe
 | **TJRR** | sim | - | - | - | JSF/PrimeFaces | |
 | **TJRS** | sim | - | - | - | Google Search (GSA) | |
 | **TJSC** | sim | - | - | - | eproc HTML | |
-| **TRF1** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
-| **TRF3** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
-| **TRF5** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
-| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | `[unreleased]` |
+| **TRF1** | - | - | sim | - | PJe ConsultaPublica | |
+| **TRF3** | - | - | sim | - | PJe ConsultaPublica | |
+| **TRF5** | - | - | sim | - | PJe ConsultaPublica | |
+| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | |
 
 **Legenda:** `sim` = implementado | `-` = nao implementado
 
@@ -51,7 +51,7 @@ Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 
 ## Mudancas estruturais recentes (le antes dos snippets)
 
-**Nomes canonicos singulares (`[v0.3.0]` para tamanho_pagina; `[unreleased]` para classe/assunto/vara):**
+**Nomes canonicos singulares:**
 
 | Canonico | Substitui | Onde |
 |---|---|---|
@@ -65,7 +65,7 @@ Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 
 Os antigos continuam funcionando com `DeprecationWarning` por pelo menos um minor release. Passar canonico + alias simultaneamente -> `ValueError`.
 
-**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]` `[unreleased]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`. Para descobrir IDs reais, use `listar_classes`, `listar_assuntos`, `listar_orgaos` e, no TJSP `cjpg`, `listar_varas`; todos retornam `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
+**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`. Para descobrir IDs reais, use `listar_classes`, `listar_assuntos`, `listar_orgaos` e, no TJSP `cjpg`, `listar_varas`; todos retornam `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
 **BREAKING — colunas renomeadas em DataFrames `[v0.3.0]`:**
 
@@ -90,7 +90,7 @@ Em endpoints com schema pydantic wired (familia eSAJ, agregadores, maioria dos t
 
 O helper `coerce_brazilian_date` coage para o `BACKEND_DATE_FORMAT` declarado no schema antes da validacao pydantic.
 
-**Auto-completar datas parciais `[unreleased]`:** quando o usuario informa apenas `data_*_inicio`, `data_*_fim` vira a data atual. Quando informa apenas `data_*_fim`, `data_*_inicio` vira `01/01/1990`. Um `UserWarning` e emitido sugerindo passar a data explicitamente.
+**Auto-completar datas parciais:** quando o usuario informa apenas `data_*_inicio`, `data_*_fim` vira a data atual. Quando informa apenas `data_*_fim`, `data_*_inicio` vira `01/01/1990`. Um `UserWarning` e emitido sugerindo passar a data explicitamente.
 
 **Validacao `extra="forbid"` em todos os endpoints wired `[v0.3.0]`:** kwargs desconhecidos viram `TypeError` com mensagem amigavel e sugestao de typo via difflib (ex: `data_juglamento` -> "voce quis dizer 'data_julgamento'?"). Antes, kwargs nao reconhecidos eram silenciosamente ignorados.
 
@@ -133,7 +133,7 @@ scraper.cjsg(
 
 **Auto-chunk para janelas longas `[v0.3.0]`:** janelas `data_julgamento_*` que excedem 366 dias sao automaticamente divididas em chunks e concatenadas (com dedup) por `auto_chunk=True` (default). Falhas em janelas individuais viram `UserWarning` e o DataFrame retorna parcial. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`. Veja `references/tjsp.md` para detalhes.
 
-**Notas TJSP:** extras em relacao aos demais eSAJ — `comarca`, `tipo_decisao`, `baixar_sg`; `cjsg` aceita `pesquisa=""` `[unreleased]` para buscar so por filtros; `cjsg` e `cjpg` aceitam `count_only=True` `[unreleased]` para estimar volume antes da coleta. Ver `references/tjsp.md`.
+**Notas TJSP:** extras em relacao aos demais eSAJ — `comarca`, `tipo_decisao`, `baixar_sg`; `cjsg` aceita `pesquisa=""` para buscar so por filtros; `cjsg` e `cjpg` aceitam `count_only=True` para estimar volume antes da coleta. Ver `references/tjsp.md`.
 
 **Guard de tamanho de `pesquisa` em TJSP `[v0.3.0]`:** mais de 120 caracteres levanta `QueryTooLongError` (subclasse de `ValueError`) antes do HTTP. Veja `references/tjsp.md`.
 
@@ -231,7 +231,7 @@ tjba.cjsg(
     numero_recurso=None,
     orgaos=None,                        # list de orgaos
     relatores=None,                     # list de relatores
-    classe=None,                        # singular canonico [unreleased] (era classes)
+    classe=None,                        # singular canonico (era classes)
     data_julgamento_inicio=None,        # aceita BR e ISO [v0.3.0]
     data_julgamento_fim=None,
     segundo_grau=None,                  # bool
@@ -296,7 +296,7 @@ tjap.cjsg(
 )
 ```
 
-**Gotchas:** backend Tucujuris **nao expoe filtro de data** — `test_release_date_filter.py` marca o TJAP como `xfail` estrito por limitacao server-side. `[unreleased]` O site pode responder com validacao server-side do Cloudflare Turnstile; nesse caso o scraper levanta `TJAPSecurityCheckError`. Trate como bloqueio ambiental/anti-bot, nao como erro de filtros do usuario.
+**Gotchas:** backend Tucujuris **nao expoe filtro de data** — `test_release_date_filter.py` marca o TJAP como `xfail` estrito por limitacao server-side. O site pode responder com validacao server-side do Cloudflare Turnstile; nesse caso o scraper levanta `TJAPSecurityCheckError`. Trate como bloqueio ambiental/anti-bot, nao como erro de filtros do usuario.
 
 ### TJPB
 
@@ -328,11 +328,11 @@ tjpe.cjsg(
     assunto=None,                       # singular canonico [v0.3.0] (era assunto_cnj)
     meio_tramitacao=None,
     tipo_decisao=None,                  # 'acordaos', 'monocraticas', 'todos'
-    contratos=None                      # [unreleased] filtro novo (issue #197)
+    contratos=None                      # filtro novo (issue #197)
 )
 ```
 
-`[unreleased]` Suporte a filtro `contratos`.
+Suporte a filtro `contratos`.
 
 ### TJPI
 
@@ -401,7 +401,7 @@ tjrr.cjsg(
 
 `[v0.3.0]` JSF auto-gerado: descoberta dinamica dos nomes de campos (que mudam quando o tribunal reordena componentes do form). Antes, o scraper retornava zero resultados silenciosamente apos renumeracao do tribunal.
 
-`[unreleased]` `relator` aceita lista de nomes regimentais. A paginacao da tabela principal de acordaos foi corrigida, mas decisoes monocraticas ficam numa segunda tabela com paginador proprio e ainda retornam so a primeira pagina.
+`relator` aceita lista de nomes regimentais. A paginacao da tabela principal de acordaos foi corrigida, mas decisoes monocraticas ficam numa segunda tabela com paginador proprio e ainda retornam so a primeira pagina.
 
 ### TJSC
 
@@ -481,7 +481,7 @@ tjrj.cjsg(
 
 **Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o backend usa o ano corrente, nao "todos os anos". `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
 
-### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[unreleased]`
+### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe
 
 Acessam a `ConsultaPublica/listView.seam` em:
 
@@ -502,7 +502,7 @@ df = trf1.cpopg(
 
 **Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `assunto`, `data_distribuicao`, `orgao_julgador`, `jurisdicao`, `endereco_orgao`, `polo_ativo`, `polo_passivo`, `movimentacoes`, `documentos`. Processos nao encontrados no portal publico devolvem linha so com `id_cnj`. Com `download_pecas=True`, o scraper baixa cada peca para `<diretorio>/<cnj>/<id_processo_doc>.html` e adiciona a coluna `pecas` com a lista de caminhos por processo.
 
-**Paginacao automatica de movimentacoes e documentos `[unreleased]`:** PJe pagina as tabelas com Richfaces inslider (15 linhas/pagina). O scraper detecta o slider e itera as paginas restantes via POST AJAX. Isso vale tanto para `movimentacoes` quanto para `documentos`, e garante que `download_pecas=True` nao baixe apenas as primeiras 15 pecas.
+**Paginacao automatica de movimentacoes e documentos:** PJe pagina as tabelas com Richfaces inslider (15 linhas/pagina). O scraper detecta o slider e itera as paginas restantes via POST AJAX. Isso vale tanto para `movimentacoes` quanto para `documentos`, e garante que `download_pecas=True` nao baixe apenas as primeiras 15 pecas.
 
 **Especializacoes por tribunal:**
 
@@ -512,7 +512,7 @@ df = trf1.cpopg(
 
 **Gotcha:** cada tribunal tem implementacao independente em `courts/{trf1,trf3,trf5}/`, mas compartilha a base `_trf` para o contrato atual de `cpopg`/download de pecas. Bloqueios Akamai sao ambientais/anti-bot; reduza ritmo, tente outro horario/IP, ou use Datajud quando bastarem metadados.
 
-### TRF6 — `cpopg` via eproc/SJMG `[unreleased]`
+### TRF6 — `cpopg` via eproc/SJMG
 
 O TRF6 acessa o eproc de 1º grau da Seção Judiciaria de Minas Gerais (`https://eproc1g.trf6.jus.br/eproc/`). O formulario exige captcha textual em imagem PNG embutida no HTML e validada server-side; o scraper resolve via `txtcaptcha` e refaz o GET do form a cada tentativa porque o captcha e vinculado ao cookie `PHPSESSID`.
 
@@ -525,7 +525,7 @@ df = trf6.cpopg(id_cnj='1000149-71.2024.4.06.3800')
 
 **Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. Processos nao encontrados devolvem linha so com `id_cnj`. **Nao documentar `download_pecas` para TRF6** — esse parametro e dos TRFs PJe acima.
 
-**Instalacao:** ainda nao disponivel em PyPI. Requer `pip install git+https://github.com/jtrecenti/juscraper.git`.
+**Instalacao:** disponivel na release do `juscraper` que inclui o commit `0bc0de5`; use `pip install -U juscraper` ou `uv add -U juscraper`.
 
 ---
 
@@ -553,7 +553,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 6. **Formatos de data `[v0.3.0]`:** em endpoints com schema pydantic wired, aceita `DD/MM/AAAA`, `DD-MM-AAAA`, `AAAA-MM-DD`, `AAAA/MM/DD` e objetos `datetime.date`/`datetime.datetime`. Antes era estritamente o formato declarado pelo backend de cada tribunal.
 
-7. **Filtros parciais auto-completam `[unreleased]`:** informar apenas `data_*_inicio` ou apenas `data_*_fim` faz o outro lado virar respectivamente "hoje" ou `01/01/1990`. Emite `UserWarning`.
+7. **Filtros parciais auto-completam:** informar apenas `data_*_inicio` ou apenas `data_*_fim` faz o outro lado virar respectivamente "hoje" ou `01/01/1990`. Emite `UserWarning`.
 
 8. **cposg do TJSP com `method='api'`** — o parse JSON nao esta implementado. Use `'html'`.
 
@@ -563,7 +563,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 11. **Aliases depreciados emitem `DeprecationWarning`** — sempre use o nome canonico (`pesquisa`, `data_julgamento_inicio`, `tamanho_pagina`, `classe`, `assunto`, `vara`, `numero_processo`, `relator`, `id_classe`). Tabela completa em `references/api.md`.
 
-12. **`RetryExhaustedError` em `HTTPScraper` `[unreleased]`:** familia eSAJ (TJAC/TJAL/TJAM/TJCE/TJMS/TJSP `cjsg`) e familia 1C-a (TJRN/TJRO/TJRR `cjsg`) — alem dos agregadores ComunicaCNJ, JusBR e Datajud — migraram para `HTTPScraper`. Quando esgota `max_retries` em 429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
+12. **`RetryExhaustedError` em `HTTPScraper`:** familia eSAJ (TJAC/TJAL/TJAM/TJCE/TJMS/TJSP `cjsg`) e familia 1C-a (TJRN/TJRO/TJRR `cjsg`) — alem dos agregadores ComunicaCNJ, JusBR e Datajud — migraram para `HTTPScraper`. Quando esgota `max_retries` em 429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
 
 13. **`auto_chunk=True` substitui workaround manual de iteracao por ano `[v0.3.0]`:** na familia eSAJ (TJSP/TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`, TJSP `cjpg`), janelas `data_julgamento_*` maiores que 366 dias agora sao automaticamente divididas em chunks e concatenadas com dedup. O `pd.concat([cjpg(...) for ano in range(...)])` antigo ja nao e necessario para esse caso. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`.
 

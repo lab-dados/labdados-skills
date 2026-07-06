@@ -9,7 +9,7 @@ Quatro fontes nacionais que cobrem multiplos tribunais a partir de um unico endp
 | **Datajud** | Listar/contar processos em qualquer tribunal (estaduais, federais, superiores, trabalho, eleitoral) por sigla ou por numero CNJ. Metadados sem texto. | Nenhuma (API key publica embutida) | Estavel desde v0.1.x |
 | **JusBR** | Consultar processo por CNJ em **qualquer tribunal** e **baixar texto das pecas** (`download_documents`). Para texto integral em processos da Justica Estadual ou Federal. | Obrigatoria (JWT do gov.br) | Estavel desde v0.1.x |
 | **ComunicaCNJ** | Coletar **comunicacoes processuais** publicadas pelos tribunais no PJe (DJe digital, intimacoes publicas). Util para acompanhar publicacoes em determinado tema sem percorrer Diarios Oficiais. | Nenhuma | `[v0.3.0+]` |
-| **PDPJ** | Consulta unificada via API DATALAKE do PDPJ (mesmo SSO do PJe). Substitui parcialmente JusBR e oferece endpoints granulares: existe, cpopg, documentos, movimentos, partes, pesquisa, contar, download_documents. | Obrigatoria (JWT do PDPJ via SSO PJe) | `[unreleased]` — instalar via `pip install git+https://github.com/jtrecenti/juscraper.git` |
+| **PDPJ** | Consulta unificada via API DATALAKE do PDPJ (mesmo SSO do PJe). Substitui parcialmente JusBR e oferece endpoints granulares: existe, cpopg, documentos, movimentos, partes, pesquisa, contar, download_documents. | Obrigatoria (JWT do PDPJ via SSO PJe) | Disponivel na release com `0bc0de5` |
 
 Comparativo de capacidade:
 
@@ -125,10 +125,10 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 ### Gotchas
 
 - **Tamanho de pagina:** default de `5000` (subiu em v0.3.0). Em caso de `HTTP 504`/`Timeout`, o client refaz com `size // 4` automaticamente (1 retry com `UserWarning`); valores proximos de 10000 sao instaveis. Por isso `paginas=None` num tribunal grande pode demorar.
-- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning` (`[v0.3.0]`); nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError` (`[unreleased]`). `assunto` aceita `int | str | list[int|str]`; `movimentos_codigo` aceita `int | str | list[int|str]`.
+- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning` (`[v0.3.0]`); nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError`. `assunto` aceita `int | str | list[int|str]`; `movimentos_codigo` aceita `int | str | list[int|str]`.
 - **CNJ com whitespace ou separadores** (vindos de CSV/Excel) sao limpos automaticamente antes do envio. `[v0.3.0]`
 - **Problemas de runtime** (CNJ invalido, tribunal nao mapeado, falha de API, JSON corrompido) emitem `warnings.warn(UserWarning)` alem do log — em Jupyter sem handler de logging, fica visivel. `[v0.3.0]`
-- **`RetryExhaustedError`**: `[unreleased]` o `DatajudScraper` agora herda de `HTTPScraper`; a forma de transporte central nao muda (504/timeout continua usando o retry especializado da `call_datajud_api`), mas algumas falhas podem propagar `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`. Para codigo defensivo, capturar ambas.
+- **`RetryExhaustedError`**: o `DatajudScraper` agora herda de `HTTPScraper`; a forma de transporte central nao muda (504/timeout continua usando o retry especializado da `call_datajud_api`), mas algumas falhas podem propagar `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`. Para codigo defensivo, capturar ambas.
 - **`data_inicio`/`data_fim` NAO sao aceitos** no Datajud — esses aliases mapeiam para `data_julgamento_*` em scrapers de jurisprudencia, e o Datajud filtra por **ajuizamento**, nao julgamento. Use `data_ajuizamento_inicio`/`_fim`. `extra="forbid"` faz quem usar o nome generico receber `TypeError` direto.
 
 ---
@@ -162,7 +162,7 @@ jusbr.auth_firefox()
 
 Onde obter o token: acessar https://www.jus.br, fazer login via gov.br, abrir DevTools > Network, capturar a requisicao para a API e copiar o campo `access_token` do header `Authorization: Bearer <token>`.
 
-Tokens JWT expiram. `[unreleased]` `auth(token)` valida explicitamente o claim `exp`: token expirado levanta `ValueError("Token JWT expirado.")`; token sem `exp` continua aceito. Se der erro de autenticacao, peca ao usuario um novo token.
+Tokens JWT expiram. `auth(token)` valida explicitamente o claim `exp`: token expirado levanta `ValueError("Token JWT expirado.")`; token sem `exp` continua aceito. Se der erro de autenticacao, peca ao usuario um novo token.
 
 ### `cpopg`
 
@@ -181,7 +181,7 @@ df_docs = jusbr.download_documents(
 )
 ```
 
-**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api`. `[unreleased]` O downloader e tolerante a disponibilidade parcial: baixa o que existir quando ha so texto ou so binario; quando ambos os links faltam, pula o documento.
+**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api`. O downloader e tolerante a disponibilidade parcial: baixa o que existir quando ha so texto ou so binario; quando ambos os links faltam, pula o documento.
 
 ### Workflow completo
 
@@ -199,8 +199,8 @@ print(docs[['numero_processo', 'descricao', 'texto']].head())
 
 ### Gotchas
 
-- **`RetryExhaustedError`**: `[unreleased]` o `JusbrScraper` agora herda de `HTTPScraper`. O contrato publico nao muda (os `fetch_*` internos capturam `RetryExhaustedError` e devolvem `None`, mantendo "erro -> None"). Mas se voce instrumentar codigo de baixo nivel para capturar excecoes do `download.py`, deve capturar `RetryExhaustedError` em vez de `requests.HTTPError` direto.
-- **Token expirado** `[unreleased]` vira `ValueError("Token JWT expirado.")` ja em `auth(token)` quando o claim `exp` existe; peca novo token ao usuario.
+- **`RetryExhaustedError`**: o `JusbrScraper` agora herda de `HTTPScraper`. O contrato publico nao muda (os `fetch_*` internos capturam `RetryExhaustedError` e devolvem `None`, mantendo "erro -> None"). Mas se voce instrumentar codigo de baixo nivel para capturar excecoes do `download.py`, deve capturar `RetryExhaustedError` em vez de `requests.HTTPError` direto.
+- **Token expirado** vira `ValueError("Token JWT expirado.")` ja em `auth(token)` quando o claim `exp` existe; peca novo token ao usuario.
 - **Listar por nome de parte / OAB:** nao e suportado pelo JusBR. Para isso, use o **PDPJ** abaixo.
 
 ---
@@ -242,15 +242,13 @@ df = cnj.listar_comunicacoes(
 
 - **Datas em dois formatos** (ISO e BR) sao aceitas e convertidas para ISO antes do schema. Intervalo invalido (fim antes de inicio) levanta `ValueError`.
 - **`pesquisa` e obrigatorio.** Faltar gera `ValidationError`.
-- **`RetryExhaustedError`** ao esgotar `max_retries` em 429/5xx persistente — `ComunicaCNJ` migrou para `HTTPScraper` em `[unreleased]`. Antes, 429/5xx propagava `requests.HTTPError`; agora propaga `juscraper.core.exceptions.RetryExhaustedError`. Codigo defensivo: capturar ambas. Este retry cobre 429/5xx; `pesquisa` ausente ou intervalo invalido continuam erros de input.
+- **`RetryExhaustedError`** ao esgotar `max_retries` em 429/5xx persistente — `ComunicaCNJ` migrou para `HTTPScraper`. Antes, 429/5xx propagava `requests.HTTPError`; agora propaga `juscraper.core.exceptions.RetryExhaustedError`. Codigo defensivo: capturar ambas. Este retry cobre 429/5xx; `pesquisa` ausente ou intervalo invalido continuam erros de input.
 
 ---
 
-## PDPJ — DATALAKE Processos `[unreleased]`
+## PDPJ — DATALAKE Processos
 
-Agregador novo `[unreleased]` para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Sucessor parcial do JusBR. **Usa o JWT do SSO do PJe — nao e o mesmo token do JusBR**, que consome o JWT do SSO do gov.br. Sao tokens distintos, embora o fluxo de captura via DevTools seja analogo. Oferece endpoints granulares e suporte a busca por nome de parte / OAB.
-
-**Instalacao obrigatoria via dev:** `pip install git+https://github.com/jtrecenti/juscraper.git`
+Agregador para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Sucessor parcial do JusBR. **Usa o JWT do SSO do PJe — nao e o mesmo token do JusBR**, que consome o JWT do SSO do gov.br. Sao tokens distintos, embora o fluxo de captura via DevTools seja analogo. Oferece endpoints granulares e suporte a busca por nome de parte / OAB.
 
 ### Construtor
 
@@ -359,7 +357,7 @@ texts = pdpj.download_documents(docs)
 
 | Criterio | JusBR | PDPJ |
 |---|---|---|
-| Status | Estavel | `[unreleased]` |
+| Status | Estavel | Disponivel na release com `0bc0de5` |
 | Auth | JWT gov.br | JWT PDPJ (mesmo SSO PJe) |
 | cpopg por CNJ | sim | sim |
 | Download de pecas | sim (texto) | sim (texto e/ou binario, granular) |
@@ -367,7 +365,7 @@ texts = pdpj.download_documents(docs)
 | Contagem rapida | nao | sim (`contar`) |
 | Endpoints granulares (`existe`/`movimentos`/`partes`) | nao | sim |
 
-Se ja esta implementado com JusBR, nao ha necessidade de migrar. Para casos novos com requisitos de busca por parte/OAB ou contagem pre-coleta, PDPJ e a opcao mais rica — assumindo que o usuario aceita instalar pela `main`.
+Se ja esta implementado com JusBR, nao ha necessidade de migrar. Para casos novos com requisitos de busca por parte/OAB ou contagem pre-coleta, PDPJ e a opcao mais rica — assumindo que o usuario tem a release atual do `juscraper` instalada.
 
 ### Gotchas
 
