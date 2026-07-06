@@ -125,7 +125,7 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 ### Gotchas
 
 - **Tamanho de pagina:** default de `5000` (subiu em v0.3.0). Em caso de `HTTP 504`/`Timeout`, o client refaz com `size // 4` automaticamente (1 retry com `UserWarning`); valores proximos de 10000 sao instaveis. Por isso `paginas=None` num tribunal grande pode demorar.
-- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning` (`[v0.3.0]`); nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError` (`[unreleased]`).
+- **Alias plural `assuntos`** (e `classes` em TJBA) e aceito com `DeprecationWarning` (`[v0.3.0]`); nome canonico singular e `assunto` (e `classe`). Passar plural + singular juntos -> `ValueError` (`[unreleased]`). `assunto` aceita `int | str | list[int|str]`; `movimentos_codigo` aceita `int | str | list[int|str]`.
 - **CNJ com whitespace ou separadores** (vindos de CSV/Excel) sao limpos automaticamente antes do envio. `[v0.3.0]`
 - **Problemas de runtime** (CNJ invalido, tribunal nao mapeado, falha de API, JSON corrompido) emitem `warnings.warn(UserWarning)` alem do log — em Jupyter sem handler de logging, fica visivel. `[v0.3.0]`
 - **`RetryExhaustedError`**: `[unreleased]` o `DatajudScraper` agora herda de `HTTPScraper`; a forma de transporte central nao muda (504/timeout continua usando o retry especializado da `call_datajud_api`), mas algumas falhas podem propagar `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`. Para codigo defensivo, capturar ambas.
@@ -162,7 +162,7 @@ jusbr.auth_firefox()
 
 Onde obter o token: acessar https://www.jus.br, fazer login via gov.br, abrir DevTools > Network, capturar a requisicao para a API e copiar o campo `access_token` do header `Authorization: Bearer <token>`.
 
-Tokens JWT expiram. Se der erro de autenticacao, peca ao usuario um novo token.
+Tokens JWT expiram. `[unreleased]` `auth(token)` valida explicitamente o claim `exp`: token expirado levanta `ValueError("Token JWT expirado.")`; token sem `exp` continua aceito. Se der erro de autenticacao, peca ao usuario um novo token.
 
 ### `cpopg`
 
@@ -170,7 +170,7 @@ Tokens JWT expiram. Se der erro de autenticacao, peca ao usuario um novo token.
 df = jusbr.cpopg(id_cnj='3005317-12.2025.8.06.0000')   # str ou list[str]
 ```
 
-**Retorna:** `pd.DataFrame` com colunas `processo_pesquisado`, `numeroProcesso`, `idCodexTribunal`, `detalhes` (dict com metadados completos), `status_consulta`.
+**Retorna:** `pd.DataFrame` com coluna canonica `processo`, alem de `numeroProcesso`, `idCodexTribunal`, `detalhes` (dict com metadados completos), `status_consulta`. Em linhas de fallback, `processo_pesquisado` pode aparecer como sinonimo historico, mas codigo novo deve usar `processo`.
 
 ### `download_documents`
 
@@ -181,7 +181,7 @@ df_docs = jusbr.download_documents(
 )
 ```
 
-**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api`.
+**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api`. `[unreleased]` O downloader e tolerante a disponibilidade parcial: baixa o que existir quando ha so texto ou so binario; quando ambos os links faltam, pula o documento.
 
 ### Workflow completo
 
@@ -200,7 +200,7 @@ print(docs[['numero_processo', 'descricao', 'texto']].head())
 ### Gotchas
 
 - **`RetryExhaustedError`**: `[unreleased]` o `JusbrScraper` agora herda de `HTTPScraper`. O contrato publico nao muda (os `fetch_*` internos capturam `RetryExhaustedError` e devolvem `None`, mantendo "erro -> None"). Mas se voce instrumentar codigo de baixo nivel para capturar excecoes do `download.py`, deve capturar `RetryExhaustedError` em vez de `requests.HTTPError` direto.
-- **Token expirado** vira erro 401 silencioso (sem retry); peca novo token ao usuario.
+- **Token expirado** `[unreleased]` vira `ValueError("Token JWT expirado.")` ja em `auth(token)` quando o claim `exp` existe; peca novo token ao usuario.
 - **Listar por nome de parte / OAB:** nao e suportado pelo JusBR. Para isso, use o **PDPJ** abaixo.
 
 ---
@@ -242,7 +242,7 @@ df = cnj.listar_comunicacoes(
 
 - **Datas em dois formatos** (ISO e BR) sao aceitas e convertidas para ISO antes do schema. Intervalo invalido (fim antes de inicio) levanta `ValueError`.
 - **`pesquisa` e obrigatorio.** Faltar gera `ValidationError`.
-- **`RetryExhaustedError`** ao esgotar `max_retries` em 429/5xx persistente — `ComunicaCNJ` migrou para `HTTPScraper` em `[unreleased]`. Antes, 429/5xx propagava `requests.HTTPError`; agora propaga `juscraper.core.exceptions.RetryExhaustedError`. Codigo defensivo: capturar ambas.
+- **`RetryExhaustedError`** ao esgotar `max_retries` em 429/5xx persistente — `ComunicaCNJ` migrou para `HTTPScraper` em `[unreleased]`. Antes, 429/5xx propagava `requests.HTTPError`; agora propaga `juscraper.core.exceptions.RetryExhaustedError`. Codigo defensivo: capturar ambas. Este retry cobre 429/5xx; `pesquisa` ausente ou intervalo invalido continuam erros de input.
 
 ---
 

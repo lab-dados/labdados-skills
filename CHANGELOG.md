@@ -4,7 +4,15 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
-## [1.7.1] — 2026-07-06
+## [1.8.0] — 2026-07-06
+
+Adicionado:
+
+- `juscraper`: sincroniza a skill com o snapshot upstream `0bc0de5` de 2026-07-03, incluindo TRF6 (`cpopg` via eproc/txtcaptcha), `download_pecas` em TRF1/TRF3/TRF5, `count_only=True` em `cjsg`/`cjpg` quando suportado e metodos eSAJ de descoberta de filtros (`listar_classes`, `listar_assuntos`, `listar_orgaos`, `listar_varas`).
+
+Alterado:
+
+- `juscraper`: atualiza a matriz de tribunais para 25 estaduais + 4 TRFs e revisa Datajud, JusBR, ComunicaCNJ e PDPJ com os filtros, validacoes e retornos atuais do upstream.
 
 Corrigido:
 

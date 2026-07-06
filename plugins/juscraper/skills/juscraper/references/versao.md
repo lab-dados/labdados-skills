@@ -4,17 +4,18 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.1.0** esta alinhada com:
+A skill **v1.2.0** esta alinhada com:
 
 - **juscraper v0.3.0** (PyPI, publicado em 2026-05-03)
-- **main HEAD em 2026-05-13** (commit `6c5703d`, 43 commits a frente de v0.3.0)
+- **main HEAD em 2026-07-03** (commit `0bc0de5`, snapshot local usado para esta atualizacao)
 
-Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
+Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`. Recursos descritos como `[unreleased]` existem no snapshot `0bc0de5`, mas ainda exigem instalacao pela branch `main` do GitHub se nao tiverem sido publicados no PyPI.
 
 ## Tabela de bumps
 
 | Skill | juscraper PyPI | main snapshot | Principais inclusoes |
 |---|---|---|---|
+| 1.2.0 | 0.3.0 (2026-05-03) | `0bc0de5` (2026-07-03) | +TRF6 (`cpopg` via eproc/txtcaptcha); `download_pecas`/`diretorio` em TRF1/TRF3/TRF5; `count_only=True` em eSAJ/TJSP; `listar_classes`/`listar_assuntos`/`listar_orgaos`/`listar_varas`; JusBR com `auth(exp)` e coluna `processo`; Datajud/ComunicaCNJ/PDPJ revisados; excecoes anti-bot (`BotChallengeBlockedError`, `TJAPSecurityCheckError`) |
 | 1.1.0 | 0.3.0 (2026-05-03) | `6c5703d` (2026-05-13) | +TJGO, +TJMG (`[v0.3.0+, requer extra tjmg]`), +TJRJ, +TRF1/TRF3/TRF5 (`[unreleased]`), +ComunicaCNJ, +PDPJ (`[unreleased]`); refactor `HTTPScraper` + `RetryExhaustedError`; singulares `classe`/`assunto`/`vara`/`tamanho_pagina`; pydantic `extra="forbid"` em todos os endpoints; auto-chunk eSAJ |
 | 1.0.0 | ~0.1.x — 0.2.x | — | 22 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS) + Datajud + JusBR |
 
@@ -94,5 +95,5 @@ grep -hoE "'(tj[a-z]+|trf[0-9]+|datajud|jusbr|pdpj|comunica_cnj)'" \
 ## Decisoes de escopo registradas
 
 - A skill cobre tanto o que esta em PyPI quanto o que esta unreleased na `main`, marcando inline as funcionalidades unreleased. O default permanece `pip install juscraper` (PyPI); features `[unreleased]` ganham a instrucao explicita de instalar pela `main`.
-- TRF1/TRF3/TRF5 e PDPJ atualmente exigem instalacao via `git+...`. Quando saírem na proxima release, as tags `[unreleased]` viram `[v0.X.Y+]`.
+- TRF1/TRF3/TRF5/TRF6 e PDPJ atualmente exigem instalacao via `git+...` quando o ambiente estiver apenas no PyPI v0.3.0. Quando sairem na proxima release, as tags `[unreleased]` viram `[v0.X.Y+]`.
 - A arvore de assuntos do TJSP (`references/assuntos-tjsp.json`) foi coletada em 2026-04-16 e nao precisa ser re-coletada a cada bump da skill — a Tabela Processual Unificada do CNJ muda lentamente. Re-coletar so quando aparecer divergencia reportada por usuario ou pesquisa que use codigo desconhecido.

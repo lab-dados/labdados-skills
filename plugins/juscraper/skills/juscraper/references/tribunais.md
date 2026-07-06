@@ -1,10 +1,10 @@
 # Tribunais — Matriz de Capacidades e Parametros
 
-Esta reference cobre os **28 tribunais com scraper direto** (25 estaduais + 3 federais). Para Datajud, JusBR, ComunicaCNJ e PDPJ, veja `references/agregadores.md`.
+Esta reference cobre os **29 tribunais com scraper direto** (25 estaduais + 4 federais). Para Datajud, JusBR, ComunicaCNJ e PDPJ, veja `references/agregadores.md`.
 
 ## Matriz de capacidades
 
-### Tribunais com scraper direto (28)
+### Tribunais com scraper direto (29)
 
 | Tribunal | cjsg | cjpg | cpopg | cposg | Plataforma | Tag |
 |----------|:----:|:----:|:-----:|:-----:|------------|---|
@@ -36,6 +36,7 @@ Esta reference cobre os **28 tribunais com scraper direto** (25 estaduais + 3 fe
 | **TRF1** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
 | **TRF3** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
 | **TRF5** | - | - | sim | - | PJe ConsultaPublica | `[unreleased]` |
+| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | `[unreleased]` |
 
 **Legenda:** `sim` = implementado | `-` = nao implementado
 
@@ -64,7 +65,7 @@ Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 
 Os antigos continuam funcionando com `DeprecationWarning` por pelo menos um minor release. Passar canonico + alias simultaneamente -> `ValueError`.
 
-**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]` `[unreleased]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`.
+**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]` `[unreleased]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`. Para descobrir IDs reais, use `listar_classes`, `listar_assuntos`, `listar_orgaos` e, no TJSP `cjpg`, `listar_varas`; todos retornam `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
 **BREAKING — colunas renomeadas em DataFrames `[v0.3.0]`:**
 
@@ -132,7 +133,7 @@ scraper.cjsg(
 
 **Auto-chunk para janelas longas `[v0.3.0]`:** janelas `data_julgamento_*` que excedem 366 dias sao automaticamente divididas em chunks e concatenadas (com dedup) por `auto_chunk=True` (default). Falhas em janelas individuais viram `UserWarning` e o DataFrame retorna parcial. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`. Veja `references/tjsp.md` para detalhes.
 
-**Notas TJSP:** extras em relacao aos demais eSAJ — `comarca`, `tipo_decisao`, `baixar_sg`; `cjsg` aceita `pesquisa=""` `[unreleased]` para buscar so por filtros. Ver `references/tjsp.md`.
+**Notas TJSP:** extras em relacao aos demais eSAJ — `comarca`, `tipo_decisao`, `baixar_sg`; `cjsg` aceita `pesquisa=""` `[unreleased]` para buscar so por filtros; `cjsg` e `cjpg` aceitam `count_only=True` `[unreleased]` para estimar volume antes da coleta. Ver `references/tjsp.md`.
 
 **Guard de tamanho de `pesquisa` em TJSP `[v0.3.0]`:** mais de 120 caracteres levanta `QueryTooLongError` (subclasse de `ValueError`) antes do HTTP. Veja `references/tjsp.md`.
 
@@ -295,7 +296,7 @@ tjap.cjsg(
 )
 ```
 
-**Gotcha:** backend Tucujuris **nao expoe filtro de data** — `test_release_date_filter.py` marca o TJAP como `xfail` estrito por limitacao server-side.
+**Gotchas:** backend Tucujuris **nao expoe filtro de data** — `test_release_date_filter.py` marca o TJAP como `xfail` estrito por limitacao server-side. `[unreleased]` O site pode responder com validacao server-side do Cloudflare Turnstile; nesse caso o scraper levanta `TJAPSecurityCheckError`. Trate como bloqueio ambiental/anti-bot, nao como erro de filtros do usuario.
 
 ### TJPB
 
@@ -400,6 +401,8 @@ tjrr.cjsg(
 
 `[v0.3.0]` JSF auto-gerado: descoberta dinamica dos nomes de campos (que mudam quando o tribunal reordena componentes do form). Antes, o scraper retornava zero resultados silenciosamente apos renumeracao do tribunal.
 
+`[unreleased]` `relator` aceita lista de nomes regimentais. A paginacao da tabela principal de acordaos foi corrigida, mas decisoes monocraticas ficam numa segunda tabela com paginador proprio e ainda retornam so a primeira pagina.
+
 ### TJSC
 
 ```python
@@ -476,11 +479,11 @@ tjrj.cjsg(
 
 **Construtor:** `(sleep_time=1.0)`.
 
-**Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
+**Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o backend usa o ano corrente, nao "todos os anos". `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
 
 ### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[unreleased]`
 
-Primeiros tribunais federais cobertos. Acessam a `ConsultaPublica/listView.seam` em:
+Acessam a `ConsultaPublica/listView.seam` em:
 
 - TRF1: `https://pje1g-consultapublica.trf1.jus.br/consultapublica/`
 - TRF3: `https://pje1g.trf3.jus.br/pje/`
@@ -489,23 +492,38 @@ Primeiros tribunais federais cobertos. Acessam a `ConsultaPublica/listView.seam`
 ```python
 trf1 = jus.scraper('trf1')   # ou 'trf3', 'trf5'
 df = trf1.cpopg(
-    id_cnj='1003063-27.2023.4.01.3304'  # str ou list[str]
+    id_cnj='1003063-27.2023.4.01.3304',  # str ou list[str]
+    download_pecas=True,
+    diretorio='dados/trf1_pecas'
 )
 ```
 
 **Construtor:** `(verbose=0, download_path=None, sleep_time=1.0)`.
 
-**Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `assunto`, `data_distribuicao`, `orgao_julgador`, `jurisdicao`, `polo_ativo`, `polo_passivo`, `movimentacoes`, `documentos`. Processos nao encontrados no portal publico devolvem linha so com `id_cnj`.
+**Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `assunto`, `data_distribuicao`, `orgao_julgador`, `jurisdicao`, `endereco_orgao`, `polo_ativo`, `polo_passivo`, `movimentacoes`, `documentos`. Processos nao encontrados no portal publico devolvem linha so com `id_cnj`. Com `download_pecas=True`, o scraper baixa cada peca para `<diretorio>/<cnj>/<id_processo_doc>.html` e adiciona a coluna `pecas` com a lista de caminhos por processo.
 
-**Paginacao automatica de movimentacoes `[v0.3.0]`:** PJe pagina a tabela de movs com Richfaces inslider (15 linhas/pagina). O scraper detecta o slider e itera as paginas restantes via POST AJAX. Validado: `1003063-27.2023.4.01.3304` (TRF1) sobe de 15 para 55 movs; `0814776-71.2022.4.05.8100` (TRF5) de 15 para 499 movs.
+**Paginacao automatica de movimentacoes e documentos `[unreleased]`:** PJe pagina as tabelas com Richfaces inslider (15 linhas/pagina). O scraper detecta o slider e itera as paginas restantes via POST AJAX. Isso vale tanto para `movimentacoes` quanto para `documentos`, e garante que `download_pecas=True` nao baixe apenas as primeiras 15 pecas.
 
 **Especializacoes por tribunal:**
 
-- **TRF3** envia `classeJudicial`+`sgbClasseJudicial_selection` (autocomplete) e campos `dataAutuacaoDecoration`. Ultrapassa filtro Akamai (`ak_bmsc`) com headers browser-like.
-- **TRF5** envia `classeProcessualProcessoHidden` (popup picker), omite as datas, ignora reCAPTCHA renderizado (`if (false)` no `executarReCaptcha` — dead code).
-- **TRF1** segue o mesmo padrao do TRF3 (autocomplete + `dataAutuacaoDecoration`); divergencia em `BASE_URL` apenas.
+- **TRF3** envia `classeJudicial`+`sgbClasseJudicial_selection` (autocomplete) e campos `dataAutuacaoDecoration`. Pode ser bloqueado por Akamai; nesse caso levanta `BotChallengeBlockedError`.
+- **TRF5** envia `classeProcessualProcessoHidden` (popup picker), omite as datas, ignora reCAPTCHA renderizado (`if (false)` no `executarReCaptcha` — dead code). Tambem pode sofrer `BotChallengeBlockedError`.
+- **TRF1** segue o mesmo padrao do TRF3 (autocomplete + `dataAutuacaoDecoration`); divergencia em `BASE_URL` apenas. Tambem pode sofrer `BotChallengeBlockedError`.
 
-**Gotcha:** cada tribunal tem implementacao **completamente independente** em `courts/{trf1,trf3,trf5}/`. Nenhuma base compartilhada — duplicacao consciente para evitar refator em cascata quando algum dos TRFs trocar de sistema.
+**Gotcha:** cada tribunal tem implementacao independente em `courts/{trf1,trf3,trf5}/`, mas compartilha a base `_trf` para o contrato atual de `cpopg`/download de pecas. Bloqueios Akamai sao ambientais/anti-bot; reduza ritmo, tente outro horario/IP, ou use Datajud quando bastarem metadados.
+
+### TRF6 — `cpopg` via eproc/SJMG `[unreleased]`
+
+O TRF6 acessa o eproc de 1º grau da Seção Judiciaria de Minas Gerais (`https://eproc1g.trf6.jus.br/eproc/`). O formulario exige captcha textual em imagem PNG embutida no HTML e validada server-side; o scraper resolve via `txtcaptcha` e refaz o GET do form a cada tentativa porque o captcha e vinculado ao cookie `PHPSESSID`.
+
+```python
+trf6 = jus.scraper('trf6', max_captcha_attempts=3)
+df = trf6.cpopg(id_cnj='1000149-71.2024.4.06.3800')
+```
+
+**Construtor:** `(verbose=0, download_path=None, sleep_time=1.0, max_captcha_attempts=3)`.
+
+**Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. Processos nao encontrados devolvem linha so com `id_cnj`. **Nao documentar `download_pecas` para TRF6** — esse parametro e dos TRFs PJe acima.
 
 **Instalacao:** ainda nao disponivel em PyPI. Requer `pip install git+https://github.com/jtrecenti/juscraper.git`.
 

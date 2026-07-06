@@ -1,17 +1,17 @@
 ---
 name: juscraper
-description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg), coletar comunicacoes/DJe digital ou consultas cross-tribunal via Datajud, JusBR, ComunicaCNJ e PDPJ. Cobre 25 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ), 3 tribunais regionais federais (TRF1, TRF3, TRF5) e 4 agregadores nacionais (Datajud, JusBR, ComunicaCNJ, PDPJ). Use esta skill sempre que o usuario mencionar tribunal brasileiro, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes judiciais, processos judiciais, eSAJ, PJe, poder judiciario, justica federal, comunicacoes processuais, DJe, intimacoes publicas, ou qualquer tarefa envolvendo coleta de dados de tribunais brasileiros — mesmo que nao mencione explicitamente "juscraper".
+description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg), coletar comunicacoes/DJe digital ou consultas cross-tribunal via Datajud, JusBR, ComunicaCNJ e PDPJ. Cobre 25 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ), 4 tribunais regionais federais (TRF1, TRF3, TRF5, TRF6) e 4 agregadores nacionais (Datajud, JusBR, ComunicaCNJ, PDPJ). Use esta skill sempre que o usuario mencionar tribunal brasileiro, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes judiciais, processos judiciais, eSAJ, PJe, poder judiciario, justica federal, comunicacoes processuais, DJe, intimacoes publicas, ou qualquer tarefa envolvendo coleta de dados de tribunais brasileiros — mesmo que nao mencione explicitamente "juscraper".
 ---
 
 # JusScraper Skill
 
 juscraper e uma biblioteca Python para raspagem de dados do poder judiciario brasileiro.
-Cobre **25 tribunais estaduais**, **3 tribunais regionais federais** (TRF1, TRF3, TRF5) e
+Cobre **25 tribunais estaduais**, **4 tribunais regionais federais** (TRF1, TRF3, TRF5, TRF6) e
 **4 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ e PDPJ), permitindo buscar
 jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
 
-> **Atualizada para juscraper v0.3.0 (PyPI) e main HEAD em 2026-05-13.**
-> Recursos marcados `[unreleased]` (TRF1/TRF3/TRF5, PDPJ, alguns refactors)
+> **Atualizada para juscraper v0.3.0 (PyPI) e main HEAD `0bc0de5` de 2026-07-03.**
+> Recursos marcados `[unreleased]` (TRF1/TRF3/TRF5/TRF6, PDPJ, alguns refactors)
 > exigem instalacao via `pip install git+https://github.com/jtrecenti/juscraper.git`.
 > Recursos marcados `[v0.3.0+]` exigem `pip install juscraper>=0.3.0`. Ver
 > `references/versao.md` para o changelog skill ↔ biblioteca.
@@ -34,14 +34,14 @@ Verifique se `juscraper` esta instalado:
 |---|---|
 | Tudo que esta em PyPI (default, recomendado) | `pip install juscraper` ou `uv add juscraper` |
 | TJMG (captcha automatico) | `pip install 'juscraper[tjmg]'` |
-| TRF1, TRF3, TRF5 ou PDPJ (atualmente `[unreleased]`) | `pip install git+https://github.com/jtrecenti/juscraper.git` |
+| TRF1, TRF3, TRF5, TRF6 ou PDPJ (atualmente `[unreleased]`) | `pip install git+https://github.com/jtrecenti/juscraper.git` |
 
 Se a tarefa envolve algum recurso `[unreleased]` (TRFs federais, PDPJ, alguns
-refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
+refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje. Para TRF6, o captcha textual exige o extra `txtcaptcha` disponivel nessa instalacao de desenvolvimento.
 
 ### 2. Autenticacao (condicional)
 
-- **Todos os 25 tribunais estaduais e 3 TRFs federais:** Nenhuma autenticacao necessaria.
+- **Todos os 25 tribunais estaduais e 4 TRFs federais:** Nenhuma autenticacao necessaria. TRF6 tem captcha textual validado server-side, mas o scraper resolve via `txtcaptcha`.
 - **Datajud:** Tem API key publica embutida. Funciona sem configuracao.
 - **ComunicaCNJ:** API publica, sem autenticacao.
 - **JusBR:** Autenticacao obrigatoria (sem token, qualquer chamada falha com RuntimeError).
@@ -66,17 +66,17 @@ refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
 | Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais |
 | Buscar jurisprudencia (1o grau) por texto ou CNJ | `cjpg(pesquisa=...)` ou `cjpg(id_processo=cnj)` | TJSP, TJES, TJTO |
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP (direto), JusBR (qualquer tribunal), PDPJ `[unreleased]` |
-| Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` | TRF1, TRF3, TRF5 `[unreleased]` |
+| Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` | TRF1, TRF3, TRF5, TRF6 `[unreleased]` |
 | Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP |
 | Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
-| Baixar texto de documentos/pecas | `download_documents()` | JusBR; PDPJ `[unreleased]` |
+| Baixar texto de documentos/pecas | `download_documents()`; `cpopg(download_pecas=True, diretorio=...)` | JusBR; PDPJ `[unreleased]`; TRF1/TRF3/TRF5 `[unreleased]` |
 | Coletar comunicacoes/intimacoes publicadas no DJe | `listar_comunicacoes()` | ComunicaCNJ `[v0.3.0+]` |
 | Busca por nome de parte / OAB | `pesquisa()` | PDPJ `[unreleased]` |
 
 ### Passo 2: Qual tribunal?
 
 - Se o usuario especificou um **tribunal estadual** e ele esta entre os 25 (incluindo agora **TJGO**, **TJMG** e **TJRJ** `[v0.3.0+]`) → use o scraper direto.
-- Se o usuario especificou um **tribunal federal** (TRF1, TRF3 ou TRF5) → use o scraper direto `[unreleased]` para `cpopg` ou o Datajud para metadados.
+- Se o usuario especificou um **tribunal federal** (TRF1, TRF3, TRF5 ou TRF6) → use o scraper direto `[unreleased]` para `cpopg` ou o Datajud para metadados. Para baixar pecas junto com `cpopg`, isso existe em TRF1/TRF3/TRF5 (`download_pecas=True`, `diretorio=...`), nao em TRF6.
 - Se o tribunal estadual nao tem scraper direto (TJMA, TJSE — captcha server-side) → use **Datajud** para metadados ou **JusBR**/**PDPJ** para consultar por CNJ e baixar documentos.
 - Para jurisprudencia sem tribunal especificado → TJSP e o maior e mais completo.
 - Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam `cjpg`; no TJSP, `cjpg(id_processo=cnj)` busca pelo numero CNJ do processo, nao por ID interno do eSAJ.
@@ -157,13 +157,7 @@ assunto** sobre busca por palavra-chave textual. Justificativa:
 | Busca textual | Conceito sem codigo de assunto; refinamento dentro de frame ja filtrado | termos tecnicos, nomes de leis, citacao de precedente |
 | Combinacao (assunto + texto) | Recomendado — filtrar por assunto e refinar por texto | `assunto=<codigo> AND pesquisa="fornecimento medicamento"` |
 
-**Onde encontrar codigos de assunto**: TJSP tem lista extraida da
-pagina de busca avancada em `references/assuntos-tjsp.md` (json:
-`assuntos-tjsp.json`). Para outros tribunais, a **Tabela Processual
-Unificada do CNJ** (Resolucao 46/2007) define os codigos nacionais
-de assunto que a maioria dos tribunais adota. Conforme references
-especificas de outros tribunais forem validadas, mais arquivos
-`assuntos-<tribunal>.md` poderao aparecer aqui.
+**Onde encontrar codigos de assunto**: na familia eSAJ, prefira descobrir IDs pelo proprio scraper antes de adivinhar: `listar_classes(grau="2")`, `listar_assuntos(grau="2")` e `listar_orgaos(grau="2")` listam filtros de `cjsg`; no TJSP, `listar_varas(grau="1")` lista varas de `cjpg`. Esses metodos retornam arvore com `id`, `nome`, `id_pai`, `nivel`, `selecionavel` e `caminho`. TJSP tambem tem lista extraida da pagina de busca avancada em `references/assuntos-tjsp.md` (json: `assuntos-tjsp.json`). Para outros tribunais, a **Tabela Processual Unificada do CNJ** (Resolucao 46/2007) define os codigos nacionais de assunto que a maioria dos tribunais adota. Conforme references especificas de outros tribunais forem validadas, mais arquivos `assuntos-<tribunal>.md` poderao aparecer aqui.
 
 ## LGPD e etica — coletar vs. publicar
 
@@ -224,6 +218,7 @@ Por isso:
 - `paginas=None` baixa todas as paginas — para buscas amplas como "dano moral"
   isso pode significar milhares de paginas. Sempre comece com um range pequeno
   (ex: `range(1, 4)`) e so amplie se o usuario pedir explicitamente.
+- Antes de uma raspagem ampla em eSAJ/TJSP, use `count_only=True` quando suportado (`cjsg` em TJAC/TJAL/TJAM/TJCE/TJMS/TJSP e `cjpg` em TJSP). Ele retorna um `int`, ignora `paginas` com warning e, com `auto_chunk=True`, soma resultados brutos por janela — pode divergir de `len(df)` por deduplicacao.
 - O juscraper avisa quando uma busca retorna muitos resultados. Mostre essa
   contagem ao usuario e peca confirmacao antes de prosseguir.
 
@@ -255,12 +250,12 @@ controle granular sobre arquivos brutos. O metodo sem sufixo combina ambos.
 
 ## Quando usar scrapers diretos vs agregadores
 
-| Criterio | Scrapers diretos (28 tribunais) | Datajud | JusBR | ComunicaCNJ `[v0.3.0+]` | PDPJ `[unreleased]` |
+| Criterio | Scrapers diretos (29 tribunais) | Datajud | JusBR | ComunicaCNJ `[v0.3.0+]` | PDPJ `[unreleased]` |
 |---|---|---|---|---|---|
 | Jurisprudencia (`cjsg`) | Sim — principal uso | Nao | Nao | Nao | Nao |
-| Consulta por CNJ | TJSP (cpopg/cposg), TRF1/TRF3/TRF5 (cpopg) | Sim (`listar_processos`) | Sim (`cpopg`) | Nao | Sim (`cpopg`) |
+| Consulta por CNJ | TJSP (cpopg/cposg), TRF1/TRF3/TRF5/TRF6 (cpopg) | Sim (`listar_processos`) | Sim (`cpopg`) | Nao | Sim (`cpopg`) |
 | Cross-tribunal | 1 tribunal por vez | Sim (detecta tribunal pelo CNJ) | Sim | Sim (filtro `siglaTribunal`) | Sim (filtro `tribunal`) |
-| Documentos/pecas | Nao | Nao | Sim (texto) | Nao | Sim (texto e/ou binario) |
+| Documentos/pecas | TRF1/TRF3/TRF5 via `cpopg(download_pecas=True)` | Nao | Sim (texto) | Nao | Sim (texto e/ou binario) |
 | Busca por nome de parte / OAB | Nao | Nao | Nao | Nao | Sim (`pesquisa`) |
 | Comunicacoes / DJe | Nao | Nao | Nao | Sim (`listar_comunicacoes`) | Nao |
 | Contagem rapida | Nao | Sim (`contar_processos`) | Nao | Sim (campo `count`) | Sim (`contar`) |
