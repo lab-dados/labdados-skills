@@ -34,7 +34,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 | Skill | O que faz | Trigger tipico |
 |-------|-----------|----------------|
-| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia |
+| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 3 TRFs + Datajud, JusBR, ComunicaCNJ e PDPJ) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, cjpg por CNJ |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |

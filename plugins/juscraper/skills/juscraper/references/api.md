@@ -255,7 +255,7 @@ df = tjsp.cjpg(
     classe=None,                            # singular canonico [unreleased] (era 'classes')
     assunto=None,                           # singular canonico [unreleased] (era 'assuntos')
     vara=None,                              # singular canonico [unreleased] (era 'varas')
-    id_processo=None,
+    id_processo=None,                       # CNJ do processo, com ou sem mascara; normalizado via clean_cnj()
     data_julgamento_inicio=None,
     data_julgamento_fim=None,
     paginas=range(1, 4),
@@ -264,6 +264,13 @@ df = tjsp.cjpg(
 ```
 
 `[unreleased]` Plurais (`classes`/`assuntos`/`varas`) aceitos com `DeprecationWarning`. Plural + singular juntos -> `ValueError`. `[v0.3.0]` Guard `QueryTooLongError` para `pesquisa` >120 caracteres.
+
+```python
+cnj = '1011654-78.2024.8.26.0566'
+df = tjsp.cjpg(id_processo=cnj, paginas=range(1, 2))
+```
+
+`id_processo` em `cjpg` e o numero CNJ do processo, com ou sem mascara, normalizado internamente por `clean_cnj()`. Nao e o `cd_processo` nem outro identificador interno do eSAJ. Use `cjpg(id_processo=cnj)` quando a pergunta for por jurisprudencia ou decisoes de 1o grau de um processo especifico; use `cpopg(id_cnj=cnj)` quando a pergunta for por dados cadastrais ou andamentos do processo.
 
 **Retorna:** `pandas.DataFrame` com colunas: `cd_processo`, `id_processo`, `classe`, `assunto`, `magistrado`, `comarca`, `foro`, `vara`, `data_disponibilizacao`, `decisao`.
 

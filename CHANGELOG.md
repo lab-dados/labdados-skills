@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.7.1] — 2026-07-06
+
+Corrigido:
+
+- `juscraper`: esclarece que `tjsp.cjpg(id_processo=...)` recebe o numero CNJ do processo, com ou sem mascara, e cobre busca de jurisprudencia de 1o grau por CNJ alem da busca textual. Isso evita confundir `id_processo` com ID interno do eSAJ ou sugerir `cpopg` quando a tarefa pede jurisprudencia ou decisoes.
+
 ## [1.7.0] — 2026-06-05
 
 Removido:

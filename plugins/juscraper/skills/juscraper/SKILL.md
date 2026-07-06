@@ -64,7 +64,7 @@ refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
 | Preciso de... | Metodo | Scrapers disponiveis |
 |---|---|---|
 | Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais |
-| Buscar jurisprudencia (1o grau) | `cjpg(pesquisa)` | TJSP, TJES, TJTO |
+| Buscar jurisprudencia (1o grau) por texto ou CNJ | `cjpg(pesquisa=...)` ou `cjpg(id_processo=cnj)` | TJSP, TJES, TJTO |
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP (direto), JusBR (qualquer tribunal), PDPJ `[unreleased]` |
 | Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` | TRF1, TRF3, TRF5 `[unreleased]` |
 | Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP |
@@ -79,7 +79,7 @@ refactors do `HTTPScraper`), instalar pela `main` e a unica opcao hoje.
 - Se o usuario especificou um **tribunal federal** (TRF1, TRF3 ou TRF5) → use o scraper direto `[unreleased]` para `cpopg` ou o Datajud para metadados.
 - Se o tribunal estadual nao tem scraper direto (TJMA, TJSE — captcha server-side) → use **Datajud** para metadados ou **JusBR**/**PDPJ** para consultar por CNJ e baixar documentos.
 - Para jurisprudencia sem tribunal especificado → TJSP e o maior e mais completo.
-- Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam `cjpg`.
+- Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam `cjpg`; no TJSP, `cjpg(id_processo=cnj)` busca pelo numero CNJ do processo, nao por ID interno do eSAJ.
 - Para buscar por nome de parte ou numero OAB → use **PDPJ** `[unreleased]` (`pdpj.pesquisa(nome_parte=..., oab_representante=...)`).
 - Para acompanhar publicacoes no DJe sobre um tema → use **ComunicaCNJ** `[v0.3.0+]`.
 - Consulte `references/tribunais.md` (tribunais) e `references/agregadores.md` (agregadores) para a matriz completa de capacidades e parametros.

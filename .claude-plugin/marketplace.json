@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e producao de videos explicativos. As skills institucionais do LabDados (gestao do projeto, atas, relatorios e prestacao de contas) ficam no marketplace interno privado lab-dados/labdados-skills-interno.",
-    "version": "1.7.0"
+    "version": "1.7.1"
   },
   "plugins": [
     {
       "name": "juscraper",
       "source": "./plugins/juscraper",
       "description": "Raspar dados judiciais brasileiros (28 tribunais: 25 estaduais + 3 TRFs federais; 4 agregadores nacionais: Datajud, JusBR, ComunicaCNJ, PDPJ) via biblioteca juscraper.",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": { "name": "lab-dados" },
       "keywords": ["scraping", "tribunais", "cnj", "jurisprudencia", "direito", "brasil", "trf", "pdpj", "comunica-cnj", "djen"],
       "category": "data-collection",

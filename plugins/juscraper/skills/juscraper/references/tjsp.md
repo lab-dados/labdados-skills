@@ -50,13 +50,19 @@ tjsp.cjpg(
     classe=None,         # int | str | list[int|str] — singular canonico [unreleased] (era `classes`)
     assunto=None,        # int | str | list[int|str] — singular canonico [unreleased] (era `assuntos`)
     vara=None,           # str | list[str] — singular canonico [unreleased] (era `varas`)
-    id_processo=None,
+    id_processo=None,    # CNJ do processo, com ou sem mascara; normalizado via clean_cnj()
     data_julgamento_inicio=None, data_julgamento_fim=None,
     auto_chunk=True      # [v0.3.0] divide janela >366 dias automaticamente
 )
 ```
 
 `[unreleased]` Plurais (`classes`/`assuntos`/`varas`) ainda aceitos com `DeprecationWarning`. Passar plural + singular juntos -> `ValueError`.
+
+```python
+df = tjsp.cjpg(id_processo='1011654-78.2024.8.26.0566', paginas=range(1, 2))
+```
+
+`id_processo` aqui significa numero CNJ do processo, nao ID interno do eSAJ. Para jurisprudencia ou decisoes de 1o grau de um processo especifico, use `cjpg(id_processo=cnj)`; para dados cadastrais e andamento processual, use `cpopg(id_cnj=cnj)`.
 
 ### `cjsg` — extras em relacao ao eSAJ padrao
 
