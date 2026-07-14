@@ -4,6 +4,13 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.7.1] — 2026-07-14
+
+Corrigido:
+
+- `dataframeit` — coloca a descricao longa do frontmatter entre aspas para que o parser YAML do Claude Code preserve `name` e `description`; antes, o `:` na prosa invalidava todo o frontmatter e impedia a descoberta da skill.
+- A validacao do CI agora executa `claude plugin validate` em cada plugin e bloqueia frontmatter que o runtime descartaria, em vez de verificar apenas a existencia de `SKILL.md`.
+
 ## [1.7.0] — 2026-06-05
 
 Removido:
