@@ -71,7 +71,7 @@ Para estimar volume antes de baixar sentencas, use `count_only=True`:
 n = tjsp.cjpg(pesquisa='fornecimento medicamento', assunto=10070, count_only=True)
 ```
 
-Retorna `int`; `paginas` e ignorado com `UserWarning`. Com `auto_chunk=True`, janelas longas sao somadas sem dedup por `(id_processo, data_disponibilizacao)`, entao a contagem pode divergir de `len(tjsp.cjpg(...))`.
+Retorna `int`; `paginas` e ignorado com `UserWarning`. Com `auto_chunk=True`, janelas longas sao somadas sem dedup por `id_processo`, entao a contagem pode divergir de `len(tjsp.cjpg(...))`.
 
 ### `cjsg` — extras em relacao ao eSAJ padrao
 
@@ -142,9 +142,12 @@ raspagens do primeiro grau:
   ano in range(...)])` continua funcionando — util para ter controle
   granular sobre dedup, retry por chunk, ou progress reporting.
 
-  **Dedup interno usa `(id_processo, data_disponibilizacao)`** — nao
-  apenas `id_processo`, porque um mesmo processo pode ter mais de uma
-  sentenca publicada em datas distintas.
+  **Dedup interno do `cjpg` usa so `id_processo`** (fica a primeira
+  ocorrencia). Um processo com duas sentencas publicadas em janelas
+  diferentes perde uma delas no DataFrame final. Se o estudo precisa de
+  todas as sentencas de cada processo, use `auto_chunk=False` com o
+  workaround manual por ano acima e deduplique voce mesmo por
+  `(id_processo, data_disponibilizacao)`.
 
 - **Campo `pesquisa` ≤ 120 caracteres — `QueryTooLongError` `[v0.3.0]`.**
   O backend do eSAJ trunca strings com mais de 120 chars silenciosamente.

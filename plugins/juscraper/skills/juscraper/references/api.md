@@ -25,8 +25,7 @@ scraper = jus.scraper(sigla, **kwargs)
 
 | Categoria | Siglas |
 |---|---|
-| Estaduais (22 estaveis) | `tjac`, `tjal`, `tjam`, `tjap`, `tjba`, `tjce`, `tjdft`, `tjes`, `tjms`, `tjmt`, `tjpa`, `tjpb`, `tjpe`, `tjpi`, `tjpr`, `tjrn`, `tjro`, `tjrr`, `tjrs`, `tjsc`, `tjsp`, `tjto` |
-| Estaduais (3 novos `[v0.3.0+]`) | `tjgo`, `tjmg` (requer `pip install 'juscraper[tjmg]'`), `tjrj` |
+| Estaduais (25) | `tjac`, `tjal`, `tjam`, `tjap`, `tjba`, `tjce`, `tjdft`, `tjes`, `tjms`, `tjmt`, `tjpa`, `tjpb`, `tjpe`, `tjpi`, `tjpr`, `tjrn`, `tjro`, `tjrr`, `tjrs`, `tjsc`, `tjsp`, `tjto`, `tjgo`, `tjmg` (requer `txtcaptcha`, via `pip install 'juscraper[tjmg]'`), `tjrj` |
 | Federais `[v0.4.0+]` | `trf1`, `trf3`, `trf5`, `trf6` (TRF6 requer `txtcaptcha`) |
 | Superior `[v0.4.0+]` | `stf` (busca de jurisprudencia; requer extra `stf` ou `waf_token`) |
 | Agregadores estaveis | `datajud`, `jusbr`, `comunica_cnj` (`[v0.3.0+]`) |
@@ -58,7 +57,7 @@ scraper = jus.scraper('tjac',   # ou tjal, tjam, tjce, tjms
 )
 ```
 
-### TJGO, TJMG, TJRJ `[v0.3.0+]`
+### TJGO, TJMG, TJRJ
 
 ```python
 tjgo = jus.scraper('tjgo')   # sleep_time=1.0 default

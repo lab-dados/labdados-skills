@@ -129,7 +129,7 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 - **CNJ com whitespace ou separadores** (vindos de CSV/Excel) sao limpos automaticamente antes do envio. `[v0.3.0]`
 - **Problemas de runtime** (CNJ invalido, tribunal nao mapeado, falha de API, JSON corrompido) emitem `warnings.warn(UserWarning)` alem do log — em Jupyter sem handler de logging, fica visivel. `[v0.3.0]`
 - **Paginacao por cursor** `[v0.4.0+]`: `paginas=range(3, 6)` devolve as paginas 3 a 5 (o scraper percorre o prefixo pelo cursor `search_after` e descarta o que nao foi pedido); antes da 0.4.0 devolvia na pratica as paginas 1 a 3. `paginas=[3, 5]` vira `range(3, 6)`. `paginas=[]`, `0`, negativos e `range` descendente levantam `ValueError` antes de qualquer requisicao.
-- **`RetryExhaustedError`** `[v0.4.0+]`: o `DatajudScraper` agora herda de `HTTPScraper`; a forma de transporte central nao muda (504/timeout continua usando o retry especializado da `call_datajud_api`), mas algumas falhas podem propagar `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`. Para codigo defensivo, capturar ambas.
+- **Sem `RetryExhaustedError`**: o `DatajudScraper` herda de `HTTPScraper` `[v0.4.0+]` so para sessao e headers. As requisicoes passam pela `call_datajud_api`, que tem retry proprio (504/timeout refaz uma vez com `size // 4`) e, quando a falha persiste, devolve `None` e emite `UserWarning` em vez de levantar excecao.
 - **`data_inicio`/`data_fim` NAO sao aceitos** no Datajud — esses aliases mapeiam para `data_julgamento_*` em scrapers de jurisprudencia, e o Datajud filtra por **ajuizamento**, nao julgamento. Use `data_ajuizamento_inicio`/`_fim`. `extra="forbid"` faz quem usar o nome generico receber `TypeError` direto.
 
 ---
@@ -277,9 +277,9 @@ pdpj.auth(token='eyJhbGciOiJSUzI1NiIs...')
 
 O token e um JWT emitido pelo SSO do PJe (diferente do JWT do gov.br que o JusBR usa — ver nota acima). Obter pelo portal PDPJ logado (DevTools > Network > capturar header `Authorization: Bearer <token>`).
 
-A autenticacao valida o formato e detecta tokens expirados antes de tentar usar:
+A autenticacao so valida o formato do token:
 - Token malformado -> `ValueError("Token JWT invalido: ...")`.
-- Token expirado -> `ValueError("Token JWT expirado.")`.
+- Token expirado **nao** e detectado em `auth()`: o client decodifica o JWT sem verificar assinatura, e o PyJWT desliga a checagem de `exp` nesse modo. O erro so aparece na primeira chamada autenticada. A validacao explicita de `exp` da 0.4.0 existe so no JusBR.
 
 ### Endpoints
 
@@ -376,7 +376,7 @@ Se ja esta implementado com JusBR, nao ha necessidade de migrar. Para casos novo
 
 ### Gotchas
 
-- **Token expirado:** detectado na hora do `auth()` (vira `ValueError("Token JWT expirado.")`) e nao apenas na primeira chamada.
+- **Token expirado:** `auth()` aceita token vencido sem erro; a falha so aparece na primeira chamada a API. Se a coleta falhar logo no inicio com erro de autenticacao, peca um token novo ao usuario.
 - **`existe` retorna tipos diferentes** conforme o input: `bool` quando recebe `str`, `DataFrame` quando recebe `list[str]`. Pense duas vezes antes de usar em codigo generico.
 - **Cursor `searchAfter` em `pesquisa`** e forwards-only — `paginas=[3, 5]` baixa as paginas 3, 4 e 5 contiguamente (nao pula a 4).
 - **Validacao `extra="forbid"`** em todos os endpoints: kwarg desconhecido vira `TypeError` com sugestao de typo via difflib (ex: `data_juglamento` -> "voce quis dizer 'data_julgamento'?").

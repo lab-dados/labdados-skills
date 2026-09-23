@@ -18,7 +18,9 @@ Alterado:
 
 Corrigido:
 
-- `juscraper`: os nomes singulares `classe`/`assunto`/`vara` (TJSP `cjpg`), `classe` (TJBA) e `assunto` (Datajud) passam a constar como da v0.4.0, nao da v0.3.0; a linha 1.1.0 de `versao.md` separa o que veio da 0.3.0 do que veio da `main`.
+- `juscraper`: os nomes singulares `classe`/`assunto`/`vara` (TJSP `cjpg`), `classe` (TJBA) e `assunto` (Datajud) passam a constar como da v0.4.0, nao da v0.3.0; TJGO, TJMG e TJRJ passam a constar como da 0.2.1 (da 0.3.0 e so o extra `[tjmg]`); a linha 1.1.0 de `versao.md` separa o que veio da 0.3.0 do que veio da `main`, e a 1.2.0, nunca publicada, foi fundida na 1.3.0.
+- `juscraper`: `RetryExhaustedError` deixa de ser prometido para Datajud e JusBR, que devolvem `None` internamente; o PDPJ nao detecta token expirado em `auth()`; o dedup do auto-chunk do `cjpg` do TJSP e so por `id_processo`; sai o filtro `contratos` do TJPE, que a biblioteca nao aceita.
+- `juscraper`: a `description` da skill cabe no limite de 1024 caracteres da especificacao de Agent Skills.
 - `juscraper`: documenta o contrato de `paginas` da v0.4.0 (selecao vazia, zero, negativo e `range` descendente levantam `ValueError`; no Datajud, `range(3, 6)` devolve as paginas 3 a 5) e a validacao de entrada do `download_documents` do JusBR.
 - `juscraper`: remove a coluna `_total_tokens` e a regra da "primeira coluna" da integracao com o dataframeit, que nao valem desde o dataframeit 0.6.0.
 - `juscraper`: esclarece que `tjsp.cjpg(id_processo=...)` recebe o numero CNJ do processo, com ou sem mascara, e cobre busca de jurisprudencia de 1o grau por CNJ alem da busca textual. Isso evita confundir `id_processo` com ID interno do eSAJ ou sugerir `cpopg` quando a tarefa pede jurisprudencia ou decisoes.

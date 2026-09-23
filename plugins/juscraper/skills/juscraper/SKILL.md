@@ -1,6 +1,6 @@
 ---
 name: juscraper
-description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg; STF via listar_decisoes), coletar comunicacoes/DJe digital ou consultas cross-tribunal via Datajud, JusBR, ComunicaCNJ e PDPJ. Cobre 25 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ), 4 tribunais regionais federais (TRF1, TRF3, TRF5, TRF6), o STF (Supremo Tribunal Federal, busca de jurisprudencia) e 4 agregadores nacionais (Datajud, JusBR, ComunicaCNJ, PDPJ). Use esta skill sempre que o usuario mencionar tribunal brasileiro, STF, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes judiciais, processos judiciais, eSAJ, PJe, poder judiciario, justica federal, comunicacoes processuais, DJe, intimacoes publicas, ou qualquer tarefa envolvendo coleta de dados de tribunais brasileiros — mesmo que nao mencione explicitamente "juscraper".
+description: Raspar dados judiciais brasileiros com a biblioteca juscraper. Use para consultar processos por numero CNJ (cpopg/cposg), buscar jurisprudencia (cjsg/cjpg; STF via listar_decisoes), coletar comunicacoes/DJe digital ou consultas cross-tribunal via Datajud, JusBR, ComunicaCNJ e PDPJ. Cobre 25 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ), 4 TRFs (TRF1, TRF3, TRF5, TRF6), o STF e 4 agregadores nacionais (Datajud, JusBR, ComunicaCNJ, PDPJ). Use sempre que o usuario mencionar tribunal brasileiro, STF, numero CNJ, acordao, jurisprudencia, pesquisa empirica em direito, dados judiciais, consulta processual, decisoes ou processos judiciais, eSAJ, PJe, poder judiciario, justica federal, comunicacoes processuais, DJe, intimacoes publicas, ou qualquer coleta de dados de tribunais brasileiros, mesmo sem citar "juscraper".
 ---
 
 # JusScraper Skill
@@ -56,8 +56,9 @@ Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependenc
   **Nao e o mesmo token do JusBR** (que usa o SSO do gov.br) — sao tokens
   distintos, embora o fluxo de captura via DevTools seja analogo. O token vem
   do portal PDPJ logado (DevTools > Network > header
-  `Authorization: Bearer <token>`). Token invalido ou expirado vira
-  `ValueError` ja em `pdpj.auth(token)`.
+  `Authorization: Bearer <token>`). Token malformado vira `ValueError`
+  ja em `pdpj.auth(token)`, mas token expirado passa pelo `auth` e so
+  falha na primeira chamada a API.
 
 ## Roteamento de decisao — o que usar?
 
@@ -78,7 +79,7 @@ Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependenc
 
 ### Passo 2: Qual tribunal?
 
-- Se o usuario especificou um **tribunal estadual** e ele esta entre os 25 (incluindo agora **TJGO**, **TJMG** e **TJRJ** `[v0.3.0+]`) → use o scraper direto.
+- Se o usuario especificou um **tribunal estadual** e ele esta entre os 25 (incluindo **TJGO**, **TJMG** e **TJRJ**; o TJMG requer `txtcaptcha`, via extra `tjmg`) → use o scraper direto.
 - Se o usuario especificou um **tribunal federal** (TRF1, TRF3, TRF5 ou TRF6) `[v0.4.0+]` → use o scraper direto para `cpopg` ou o Datajud para metadados. Para baixar pecas junto com `cpopg`, isso existe em TRF1/TRF3/TRF5 (`download_pecas=True`, `diretorio=...`), nao em TRF6.
 - Se o usuario pediu **jurisprudencia do STF** → use o scraper `stf` `[v0.4.0+]` (`listar_decisoes`/`contar_decisoes`). O Datajud tem o alias do STF, mas so devolve metadados de processos, sem ementa nem texto da decisao.
 - Se o tribunal estadual nao tem scraper direto (TJMA, TJSE — captcha server-side) → use **Datajud** para metadados ou **JusBR**/**PDPJ** para consultar por CNJ e baixar documentos.
@@ -283,7 +284,7 @@ Se o scraper falhar (timeout, bloqueio, erro HTTP):
 
 **Excecoes a conhecer:**
 
-- **`juscraper.core.exceptions.RetryExhaustedError`** `[v0.4.0+]`: levantada quando 403/429/5xx persistente esgota `max_retries`. Na 0.4.0 vale para o `cjsg` dos 25 tribunais estaduais (e o `cjpg` de TJES/TJTO), o `cpopg` de TRF1/TRF3/TRF5, o STF e os agregadores ComunicaCNJ, JusBR e Datajud, todos migrados para `HTTPScraper`. Substitui `requests.HTTPError` / `requests.RequestException` nesse cenario. Para codigo defensivo, capture ambas.
+- **`juscraper.core.exceptions.RetryExhaustedError`** `[v0.4.0+]`: levantada quando 403/429/5xx persistente esgota `max_retries`. Na 0.4.0 vale para o `cjsg` dos 25 tribunais estaduais (e o `cjpg` de TJES/TJTO), o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ. Datajud e JusBR nao a propagam: em falha persistente devolvem `None` internamente (o Datajud com `UserWarning`). Substitui `requests.HTTPError` / `requests.RequestException` nesse cenario. Para codigo defensivo, capture ambas.
 - **STF `ValueError`** `[v0.4.0+]`: pagina que comeca depois do registro 10.000 da busca falha antes de qualquer requisicao. Ver `references/tribunais.md` §STF.
 - **`TypeError` por kwarg desconhecido** `[v0.3.0]`: todos os endpoints com schema pydantic wired (a maioria) rejeitam kwargs nao reconhecidos com mensagem amigavel e sugestao de typo via difflib (`(você quis dizer 'data_julgamento_inicio'?)`). Se aparecer, confira o nome canonico em `references/api.md` §"Aliases de parametros depreciados".
 - **`juscraper.courts.tjsp.exceptions.QueryTooLongError`** `[v0.3.0]`: no TJSP `cjsg`/`cjpg`, `pesquisa` com mais de 120 caracteres levanta erro antes do HTTP (antes, o backend silenciosamente truncava). Priorize os termos mais discriminativos.

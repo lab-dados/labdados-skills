@@ -18,7 +18,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 | **TJBA** | sim | - | - | - | GraphQL | |
 | **TJCE** | sim | - | - | - | eSAJ | |
 | **TJDFT** | sim | - | - | - | REST API | |
-| **TJGO** | sim | - | - | - | Projudi HTML | `[v0.3.0+]` |
+| **TJGO** | sim | - | - | - | Projudi HTML | |
 | **TJMG** | sim | - | - | - | Custom HTML + captcha | `[v0.3.0+, requer extra tjmg]` |
 | **TJMS** | sim | - | - | - | eSAJ | |
 | **TJMT** | sim | - | - | - | REST API | |
@@ -27,7 +27,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 | **TJPE** | sim | - | - | - | HTML form | |
 | **TJPI** | sim | - | - | - | HTML server-rendered | |
 | **TJPR** | sim | - | - | - | HTML form + sessao | |
-| **TJRJ** | sim | - | - | - | ASPX + JSON | `[v0.3.0+]` |
+| **TJRJ** | sim | - | - | - | ASPX + JSON | |
 | **TJRN** | sim | - | - | - | PJe/Elasticsearch | |
 | **TJRO** | sim | - | - | - | JURIS/Elasticsearch | |
 | **TJRR** | sim | - | - | - | JSF/PrimeFaces | |
@@ -328,12 +328,9 @@ tjpe.cjsg(
     classe=None,                        # singular canonico [v0.3.0] (era classe_cnj)
     assunto=None,                       # singular canonico [v0.3.0] (era assunto_cnj)
     meio_tramitacao=None,
-    tipo_decisao=None,                  # 'acordaos', 'monocraticas', 'todos'
-    contratos=None                      # filtro novo (issue #197)
+    tipo_decisao=None                   # 'acordaos', 'monocraticas', 'todos'
 )
 ```
-
-Suporte a filtro `contratos`.
 
 ### TJPI
 
@@ -402,7 +399,7 @@ tjrr.cjsg(
 
 `[v0.3.0]` JSF auto-gerado: descoberta dinamica dos nomes de campos (que mudam quando o tribunal reordena componentes do form). Antes, o scraper retornava zero resultados silenciosamente apos renumeracao do tribunal.
 
-`relator` aceita lista de nomes regimentais. A paginacao da tabela principal de acordaos foi corrigida, mas decisoes monocraticas ficam numa segunda tabela com paginador proprio e ainda retornam so a primeira pagina.
+`relator` aceita lista de nomes regimentais `[v0.4.0+]`. A paginacao da tabela principal de acordaos foi corrigida na 0.4.0 (antes, a pagina 2 repetia a 1), mas decisoes monocraticas ficam numa segunda tabela com paginador proprio e ainda retornam so a primeira pagina.
 
 ### TJSC
 
@@ -417,7 +414,7 @@ tjsc.cjsg(
 )
 ```
 
-### TJGO `[v0.3.0+]`
+### TJGO
 
 Backend Projudi com Cloudflare Turnstile (mas sem validacao server-side — flow funciona com HTTP puro).
 
@@ -459,7 +456,7 @@ tjmg.cjsg(
 
 **Gotcha:** cap de **400 resultados** (limite do TJMG). `paginas=None` baixa ate esse cap.
 
-### TJRJ `[v0.3.0+]`
+### TJRJ
 
 Backend ASPX com reCAPTCHA renderizado, mas **nao validado server-side**.
 
@@ -480,7 +477,7 @@ tjrj.cjsg(
 
 **Construtor:** `(sleep_time=1.0)`.
 
-**Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o backend usa o ano corrente, nao "todos os anos". `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
+**Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o scraper preenche os dois com o ano corrente `[v0.4.0+]`, entao o resultado cobre so o ano corrente, nao "todos os anos". Antes da 0.4.0, a chamada sem ano recebia HTTP 500 do backend e abortava com `RetryExhaustedError`. `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
 
 ### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[v0.4.0+]`
 
@@ -619,7 +616,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 11. **Aliases depreciados emitem `DeprecationWarning`** — sempre use o nome canonico (`pesquisa`, `data_julgamento_inicio`, `tamanho_pagina`, `classe`, `assunto`, `vara`, `numero_processo`, `relator`, `id_classe`). Tabela completa em `references/api.md`.
 
-12. **`RetryExhaustedError` em `HTTPScraper` `[v0.4.0+]`:** na 0.4.0, o `cjsg` dos 25 tribunais estaduais (familia eSAJ e todos os demais), o `cjpg` de TJES/TJTO, o `cpopg` de TRF1/TRF3/TRF5, o STF e os agregadores ComunicaCNJ, JusBR e Datajud migraram para `HTTPScraper`. TRF6 e PDPJ ficaram fora. Quando esgota `max_retries` em 403/429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
+12. **`RetryExhaustedError` em `HTTPScraper` `[v0.4.0+]`:** na 0.4.0, o `cjsg` dos 25 tribunais estaduais (familia eSAJ e todos os demais), o `cjpg` de TJES/TJTO, o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ migraram para `HTTPScraper` e propagam a excecao. Datajud e JusBR herdam `HTTPScraper`, mas nao a propagam: o Datajud usa o retry proprio da `call_datajud_api` e devolve `None` com `UserWarning` quando falha; o JusBR captura a excecao nos `fetch_*` internos e devolve `None`. TRF6 e PDPJ ficaram fora. Quando esgota `max_retries` em 403/429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
 
 13. **`auto_chunk=True` substitui workaround manual de iteracao por ano `[v0.3.0]`:** na familia eSAJ (TJSP/TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`, TJSP `cjpg`), janelas `data_julgamento_*` maiores que 366 dias agora sao automaticamente divididas em chunks e concatenadas com dedup. O `pd.concat([cjpg(...) for ano in range(...)])` antigo ja nao e necessario para esse caso. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`.
 
