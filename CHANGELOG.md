@@ -13,7 +13,8 @@ Corrigido:
 - `juscraper` (plugin 1.3.1): `comarca`, `tipo_decisao` e `count_only` deixam de aparecer como
   exclusivos do TJSP em `tribunais.md`, `api.md` e `tjsp.md`. Na v0.4.0 os tres valem para toda a
   familia eSAJ; a diferenca real do TJSP no `cjsg` e `baixar_sg` no lugar de `origem`, sem
-  `numero_recurso` nem `data_publicacao_*`.
+  `numero_recurso` nem `data_publicacao_*`. O `cjpg` tambem deixa de constar como exclusivo do TJSP,
+  porque TJES e TJTO tem o metodo.
 - `openalex` (plugin 1.1.1): o custo de US$1 por mil de filtros `*.search*` passa a constar tambem
   no resumo de custos da `SKILL.md` e em `references/api.md`, e nao so em `references/cli.md`.
 
