@@ -116,7 +116,7 @@ scraper.cjsg(
     pesquisa='dano moral',            # str
     paginas=range(1, 4),              # 1-based
     ementa=None,                      # filtro por texto da ementa
-    numero_recurso=None,
+    numero_recurso=None,              # nao no TJSP
     classe=None,                      # int | str | list[int|str]
     assunto=None,                     # int | str | list[int|str]
     comarca=None,                     # int | str (TJSP apenas — exclusivo na familia eSAJ)
@@ -125,8 +125,8 @@ scraper.cjsg(
     data_julgamento_fim=None,
     data_publicacao_inicio=None,      # nao no TJSP
     data_publicacao_fim=None,
-    origem=None,                      # 'T' (2o grau) ou 'R' (turma recursal)
-    tipo_decisao=None                 # 'acordao' ou 'monocratica'
+    origem='T',                       # 'T' (2o grau) ou 'R' (turma recursal); nao no TJSP
+    tipo_decisao='acordao'            # 'acordao' ou 'monocratica'
 )
 ```
 
