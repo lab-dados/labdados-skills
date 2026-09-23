@@ -61,7 +61,7 @@ Before running any content download (PDF or TEI XML):
 3. **Wait for explicit confirmation** before executing.
 
 Metadata downloads (JSON without `--content`) are not free but cheap: ~$0.10 per 1,000
-list requests (only lookups by ID are free). No warning needed.
+list requests, or $1 per 1,000 with a `*.search*` filter (only lookups by ID are free). No warning needed.
 The free tier gives $1/day (~100 files). Warn if cost exceeds the daily limit.
 
 ## When to use what

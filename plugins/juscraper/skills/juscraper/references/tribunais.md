@@ -134,7 +134,7 @@ scraper.cjsg(
 
 **Auto-chunk para janelas longas `[v0.3.0]`:** janelas `data_julgamento_*` que excedem 366 dias sao automaticamente divididas em chunks e concatenadas (com dedup) por `auto_chunk=True` (default). Falhas em janelas individuais viram `UserWarning` e o DataFrame retorna parcial. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`. Veja `references/tjsp.md` para detalhes.
 
-**Notas TJSP:** no lugar de `origem` o TJSP usa `baixar_sg`, e nao aceita `numero_recurso` nem `data_publicacao_*`; `comarca`, `tipo_decisao` e `count_only` valem para toda a familia eSAJ. `cjsg` aceita `pesquisa=""` para buscar so por filtros; `cjsg` e `cjpg` aceitam `count_only=True` para estimar volume antes da coleta. Ver `references/tjsp.md`.
+**Notas TJSP:** no lugar de `origem` o TJSP usa `baixar_sg`, e nao aceita `numero_recurso` nem `data_publicacao_*`; `comarca`, `tipo_decisao` e `count_only=True` (que estima o volume antes da coleta) valem para toda a familia eSAJ, e o `cjpg` do TJSP tambem aceita `count_only`. `cjsg` aceita `pesquisa=""` para buscar so por filtros. Ver `references/tjsp.md`.
 
 **Guard de tamanho de `pesquisa` em TJSP `[v0.3.0]`:** mais de 120 caracteres levanta `QueryTooLongError` (subclasse de `ValueError`) antes do HTTP. Veja `references/tjsp.md`.
 

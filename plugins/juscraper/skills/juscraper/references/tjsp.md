@@ -42,7 +42,7 @@ tjsp.cpopg(id_cnj, method='api')   # via API REST do TJSP
 O metodo `'html'` e mais estavel. O parse JSON do `cposg` **nao esta
 implementado** — use `'html'`.
 
-### `cjpg` (1º grau, exclusivo TJSP)
+### `cjpg` (1º grau; TJES e TJTO tambem tem)
 
 ```python
 tjsp.cjpg(

@@ -4,7 +4,7 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.3.0** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15). O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
+A skill **v1.3.1** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15). O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 

@@ -331,7 +331,7 @@ Leia a referencia apropriada antes de gerar codigo:
   comunicacoes/DJe, contagem antes da coleta, ou download de pecas.
 
 - **`references/tjsp.md`** — Especificidades do TJSP: endpoints exclusivos (`cjpg`),
-  parametro `method` de `cpopg`/`cposg`, extras da `cjsg`, `pesquisa=""`,
+  parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`, `pesquisa=""`,
   `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
