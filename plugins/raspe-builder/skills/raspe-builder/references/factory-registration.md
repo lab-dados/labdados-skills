@@ -166,6 +166,30 @@ python -c "raspe.{fonte}()"  # tentar instanciar
 # Aqui deve levantar DriverNotInstalledError se não tiver playwright.
 ```
 
+## Registro em `scraper_manager.py` e testes
+
+Para fontes HTTP, registre também a classe no `mapping` da função
+`scraper()` em `src/raspe/scraper_manager.py`, o que habilita
+`scraper("{FONTE}")` além de `raspe.{fonte}()`:
+
+```python
+from .scrapers.{fonte} import Scraper{Fonte}
+...
+    mapping: dict[str, Type[BaseScraper]] = {
+        ...
+        "{FONTE}": Scraper{Fonte},
+    }
+```
+
+A chave vai em maiúsculas porque `scraper()` normaliza o nome com
+`.upper()`.
+
+Depois, acrescente o caso da factory em `tests/test_init.py`
+(`TestFactoriesHTTP` ou `TestFactoriesPlaywright`) e, se a fonte entrou
+no `mapping`, em `tests/test_scraper_manager.py`. A factory em
+`src/raspe/__init__.py` entra no denominador do gate de cobertura
+(`fail_under = 80`), e são esses testes que a exercitam.
+
 ## Cuidados
 
 - **Nunca remova entradas existentes** ao adicionar a nova — `__all__` é

@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.11.1] — 2026-09-23
+
+Corrigido:
+
+- `raspe-builder`: sincroniza a skill com as convencoes atuais do `bdcdo/raspe` (main `abc953c`). A fonte isolada passa a rodar com `pytest --no-cov`, porque o gate `fail_under = 80` do `addopts` reprova por cobertura qualquer execucao parcial, e a suite completa roda antes do PR. O CHANGELOG do raspe e citado como `## [Nao lancado]` / `### Adicionado`, em pt-BR. Os testes exigem os tres cenarios typical, single_page e no_results, o script `tests/fixtures/capture/<fonte>.py` e matcher de payload sempre que possivel. Fontes Playwright seguem o padrao `test_config.py` com `samples/parse/`. O registro da fonte inclui o `mapping` de `scraper_manager.py` e os testes de factory. Tambem entram `filterwarnings = ["error"]`, `OrderedRegistry`, `mocker.patch.dict(sys.modules, ...)` e o lint via `pre-commit` no lugar de `ruff`. O exemplo de `description` da skill `raspe` deixa de citar a fonte CNJ, removida do raspe.
+
 ## [1.7.0] — 2026-06-05
 
 Removido:

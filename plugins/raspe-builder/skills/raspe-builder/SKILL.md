@@ -483,14 +483,24 @@ Ver `references/factory-registration.md`. Em `src/raspe/__init__.py`:
 4. Adicionar `"{fonte}"` na lista `__all__`, na seção apropriada (HTTP ou
    Browser).
 
+5. Para HTTP: registrar a classe no `mapping` de `scraper()` em
+   `src/raspe/scraper_manager.py` (`"{FONTE}": Scraper{Fonte}`), o que
+   habilita `scraper("{FONTE}")` além de `raspe.{fonte}()`.
+
+6. Testar o registro: um caso em `tests/test_init.py` (classe
+   `TestFactoriesHTTP` ou `TestFactoriesPlaywright`) e, se a fonte entrou
+   no `mapping`, outro em `tests/test_scraper_manager.py`.
+
 ### Etapa 6 — Testes de contrato offline
 
 Ver `references/test-patterns.md`. Padrão canônico:
 `tests/ipea/test_raspar_contract.py`.
 
 1. Criar `tests/{fonte}/__init__.py` (vazio).
-2. Salvar samples HTML capturados na Etapa 2 em
-   `tests/{fonte}/samples/raspar/page_01.html` e `page_02.html`.
+2. Criar o script de captura `tests/fixtures/capture/{fonte}.py`,
+   obrigatório pelo `CLAUDE.md` do raspe, e salvar os samples em
+   `tests/{fonte}/samples/raspar/`: `page_01.html`, `page_02.html`,
+   `single_page.html` e `no_results.html`.
 3. Criar `tests/{fonte}/test_raspar_contract.py`:
    ```python
    import pytest
@@ -531,20 +541,34 @@ Ver `references/test-patterns.md`. Padrão canônico:
            assert "termo_busca" in df.columns
    ```
 
-Casos mínimos: paginação típica, zero resultados, presença da coluna
-`termo_busca`, conjunto mínimo de colunas. Não escreva testes de retry —
-já estão cobertos em `tests/test_base_scraper.py`.
+Casos mínimos, exigidos pelo `CLAUDE.md` do raspe para cada método
+público: typical (paginação), single_page e no_results. Valide colunas
+por subconjunto (`COLUNAS_OBRIGATORIAS <= set(df.columns)`, nunca
+igualdade) e a presença de `termo_busca`. Use matcher de payload sempre
+que possível (`query_param_matcher` para GET,
+`urlencoded_params_matcher(..., strict_match=False)` para POST de
+formulário, `json_params_matcher` para POST JSON). Não escreva testes de
+retry: já estão cobertos em `tests/test_base_scraper.py`.
 
-Para Playwright: capture HTMLs reais durante a engenharia reversa e teste
-apenas `_parse_page(path)` diretamente. Mockar a navegação Playwright é
-caro e instável.
+Para Playwright: `responses` não intercepta o navegador, então o teste
+fica em `tests/{fonte}/test_config.py`, com samples em
+`tests/{fonte}/samples/parse/typical.html` e `no_results.html`. Ele cobre
+a configuração (`url_base`, `pagination_strategy`, `_max_pages`,
+herança de `PlaywrightScraper`) e `_parse_page` sobre os samples. Modelo:
+`tests/saudelegis/test_config.py`.
 
 ### Etapa 7 — Validação e documentação
 
-1. Rodar testes:
+1. Rodar testes. O `addopts` do raspe liga `--cov=src/raspe` e
+   `fail_under = 80` vale para a suíte inteira, então a fonte isolada
+   reprova por cobertura mesmo com todos os testes verdes; rode-a com
+   `--no-cov` e, antes do PR, a suíte completa para conferir o gate.
+   `filterwarnings = ["error"]` está ativo: warning não capturado vira
+   falha.
    ```bash
    cd <RASPE_REPO>
-   pytest tests/{fonte}/ -v
+   pytest tests/{fonte}/ -v --no-cov
+   pytest
    ```
 
 2. Teste de integração rápido (não-mockado), com permissão do usuário:
@@ -552,7 +576,9 @@ caro e instável.
    python -c "import raspe; df = raspe.{fonte}().raspar(pesquisa='X', paginas=range(1, 2)); print(df.shape); print(df.head())"
    ```
 
-3. Atualizar `CHANGELOG.md` do raspe (seção `[Unreleased] / Added`).
+3. Atualizar `CHANGELOG.md` do raspe: uma linha em `### Adicionado`,
+   sob `## [Não lançado]`, em pt-BR e no particípio ("Adicionado scraper
+   X").
 
 4. **Sincronizar a skill `raspe` do marketplace** — ver
    `references/raspe-skill-sync.md`. Isso fecha o ciclo: a skill que
