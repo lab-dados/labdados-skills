@@ -43,7 +43,7 @@ works for metadata only: since 2026-07-30 `content.openalex.org` serves files di
 If 0.3.3 is already installed, reinstall with `uv tool install --force git+https://github.com/ourresearch/openalex-official`.
 
 Verify: `openalex --help`. Note that `openalex --version` prints `0.3.2` in both 0.3.3 and
-0.3.4; use `uv tool list` to see the installed release.
+0.3.4; use `uv tool list` (or `pipx list` / `pip show openalex-official`) to see the installed release.
 
 Note: Package was previously named `openalex-content-downloader`. If installed, uninstall and switch.
 
@@ -150,6 +150,9 @@ Same syntax as the API. Examples:
 --content pdf,xml   # Download both
 # (omit --content)  # Metadata JSON only (~$0.10 per 1,000 list requests)
 ```
+
+A `*.search*` filter (e.g. `fulltext.search:`) makes each list request bill as a search:
+$1 per 1,000 requests (`X-RateLimit-Credits-Used: 10`) instead of $0.10.
 
 In filter and sample modes, `--content` makes the CLI prepend a content filter on its own:
 `has_content.pdf:true` for `pdf` or `pdf,xml`, and `has_content.grobid_xml:true` for `xml`.
@@ -272,7 +275,7 @@ Use the API to check `meta.count` with `has_content.pdf:true`, multiply by $0.01
 
 | What | Cost |
 |------|------|
-| Metadata (JSON) | ~$0.10 per 1,000 list requests (works by ID are free) |
+| Metadata (JSON) | ~$0.10 per 1,000 list requests (works by ID are free); $1 per 1,000 if the filter has a `*.search*` term |
 | PDF download | $0.01 per file |
 | TEI XML download | $0.01 per file |
 | Free daily allowance | $1/day (~100 content files) |
@@ -285,6 +288,7 @@ To estimate costs: count works with `has_content.pdf:true` in your filter via th
 ### Build a corpus for LLM screening
 ```bash
 # Download TEI XML for a topic
+# fulltext.search bills each list request as a search ($1 per 1,000), plus $0.01 per file
 openalex download \
   --api-key $OPENALEX_API_KEY \
   --output ./screening-corpus \

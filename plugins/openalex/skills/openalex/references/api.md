@@ -48,7 +48,7 @@ free key's $1/day); once it is spent, requests return HTTP 429. Content download
 ## Entity Endpoints
 
 ```
-/works          — 240M+ scholarly documents (articles, books, datasets, preprints)
+/works          — 320M+ scholarly documents in the default corpus; 460M+ with `corpus=all`
 /authors        — Researcher profiles with disambiguated identities
 /sources        — Journals, repositories, conferences (~250K)
 /institutions   — Universities, research organizations
@@ -330,8 +330,13 @@ the wording differs. Useful with long inputs such as an abstract or a research q
 | Rate limit | 1 request per second |
 | Cost | $1 / 1,000 calls (same as keyword search) |
 
-Most filters work with it, except `cited_by_count` and `country_code`
-(`last_known_institutions.country_code`), which return `400`.
+Only a whitelist of filters is supported; other filters return `400` listing the
+allowed ones (observed on 2026-09-23): `author.id`, `authorships.author.id`,
+`authorships.institutions.id`, `authorships.institutions.lineage`, `funders.id`,
+`has_abstract`, `has_fulltext`, `institution.id`, `institutions.id`, `is_oa`,
+`is_retracted`, `language`, `open_access.is_oa`, `primary_location.license`,
+`primary_location.source.id`, `publication_year`, `type`. Not supported include
+`cited_by_count`, `topics.id`, `has_content.*`, `cites`/`cited_by` and `from_publication_date`.
 
 ## Abstracts
 

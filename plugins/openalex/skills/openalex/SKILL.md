@@ -45,7 +45,8 @@ Only for download tasks. Check if `openalex` is available:
 Install from GitHub until 0.3.4 is on PyPI. The PyPI release (0.3.3) only works for
 metadata: since 2026-07-30 every `--content` download fails with "Unexpected status: 200",
 because the content API now serves files directly instead of redirecting. `openalex --version`
-prints 0.3.2 in both releases; check the installed release with `uv tool list`.
+prints 0.3.2 in both releases; check the installed release with `uv tool list`
+(or `pipx list` / `pip show openalex-official`, depending on how it was installed).
 
 The CLI is a standalone tool — do NOT install inside the project venv with `uv add`.
 
@@ -104,7 +105,7 @@ then filter by that ID. Example: search `/authors?search=Einstein` → get ID �
 - `cited_by:W123` → "works cited by W123" = outgoing references (backward)
 - Mnemonic: `cites:X` = "who cites X?"; `cited_by:X` = "what does X cite?"
 
-**Rate limits**: 100 req/sec hard limit. Free: $1/day (resets midnight UTC).
+**Rate limits**: 100 req/sec hard limit (`search.semantic`: 1 req/sec). Free: $1/day (resets midnight UTC).
 Singleton lookups free; list+filter $0.10/1K; search $1/1K; content $0.01/file.
 Check usage: `GET /rate-limit?api_key=KEY`
 
@@ -114,7 +115,7 @@ Check usage: `GET /rate-limit?api_key=KEY`
 ## Coverage limitations (especially for Brazilian legal research)
 
 OpenAlex indexes 460M+ works from journals, preprint servers, books,
-and theses. Coverage is strongest where publications are indexed in
+and theses (320M+ in the default corpus that `/works` returns; `corpus=all` adds the rest). Coverage is strongest where publications are indexed in
 Scopus / Web of Science / Crossref / DOAJ. For **Brazilian legal
 research**, part of the production lives outside those sources:
 
