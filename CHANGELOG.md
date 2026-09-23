@@ -22,6 +22,43 @@ Adicionado:
 - `openalex`: opcoes `--sample N` (1-10.000) e `--seed` da CLI, e o filtro `has_content.*:true` que a CLI acrescenta sozinha com `--content`.
 - `openalex`: na API, `search.exact`, busca booleana e por proximidade (`"..."~N`), `fulltext.search.exact` para misturar termos com e sem truncamento, limite de ~4 KB de URL, campo `content_urls`, TEI servido com gzip (`curl --compressed`) e os planos pagos.
 
+## [1.9.0] — 2026-09-23
+
+Adicionado:
+
+- `juscraper` 1.3.0: alinha a skill ao juscraper v0.4.0 (PyPI, 2026-09-15). Entram o scraper do STF (`listar_decisoes` e `contar_decisoes`, com o extra `stf` para o cookie do AWS WAF e o teto de 10.000 registros por busca), TRF6 (`cpopg` via eproc/txtcaptcha), `download_pecas` em TRF1/TRF3/TRF5, `count_only=True` em `cjsg`/`cjpg` quando suportado e os metodos eSAJ de descoberta de filtros (`listar_classes`, `listar_assuntos`, `listar_orgaos`, `listar_varas`).
+- `juscraper`: tag `[unreleased]` para o que so existe na `main` do juscraper (snapshot `5ebde28`), com instalacao via `git+https://github.com/jtrecenti/juscraper.git`: checkpoint e retomada (`checkpoint_dir`, `resume=True`) e coleta integral do STF acima de 10.000 registros.
+
+Alterado:
+
+- `juscraper`: atualiza a matriz para 25 estaduais + 4 TRFs + STF e revisa Datajud, JusBR, ComunicaCNJ e PDPJ com os filtros, validacoes e retornos da v0.4.0. As mencoes a "release com `0bc0de5`" viram `[v0.4.0+]`, e recursos da v0.4.0 sem tag (TRFs, PDPJ, `count_only`, `listar_*`, escopo de `RetryExhaustedError`, `pesquisa=""` no TJSP, autopreenchimento de datas parciais) ganham a tag.
+- `juscraper`: registra que TRF6 exige `txtcaptcha` fora das dependencias base e que `df.to_parquet` passa a exigir `pyarrow` instalado a parte.
+
+Corrigido:
+
+- `juscraper`: os nomes singulares `classe`/`assunto`/`vara` (TJSP `cjpg`), `classe` (TJBA) e `assunto` (Datajud) passam a constar como da v0.4.0, nao da v0.3.0; TJGO, TJMG e TJRJ passam a constar como da 0.2.1 (da 0.3.0 e so o extra `[tjmg]`); a linha 1.1.0 de `versao.md` separa o que veio da 0.3.0 do que veio da `main`, e a 1.2.0, nunca publicada, foi fundida na 1.3.0.
+- `juscraper`: `RetryExhaustedError` deixa de ser prometido para Datajud e JusBR, que devolvem `None` internamente; o PDPJ nao detecta token expirado em `auth()`; o dedup do auto-chunk do `cjpg` do TJSP e so por `id_processo`; sai o filtro `contratos` do TJPE, que a biblioteca nao aceita.
+- `juscraper`: a `description` da skill cabe no limite de 1024 caracteres da especificacao de Agent Skills.
+- `juscraper`: documenta o contrato de `paginas` da v0.4.0 (selecao vazia, zero, negativo e `range` descendente levantam `ValueError`; no Datajud, `range(3, 6)` devolve as paginas 3 a 5) e a validacao de entrada do `download_documents` do JusBR.
+- `juscraper`: remove a coluna `_total_tokens` e a regra da "primeira coluna" da integracao com o dataframeit, que nao valem desde o dataframeit 0.6.0.
+- `juscraper`: esclarece que `tjsp.cjpg(id_processo=...)` recebe o numero CNJ do processo, com ou sem mascara, e cobre busca de jurisprudencia de 1o grau por CNJ alem da busca textual. Isso evita confundir `id_processo` com ID interno do eSAJ ou sugerir `cpopg` quando a tarefa pede jurisprudencia ou decisoes.
+
+## [1.8.0] — 2026-09-23
+
+Corrigido:
+
+- `dataframeit` — coloca a descricao longa do frontmatter entre aspas para que o parser YAML do Claude Code preserve `name` e `description`; antes, o `:` na prosa invalidava todo o frontmatter e impedia a descoberta da skill.
+- A validacao do CI agora executa `claude plugin validate` em cada plugin e bloqueia frontmatter que o runtime descartaria, em vez de verificar apenas a existencia de `SKILL.md`.
+- `dataframeit` — alinha a skill ao dataframeit 0.6.0 (PyPI): extras reais de instalacao (nao existem `[cohere]` nem `[mistral]`; Mistral e Cohere seguem suportados via LangChain com `langchain-mistralai`/`langchain-cohere` instalados a parte; `[search]` e so Tavily; Claude Code via `[claude-code]`); provider `'mistralai'` em vez de `'mistral'`; remove a tabela de "modelo padrao por provedor", que nao existe no codigo (o unico default e `gemini-3-flash-preview`, e `model=` e obrigatorio ao trocar de provider, inclusive em `claude_code`).
+- `dataframeit` — documenta que a biblioteca injeta `temperature=0` e que modelos sem `temperature` (Claude Sonnet 5, Opus 4.7+, GPT-6 com raciocinio, o1/o3, Gemini 3.5 Flash-Lite e 3.6+) precisam de `model_kwargs={'temperature': None}`.
+- `dataframeit` — o total de tokens e `_input_tokens + _output_tokens`: `_reasoning_tokens` ja esta contido na saida, e a formula anterior contava o raciocinio duas vezes.
+- `dataframeit` — campos condicionais (`depends_on`/`condition`) so sao avaliados com `use_search=True, search_per_field=True` e sem `search_groups`; o Exemplo 2 usava `search_groups` sem `search_per_field=True`, o que levanta `ValueError`. `checkpoint_path` aceita `.csv`, `.xlsx` e `.parquet`.
+- `dataframeit` — tabela de modelos atualizada para setembro/2026 (Gemini 3.x, GPT-6, Claude 5, Mistral Small 4/Large 3, Cohere Command A, Groq GPT-OSS), com os aposentados listados e datas de desligamento.
+
+Adicionado:
+
+- `dataframeit` — coluna `_search_credits`, chave `prompt_replace` e, marcadas `[unreleased]`, as mudancas da main 0.7.x (`depends_on` derivado de `condition`; receitas de Vertex AI, Bedrock e Azure OpenAI hospedados no Brasil).
+
 ## [1.7.0] — 2026-06-05
 
 Removido:

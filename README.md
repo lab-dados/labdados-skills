@@ -34,7 +34,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 | Skill | O que faz | Trigger tipico |
 |-------|-----------|----------------|
-| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia |
+| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 4 TRFs + STF + Datajud, JusBR, ComunicaCNJ e PDPJ) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, STF, cjpg por CNJ |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
@@ -48,16 +48,21 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 ### juscraper
 
 - Python >= 3.11
-- `pip install juscraper` (ou `uv add juscraper`)
+- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0
+- Para TJMG e TRF6 (captcha): `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`
+- Para STF: `pip install 'juscraper[stf]'` e `playwright install chromium` (ou um cookie `waf_token` ja obtido)
+- Para salvar em parquet: `pip install pyarrow`, que saiu das dependencias base na v0.4.0
+- Recursos marcados `[unreleased]` na skill: `pip install "git+https://github.com/jtrecenti/juscraper.git"`
 - Para Datajud: API key do CNJ (opcional — existe chave publica default)
 - Para JusBR: token JWT via login gov.br
+- Para PDPJ: token JWT do SSO do PJe
 
 ### dataframeit
 
 - Python >= 3.10
 - `pip install dataframeit[google]` (ou outro extra do provedor)
 - API key do provedor LLM escolhido (Google, OpenAI, Anthropic, Cohere, Mistral)
-- Para busca web: `pip install dataframeit[search]` + `TAVILY_API_KEY` ou `EXA_API_KEY`
+- Para busca web: `pip install dataframeit[search]` (Tavily) + `TAVILY_API_KEY`, ou `dataframeit[search-exa]` (Exa) + `EXA_API_KEY`
 
 ### openalex
 

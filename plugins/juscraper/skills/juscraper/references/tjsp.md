@@ -28,7 +28,7 @@ TJSP e o unico tribunal com os quatro endpoints do juscraper:
 | `cpopg` | Consulta Processual Originaria de 1º grau | `jus.scraper('tjsp').cpopg(id_cnj, ...)` |
 | `cposg` | Consulta Processual Originaria de 2º grau | `jus.scraper('tjsp').cposg(id_cnj, ...)` |
 
-Construtor com `sleep_time=0.5` como default.
+Construtor com `sleep_time=0.5` como default. Para descobrir IDs de filtros antes de consultar `[v0.4.0+]`, use `listar_classes(grau="2")`, `listar_assuntos(grau="2")`, `listar_orgaos(grau="2")` e `listar_varas(grau="1")`; todos retornam arvore com `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
 ## Parametros exclusivos
 
@@ -47,16 +47,31 @@ implementado** — use `'html'`.
 ```python
 tjsp.cjpg(
     pesquisa='...', paginas=range(1, 4),
-    classe=None,         # int | str | list[int|str] — singular canonico [unreleased] (era `classes`)
-    assunto=None,        # int | str | list[int|str] — singular canonico [unreleased] (era `assuntos`)
-    vara=None,           # str | list[str] — singular canonico [unreleased] (era `varas`)
-    id_processo=None,
+    classe=None,         # int | str | list[int|str] — singular canonico [v0.4.0+] (era `classes`)
+    assunto=None,        # int | str | list[int|str] — singular canonico [v0.4.0+] (era `assuntos`)
+    vara=None,           # str | list[str] — singular canonico [v0.4.0+] (era `varas`)
+    id_processo=None,    # CNJ do processo, com ou sem mascara; normalizado via clean_cnj()
     data_julgamento_inicio=None, data_julgamento_fim=None,
-    auto_chunk=True      # [v0.3.0] divide janela >366 dias automaticamente
+    auto_chunk=True,     # [v0.3.0] divide janela >366 dias automaticamente
+    count_only=False     # [v0.4.0+] retorna int com total estimado
 )
 ```
 
-`[unreleased]` Plurais (`classes`/`assuntos`/`varas`) ainda aceitos com `DeprecationWarning`. Passar plural + singular juntos -> `ValueError`.
+Plurais (`classes`/`assuntos`/`varas`), unicos nomes aceitos na 0.3.0, seguem aceitos com `DeprecationWarning` `[v0.4.0+]`. Passar plural + singular juntos -> `ValueError`.
+
+```python
+df = tjsp.cjpg(id_processo='1011654-78.2024.8.26.0566', paginas=range(1, 2))
+```
+
+`id_processo` aqui significa numero CNJ do processo, nao ID interno do eSAJ. Para jurisprudencia ou decisoes de 1o grau de um processo especifico, use `cjpg(id_processo=cnj)`; para dados cadastrais e andamento processual, use `cpopg(id_cnj=cnj)`.
+
+Para estimar volume antes de baixar sentencas, use `count_only=True`:
+
+```python
+n = tjsp.cjpg(pesquisa='fornecimento medicamento', assunto=10070, count_only=True)
+```
+
+Retorna `int`; `paginas` e ignorado com `UserWarning`. Com `auto_chunk=True`, janelas longas sao somadas sem dedup por `id_processo`, entao a contagem pode divergir de `len(tjsp.cjpg(...))`.
 
 ### `cjsg` — extras em relacao ao eSAJ padrao
 
@@ -64,7 +79,8 @@ Alem dos parametros eSAJ documentados em `tribunais.md`, o TJSP aceita:
 - `comarca=None` — filtro por comarca (exclusivo TJSP na familia eSAJ)
 - `tipo_decisao='acordao'|'monocratica'`
 - `baixar_sg=True`
-- **`pesquisa=""` aceito `[unreleased]`** — antes era obrigatorio; agora `tjsp.cjsg(classe='...', assunto='...')` sem termo textual funciona, igualando o comportamento de `cjpg`.
+- **`pesquisa=""` aceito** `[v0.4.0+]` — antes era obrigatorio; agora `tjsp.cjsg(classe='...', assunto='...')` sem termo textual funciona, igualando o comportamento de `cjpg`.
+- **`count_only=True` aceito** `[v0.4.0+]` — retorna `int` com o total estimado de resultados em vez de `DataFrame`. Mesmo contrato do `cjpg`: ignora `paginas` com warning e soma janelas longas sem dedup.
 
 ## Cobertura temporal
 
@@ -126,9 +142,12 @@ raspagens do primeiro grau:
   ano in range(...)])` continua funcionando — util para ter controle
   granular sobre dedup, retry por chunk, ou progress reporting.
 
-  **Dedup interno usa `(id_processo, data_disponibilizacao)`** — nao
-  apenas `id_processo`, porque um mesmo processo pode ter mais de uma
-  sentenca publicada em datas distintas.
+  **Dedup interno do `cjpg` usa so `id_processo`** (fica a primeira
+  ocorrencia). Um processo com duas sentencas publicadas em janelas
+  diferentes perde uma delas no DataFrame final. Se o estudo precisa de
+  todas as sentencas de cada processo, use `auto_chunk=False` com o
+  workaround manual por ano acima e deduplique voce mesmo por
+  `(id_processo, data_disponibilizacao)`.
 
 - **Campo `pesquisa` ≤ 120 caracteres — `QueryTooLongError` `[v0.3.0]`.**
   O backend do eSAJ trunca strings com mais de 120 chars silenciosamente.
@@ -139,8 +158,8 @@ raspagens do primeiro grau:
   `'criança OR adolescente OR "menor de idade"'`.
 
 - **Filtro de `assunto` NAO e hierarquico** — aceita apenas codigos
-  `selectable=True` da arvore do eSAJ. Agrupadores (ex: 6683) retornam
-  zero. Ver `assuntos-tjsp.md`.
+  `selecionavel=True` da arvore do eSAJ. Agrupadores (ex: 6683) retornam
+  zero. Use `tjsp.listar_assuntos(grau="1")`/`grau="2"` ou ver `assuntos-tjsp.md` antes de escolher o ID.
 
 - **Regex pos-coleta e redundante quando os termos cabem em
   `pesquisa=`**: passar ja ao endpoint corta volume baixado em 10-100×.

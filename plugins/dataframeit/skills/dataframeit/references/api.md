@@ -19,7 +19,7 @@ Para topicos especializados, consulte as demais references:
 1. [Instalacao](#instalacao)
 2. [Funcao principal — dataframeit()](#funcao-principal--dataframeit)
 3. [Parametros em detalhe](#parametros-em-detalhe)
-4. [Modelos padrao por provedor](#modelos-padrao-por-provedor)
+4. [Modelo e temperature](#modelo-e-temperature)
 5. [Tipos de entrada aceitos](#tipos-de-entrada-aceitos)
 6. [Retorno — estrutura do DataFrame](#retorno--estrutura-do-dataframe)
 7. [Funcoes utilitarias](#funcoes-utilitarias)
@@ -34,15 +34,23 @@ Para topicos especializados, consulte as demais references:
 pip install dataframeit[google]         # Google Gemini (padrao, recomendado)
 pip install dataframeit[openai]         # OpenAI
 pip install dataframeit[anthropic]      # Anthropic
-pip install dataframeit[cohere]         # Cohere
-pip install dataframeit[mistral]        # Mistral
 pip install dataframeit[groq]           # Groq
-pip install dataframeit[all]            # todos os provedores
-pip install dataframeit[google,search]  # Gemini + busca web (Tavily/Exa)
-pip install dataframeit[all,search]     # todos + busca web
+pip install dataframeit[claude-code]    # provider='claude_code' (claude-agent-sdk)
+pip install dataframeit[all]            # extras acima + Tavily, Exa, polars e excel
+pip install dataframeit[google,search]      # Gemini + busca web com Tavily
+pip install dataframeit[google,search-exa]  # Gemini + busca web com Exa
+pip install dataframeit[google,search-all]  # Gemini + Tavily e Exa
 pip install dataframeit[google,polars]  # Gemini + suporte Polars
 pip install dataframeit[google,excel]   # Gemini + leitura/escrita .xlsx via openpyxl
+
+# Outros provedores do LangChain: instalar o pacote de integracao a parte
+pip install dataframeit langchain-mistralai   # provider='mistralai'
+pip install dataframeit langchain-cohere      # provider='cohere'
 ```
+
+Nao existem extras `[mistral]` nem `[cohere]`. O pip ignora extra
+inexistente com um aviso e instala o dataframeit sem o pacote de
+integracao, e a falha so aparece na primeira chamada.
 
 Python >= 3.10 obrigatorio.
 
@@ -69,7 +77,7 @@ resultado = dataframeit(
     base_delay=1.0,                      # float — delay inicial (segundos) para backoff exponencial
     max_delay=30.0,                      # float — delay maximo (segundos) para backoff
     rate_limit_delay=0.0,                # float — delay entre requisicoes (controle de rate limit)
-    track_tokens=True,                   # bool — adicionar colunas _tokens_* ao resultado
+    track_tokens=True,                   # bool — adicionar _input_tokens/_output_tokens/_reasoning_tokens
     model_kwargs=None,                   # dict | None — kwargs extras repassados ao LLM
     parallel_requests=1,                 # int — workers paralelos (1=sequencial)
     use_search=False,                    # bool — habilitar busca web
@@ -80,7 +88,7 @@ resultado = dataframeit(
     search_groups=None,                  # dict[str, dict] | None — agrupar campos para busca
     save_trace=None,                     # bool | "full" | "minimal" | None — capturar raciocinio
     batch_size=None,                     # int | None — tamanho do lote para checkpointing
-    checkpoint_path=None,                # str | Path | None — arquivo .parquet persistido a cada batch
+    checkpoint_path=None,                # str | Path | None — .csv, .xlsx ou .parquet persistido a cada batch
 )
 ```
 
@@ -97,7 +105,7 @@ resultado = dataframeit(
 | `resume` | bool | **True** | Pula linhas com `_dataframeit_status == "processed"` |
 | `reprocess_columns` | list[str] | None | Reprocessa apenas as colunas listadas |
 | `model` | str | `'gemini-3-flash-preview'` | Identificador do modelo LLM |
-| `provider` | str | `'google_genai'` | Provedor: `'google_genai'`, `'openai'`, `'anthropic'`, `'cohere'`, `'mistral'`, `'groq'`, `'claude_code'` |
+| `provider` | str | `'google_genai'` | Nome de provedor do `init_chat_model` do LangChain (`'google_genai'`, `'openai'`, `'anthropic'`, `'groq'`, `'mistralai'`, `'cohere'`, ...) ou `'claude_code'` |
 | `status_column` | str | None | Nome customizado para a coluna de status (padrao: `_dataframeit_status`) |
 | `text_column` | str | None | Coluna do DataFrame a usar como texto. Se None, a biblioteca tenta inferir entre `texto`, `text`, `decisao`, `content`, `content_text`; DataFrames de uma unica coluna usam-na direto; se nao bater, levanta `ValueError` |
 | `api_key` | str | None | API key. Se None, le da variavel de ambiente do provedor |
@@ -106,7 +114,7 @@ resultado = dataframeit(
 | `max_delay` | float | 30.0 | Delay maximo em segundos (teto do backoff) |
 | `rate_limit_delay` | float | 0.0 | Delay adicional entre requisicoes em segundos |
 | `track_tokens` | bool | **True** | Adiciona `_input_tokens`, `_output_tokens` e `_reasoning_tokens` ao resultado |
-| `model_kwargs` | dict | None | Kwargs extras repassados ao cliente LangChain do provedor |
+| `model_kwargs` | dict | None | Kwargs extras repassados ao cliente LangChain do provedor. O dataframeit ja injeta `temperature=0`; o que vier aqui sobrescreve (ver §Modelo e temperature) |
 | `parallel_requests` | int | 1 | Numero de workers paralelos |
 | `use_search` | bool | False | Habilita busca web (Tavily ou Exa) |
 | `search_provider` | str | `"tavily"` | `"tavily"` ou `"exa"` |
@@ -116,32 +124,46 @@ resultado = dataframeit(
 | `search_groups` | dict[str, dict] | None | Agrupa campos para compartilhar busca (ver `busca-web.md`) |
 | `save_trace` | bool, str, None | None | `None`=desligado, `True` ou `"full"`=completo, `"minimal"`=resumido |
 | `batch_size` | int | None | Tamanho do lote processado antes de cada checkpoint. Requer `checkpoint_path` |
-| `checkpoint_path` | str \| Path | None | Arquivo `.parquet` onde o progresso parcial e persistido a cada `batch_size` linhas |
+| `checkpoint_path` | str \| Path | None | Arquivo onde o progresso parcial e persistido a cada `batch_size` linhas. Formato pela extensao: `.csv`, `.xlsx` (requer `[excel]`) ou `.parquet` (requer `pyarrow`). Usar junto com `batch_size`, senao `ValueError` |
 
 Para orientacoes de `model_kwargs` por modelo (quais parametros aceita,
 quais nao), veja `modelos-parametros.md`.
 
 ---
 
-## Modelos padrao por provedor
+## Modelo e temperature
 
-| Provedor | `provider=` | Modelo padrao (`model=`) |
-|---|---|---|
-| Google Gemini | `'google_genai'` | `'gemini-3-flash-preview'` |
-| OpenAI | `'openai'` | `'gpt-4o-mini'` |
-| Anthropic | `'anthropic'` | `'claude-haiku-4-5-20251001'` |
-| Cohere | `'cohere'` | `'command-r'` |
-| Mistral | `'mistral'` | `'mistral-small-latest'` |
-| Groq | `'groq'` | `'llama-3.3-70b-versatile'` |
-| Claude Code SDK | `'claude_code'` | resolvido pelo SDK conforme o plano — aliases aceitos: `'haiku'`, `'sonnet'`, `'opus'` |
-
-Para usar outro modelo, especifique `model=` explicitamente:
+Nao ha modelo padrao por provedor. O unico default e
+`model='gemini-3-flash-preview'`, pensado para `provider='google_genai'`.
+Ao trocar de `provider`, passe `model=` junto; sem isso, o nome do
+Gemini vai para o outro provedor e a chamada falha.
 
 ```python
-resultado = dataframeit(df, Modelo, prompt, provider='openai', model='gpt-4o')
-resultado = dataframeit(df, Modelo, prompt, provider='anthropic', model='claude-sonnet-4-6')
-resultado = dataframeit(df, Modelo, prompt, provider='groq', model='llama-3.1-8b-instant')
+resultado = dataframeit(df, Modelo, prompt, provider='openai', model='gpt-4.1-mini')
+resultado = dataframeit(df, Modelo, prompt, provider='anthropic', model='claude-haiku-4-5')
+resultado = dataframeit(df, Modelo, prompt, provider='groq', model='openai/gpt-oss-120b')
 ```
+
+O mesmo vale para `provider='claude_code'`: o dataframeit repassa
+`model` ao `claude-agent-sdk`, entao passe um alias (`'haiku'`,
+`'sonnet'`, `'opus'`) ou um ID Claude.
+
+Nos provedores via LangChain, o dataframeit cria o cliente com
+`temperature=0` e depois aplica `model_kwargs`. Duas consequencias:
+
+- Modelo que nao aceita `temperature` (ex.: Claude Sonnet 5, Opus 4.7
+  ou mais novo, OpenAI GPT-6 com raciocinio ligado, que e o padrao,
+  OpenAI o1/o3) recebe `temperature=0` e responde com erro 400. Passe `model_kwargs={'temperature': None}` para nao enviar
+  o parametro. No Claude Fable o erro aparece antes da chamada, como
+  `ValueError` do `langchain-anthropic`, e a saida e a mesma. Na
+  familia GPT-5 o `langchain-openai` ja tira o parametro sozinho, mas
+  na GPT-6 nao (conferido com `langchain-openai` 1.6.5 e
+  `langchain-anthropic` 1.7.4).
+- Recomendacao de temperatura diferente de 0 (ex.: Gemini 3 com 1.0)
+  so vale se for passada explicitamente em `model_kwargs`.
+
+Nomes de modelo e parametros aceitos por familia estao em
+`modelos-parametros.md`.
 
 ---
 
@@ -202,10 +224,11 @@ colunas de controle:
 | `_error_details` | str \| None | **apenas se houver erros** | Mensagem de erro — removida junto com `_dataframeit_status` quando nao ha erros. |
 | `_input_tokens` | int | `track_tokens=True` (padrao) | Tokens de entrada consumidos |
 | `_output_tokens` | int | `track_tokens=True` (padrao) | Tokens de saida consumidos |
-| `_reasoning_tokens` | int | `track_tokens=True` (padrao) | Tokens de raciocinio "invisiveis" consumidos por reasoning models (o1/o3, GPT-5 raciocinio, Claude adaptive thinking). Vale `0` para modelos nao-raciocinio. |
+| `_reasoning_tokens` | int | `track_tokens=True` (padrao) | Tokens de raciocinio "invisiveis" consumidos por reasoning models (o1/o3, GPT-5 raciocinio, Claude adaptive thinking). Ja contidos em `_output_tokens`. Vale `0` para modelos nao-raciocinio. |
+| `_search_credits` | int | `use_search=True` | Creditos do provedor de busca consumidos na linha (ver `busca-web.md`) |
 
-Nao existe uma coluna `_total_tokens` agregada — some
-`_input_tokens + _output_tokens + _reasoning_tokens` para obter o total.
+Nao existe uma coluna `_total_tokens` agregada. Para o total, some
+`_input_tokens + _output_tokens`; `_reasoning_tokens` ja esta contido em `_output_tokens` (o resumo impresso pelo dataframeit mostra "incluido no Output").
 O contador interno de buscas (`_search_count`) tambem nao aparece no
 DataFrame; roda por tras para alimentar os warnings de rate limit do
 provedor de busca.
@@ -355,13 +378,16 @@ limiting`.
    a maioria dos provedores retorna 429. Comece com `parallel_requests=1`
    (padrao) e aumente conforme necessario. Ver `runs-longos.md`.
 
-9. **Campos condicionais exigem ordem** — O campo-pai (`depends_on`)
-   deve ser definido **antes** do campo-filho no modelo Pydantic. Se
-   invertido, a condicao pode nao funcionar.
+9. **Campos condicionais so valem com busca por campo** — `depends_on`
+   e `condition` so sao avaliados com `use_search=True,
+   search_per_field=True` e sem `search_groups`. Nesse modo a ordem de
+   declaracao no modelo nao importa: a biblioteca ordena os campos
+   pelas dependencias. Fora desse modo, a condicao e ignorada e todos
+   os campos sao extraidos. Ver `pydantic-patterns.md §Padrao 4`.
 
 10. **`provider=` e case-sensitive** — `'Google'` falha. Use minusculas:
-    `'google_genai'`, `'openai'`, `'anthropic'`, `'cohere'`, `'mistral'`,
-    `'groq'`, `'claude_code'`.
+    `'google_genai'`, `'openai'`, `'anthropic'`, `'groq'`, `'mistralai'`
+    (nao `'mistral'`), `'cohere'`, `'claude_code'`.
 
 11. **`model=` e o LLM, nao o Pydantic** — O parametro `model` define
     qual modelo de linguagem usar (ex: `'gemini-3-flash-preview'`). O
@@ -378,6 +404,7 @@ limiting`.
 14. **`perguntas` e alias de `questions`** — Ambos aceitam a classe
     Pydantic. Use o que preferir, mas nao passe os dois simultaneamente.
 
-15. **`track_tokens=True` e o padrao** — As colunas `_tokens_*` ja
-    aparecem sem configuracao adicional. Para desabilitar, passe
+15. **`track_tokens=True` e o padrao** — As colunas `_input_tokens`,
+    `_output_tokens` e `_reasoning_tokens` ja aparecem sem configuracao
+    adicional. Para desabilitar, passe
     `track_tokens=False` explicitamente.
