@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: Raspar dados de fontes oficiais brasileiras, bases acadêmicas e imprensa com a biblioteca raspe. Cobre legislação federal (Presidência, Câmara, Senado), agências reguladoras (ANS, ANVISA, SaudeLegis, CFM), órgão de pesquisa (IPEA), base bibliográfica acadêmica (CAPES Periódicos), e imprensa (Folha de São Paulo, New York Times). Use esta skill sempre que o usuário mencionar coleta/raspagem de leis, decretos, portarias, resoluções, projetos de lei, atos normativos, comunicados, diário oficial, agenda regulatória, normas sanitárias, normas médicas, publicações do IPEA, artigos acadêmicos, revisão de literatura via CAPES, periódicos científicos, notícias de jornal, "coletar dados do governo federal", "baixar legislação", "atos da ANVISA", "resoluções da ANS", "portarias do Ministério da Saúde", "buscador da CAPES", "Portal de Periódicos", "matérias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que não mencione explicitamente "raspe".
+description: Raspar dados de fontes oficiais brasileiras, bases acadêmicas e imprensa com a biblioteca raspe. Cobre legislação federal (Presidência, Câmara, Senado), agências reguladoras (ANS, ANVISA, SaudeLegis, CFM), órgão de pesquisa (IPEA), base bibliográfica acadêmica (CAPES Periódicos), e imprensa (Folha de São Paulo, New York Times). Use esta skill sempre que o usuário mencionar coleta/raspagem de leis, decretos, portarias, resoluções, projetos de lei, atos normativos, diário oficial, agenda regulatória, normas sanitárias, normas médicas, publicações do IPEA, artigos acadêmicos, revisão de literatura via CAPES, periódicos científicos, notícias de jornal, "baixar legislação", "atos da ANVISA", "resoluções da ANS", "portarias do Ministério da Saúde", "buscador da CAPES", "Portal de Periódicos", "matérias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que não mencione explicitamente "raspe".
 ---
 
 # Raspe Skill
@@ -151,7 +151,7 @@ Fora dessa hierarquia também propagam: `ValueError` (mais de um parâmetro pass
 
 Nos dois últimos casos o DataFrame veio incompleto. Um 4xx ou 429 numa página seguinte não deixa rastro: o corpo da resposta de erro é tratado como página e, no NYT, vira zero linhas. Esse é o risco típico do NYT, com limite de 5 requisições por minuto; confira se o número de linhas bate com o esperado (10 por página no NYT).
 
-Padrão geral: se uma fonte falhar com timeout ou 5xx, aumente `paginas` para um range menor, tente em outro horário (sites governamentais ficam lentos em horário comercial), e confirme com o usuário antes de repetir.
+Padrão geral: se páginas seguintes falharem com timeout ou 5xx, confirme com o usuário e rode de novo só as páginas que faltaram, passando em `paginas` o `range` delas, de preferência em outro horário (sites governamentais ficam lentos em horário comercial).
 
 ## O que fazer com os dados coletados
 
