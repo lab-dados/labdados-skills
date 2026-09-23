@@ -4,6 +4,22 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-09-23
+
+Corrigido:
+
+- `dataframeit` — coloca a descricao longa do frontmatter entre aspas para que o parser YAML do Claude Code preserve `name` e `description`; antes, o `:` na prosa invalidava todo o frontmatter e impedia a descoberta da skill.
+- A validacao do CI agora executa `claude plugin validate` em cada plugin e bloqueia frontmatter que o runtime descartaria, em vez de verificar apenas a existencia de `SKILL.md`.
+- `dataframeit` — alinha a skill ao dataframeit 0.6.0 (PyPI): extras reais de instalacao (nao existem `[cohere]` nem `[mistral]`; Mistral e Cohere seguem suportados via LangChain com `langchain-mistralai`/`langchain-cohere` instalados a parte; `[search]` e so Tavily; Claude Code via `[claude-code]`); provider `'mistralai'` em vez de `'mistral'`; remove a tabela de "modelo padrao por provedor", que nao existe no codigo (o unico default e `gemini-3-flash-preview`, e `model=` e obrigatorio ao trocar de provider, inclusive em `claude_code`).
+- `dataframeit` — documenta que a biblioteca injeta `temperature=0` e que modelos sem `temperature` (Claude Sonnet 5, Opus 4.7+, GPT-6 com raciocinio, o1/o3, Gemini 3.5 Flash-Lite e 3.6+) precisam de `model_kwargs={'temperature': None}`.
+- `dataframeit` — o total de tokens e `_input_tokens + _output_tokens`: `_reasoning_tokens` ja esta contido na saida, e a formula anterior contava o raciocinio duas vezes.
+- `dataframeit` — campos condicionais (`depends_on`/`condition`) so sao avaliados com `use_search=True, search_per_field=True` e sem `search_groups`; o Exemplo 2 usava `search_groups` sem `search_per_field=True`, o que levanta `ValueError`. `checkpoint_path` aceita `.csv`, `.xlsx` e `.parquet`.
+- `dataframeit` — tabela de modelos atualizada para setembro/2026 (Gemini 3.x, GPT-6, Claude 5, Mistral Small 4/Large 3, Cohere Command A, Groq GPT-OSS), com os aposentados listados e datas de desligamento.
+
+Adicionado:
+
+- `dataframeit` — coluna `_search_credits`, chave `prompt_replace` e, marcadas `[unreleased]`, as mudancas da main 0.7.x (`depends_on` derivado de `condition`; receitas de Vertex AI, Bedrock e Azure OpenAI hospedados no Brasil).
+
 ## [1.7.0] — 2026-06-05
 
 Removido:

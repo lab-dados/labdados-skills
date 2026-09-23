@@ -70,20 +70,22 @@ Versioning is [SemVer](https://semver.org/). Adding a new plugin = minor bump of
 ## Validation
 
 CI is GitHub Actions (`.github/workflows/validate.yml`), run on push/PR to `main`.
-It checks, with Python only (no deps):
+It checks:
 
 - `marketplace.json` and every `plugins/*/.claude-plugin/plugin.json` are valid JSON.
 - Every plugin `source` path in `marketplace.json` exists.
 - Every plugin has at least one `skills/*/SKILL.md`.
+- Every plugin passes the parser and manifest checks from `claude plugin validate`.
 
 Reproduce locally before pushing:
 
 ```powershell
 python -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+npx --yes @anthropic-ai/claude-code@2.1.126 plugin validate plugins/<plugin>
 ```
 
-There is no build, lint, or unit-test step for this repo — validation is just the
-JSON/structure checks above. (Individual *generated* scrapers, e.g. from
+There is no build, lint, or unit-test step for this repo — validation is the
+JSON/structure checks plus the Claude Code plugin validator above. (Individual *generated* scrapers, e.g. from
 `raspe-builder`/`juscraper-builder`, do have offline `responses`-based tests, but
 those tests live in the *target* library repos, not here.)
 
