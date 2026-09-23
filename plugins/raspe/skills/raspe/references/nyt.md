@@ -56,7 +56,7 @@ Se a chave for inválida/expirada, a primeira requisição devolve 401 e a bibli
 | `autor` | Byline completo. |
 | `palavras` | Word count do artigo. |
 | `imagem_url` | URL de imagem (prioriza tamanhos maiores). |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Só quando `texto` é uma lista. Busca por string única não gera a coluna. |
 
 ## Parâmetros específicos
 

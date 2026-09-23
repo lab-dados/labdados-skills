@@ -29,7 +29,7 @@ raspe.cfm().raspar(
 | `Situação` | "Vigente", "Revogada", etc. |
 | `Ementa` | Ementa da norma. |
 | `Link` | URL da norma no portal. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Só quando `texto` é uma lista. Busca por string única não gera a coluna. |
 
 **Atenção**: nomes de coluna preservam maiúsculas/acentos (`Nº/Ano`, `Situação`) — use-os literalmente.
 

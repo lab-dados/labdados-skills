@@ -6,7 +6,7 @@ Portal SaudeLegis do Ministério da Saúde — `https://saudelegis.saude.gov.br/
 
 ## Requisitos
 
-**Extra `[browser]` obrigatório**. Sem ele, o construtor levanta `DriverNotInstalledError`:
+**Extra `[browser]` obrigatório**. Sem ele, `.raspar()` levanta `DriverNotInstalledError` (o construtor funciona, porque o import do Playwright é preguiçoso):
 
 ```bash
 pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
@@ -20,10 +20,11 @@ raspe.saudelegis(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    assunto: str | list[str],
-    paginas: range | None = None,
+    assunto: str,
 ) -> pd.DataFrame
 ```
+
+Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 ## Colunas retornadas
 
@@ -35,7 +36,7 @@ raspe.saudelegis(
 | `origem` | Órgão emissor. |
 | `ementa` | Ementa da norma. |
 | `link_url` | URL para o texto completo. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 
@@ -56,12 +57,12 @@ raspe.saudelegis(
 ```python
 import raspe
 
-df = raspe.saudelegis().raspar(assunto="doença rara", paginas=range(1, 4))
+df = raspe.saudelegis().raspar(assunto="doença rara")
 print(df[["tipo_norma", "numero", "data_pub", "ementa"]].head())
 ```
 
 Para debug visual:
 
 ```python
-df = raspe.saudelegis(headless=False).raspar(assunto="doença rara", paginas=range(1, 2))
+df = raspe.saudelegis(headless=False).raspar(assunto="doença rara")
 ```

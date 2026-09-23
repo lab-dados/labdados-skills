@@ -4,6 +4,28 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] — 2026-09-23
+
+Removido:
+
+- `raspe`: fonte CNJ, que saiu da biblioteca `raspe` (migrada para o juscraper como agregador `comunica_cnj`). Sai `references/cnj.md`, as linhas de CNJ nas tabelas e a keyword `cnj`. Pedido de comunicacoes processuais do CNJ passa a ser redirecionado para a skill `juscraper` (ComunicaCNJ).
+
+Corrigido:
+
+- `raspe`: contagem de fontes (11 no total, 8 HTTP) e Python minimo (>= 3.10, como no `pyproject.toml` da biblioteca).
+- `raspe`: CAPES le o tamanho de pagina do atributo `data-per-page` (fallback 20), nao 30; `pesquisa` vazia levanta `ValidationError`.
+- `raspe`: regra real da coluna `termo_busca` (busca por string unica em `texto`, de `cfm` e `nyt`, nao gera a coluna; fontes Playwright nao aceitam lista).
+- `raspe`: retry de 429/5xx vale so para a requisicao inicial; nas paginas seguintes um 5xx e logado e a pagina pulada, e o DataFrame pode vir incompleto sem erro.
+- `raspe`: dataframeit nao gera mais `_total_tokens` (removida no 0.6.0); o custo sai da soma de `_input_tokens` e `_output_tokens`.
+- `raspe`: fontes Playwright (SaudeLegis, ANS, ANVISA) ignoram `paginas` e nao aceitam lista; o volume e limitado pelo atributo interno `_max_pages`. Assinaturas, exemplos e `playwright.md` corrigidos.
+- `raspe`: lista de excecoes descreve o que de fato propaga. `RateLimitError` e 5xx esgotados na requisicao inicial nao chegam ao usuario: `.raspar()` devolve DataFrame vazio e o erro fica no log.
+- `raspe`: CAPES incluida na lista de fontes das descriptions do plugin e do marketplace.
+- `raspe`: `DriverNotInstalledError` so sai no `.raspar()` (o construtor funciona sem Playwright); `PaginationStrategy` com os valores reais; orientacao de logging (handler proprio, `logging.basicConfig` sem efeito); sinais de log de paginas puladas e o 4xx/429 sem rastro em paginas seguintes; `termo_busca` tratada como opcional nos exemplos.
+
+Adicionado:
+
+- `raspe`: `raspe.scraper_manager.scraper(nome)` e o alias `.scrape()` de `.raspar()`.
+
 ## [1.10.0] — 2026-09-23
 
 Corrigido:

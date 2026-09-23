@@ -37,8 +37,9 @@ raspe.capes().raspar(
 ## Gotchas
 
 - **Sintaxe `all:contains(termo)`**. O parâmetro `q` da API espera essa sintaxe Solr-like. O raspador encapsula isso automaticamente — basta passar `pesquisa="termo"` e ele monta `q=all:contains(termo)`. Para termos compostos com espaços, passe a string inteira (`pesquisa="acesso a medicamentos"`).
-- **Paginação 1-based** via parâmetro `page`. 30 resultados por página.
-- **Volume gigante**. Buscas genéricas (ex.: "saúde") retornam ~29 milhões de resultados, ou seja, ~980 mil páginas. **Sempre use `paginas=range(1, N)` com N pequeno** (10-100 normalmente cobre). O scraper não limita por default.
+- **Paginação 1-based** via parâmetro `page`. O tamanho da página vem do atributo `data-per-page` do `<nav>` de paginação (20 em maio de 2026); se o atributo sumir, o scraper assume 20.
+- **`pesquisa` é obrigatória.** String vazia ou só com espaços levanta `ValidationError` antes de qualquer requisição.
+- **Volume gigante**. Buscas genéricas (ex.: "saúde") retornam ~29 milhões de resultados, ou seja, ~1,45 milhão de páginas com 20 itens cada. **Sempre use `paginas=range(1, N)` com N pequeno** (10-100 normalmente cobre). O scraper não limita por default.
 - **Resumo curto**. O campo `resumo` traz apenas o snippet com o termo destacado, não o abstract completo. Para o abstract, você precisaria abrir cada `link` ou cruzar pelo `id` (OpenAlex) com a `openalex-skill`.
 - **Proxy CAFe institucional**. Se você estiver atrás de uma rede com sessão CAFe, o servidor pode redirecionar para uma URL com subdomínio `ez{NN}.periodicos.capes.gov.br`. Isso não afeta o conteúdo da busca pública — o `requests` segue redirect automaticamente.
 - **Acesso a textos completos**. O raspador não coleta PDFs ou full-texts. Para o conteúdo, use o `link_editor` (DOI), `id` OpenAlex via `openalex-skill`, ou abra o link de detalhamento manualmente.
