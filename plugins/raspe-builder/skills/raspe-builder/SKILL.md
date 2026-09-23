@@ -511,7 +511,7 @@ Playwright segue o caminho descrito no fim desta etapa.
    ```python
    import pytest
    import responses
-   from responses import registries
+   from responses import matchers, registries
 
    from raspe.scrapers.{fonte} import Scraper{Fonte}
    from tests._helpers import load_sample_bytes
@@ -536,7 +536,10 @@ Playwright segue o caminho descrito no fim desta etapa.
            # pagina. Para 2 paginas → 3 responses.add no total.
            responses.add(responses.GET, API_URL,
                body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
-               status=200, content_type="text/html; charset=utf-8")
+               status=200, content_type="text/html; charset=utf-8",
+               match=[matchers.query_param_matcher(
+                   {"{param_busca}": "economia"}, strict_match=False,
+               )])
            responses.add(responses.GET, API_URL,
                body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
                status=200, content_type="text/html; charset=utf-8")

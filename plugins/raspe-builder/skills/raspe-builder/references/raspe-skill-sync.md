@@ -57,7 +57,9 @@ Exemplo, se a fonte nova for Tesouro Nacional:
 ### Frontmatter `description`
 
 A `description` no frontmatter lista as fontes cobertas e termos-gatilho.
-Adicione menção à nova fonte. Leia a `description` atual da `SKILL.md`
+Adicione menção à nova fonte. A especificação de skills limita a
+`description` a 1024 caracteres, e a da raspe já está perto do teto:
+meça depois de editar e, se passar, corte um gatilho redundante. Leia a `description` atual da `SKILL.md`
 da raspe antes de editar; o padrão é agrupar as fontes por categoria,
 como em:
 

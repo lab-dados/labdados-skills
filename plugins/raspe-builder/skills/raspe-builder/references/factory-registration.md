@@ -162,13 +162,17 @@ Para Playwright, valide adicionalmente que importar `raspe` **sem**
 python -c "import raspe; raspe.{fonte}"  # acessar a função (não chama)
 # Deve passar sem ImportError, mesmo sem playwright instalado.
 
-python -c "raspe.{fonte}()"  # tentar instanciar
+python -c "import raspe; raspe.{fonte}()"  # instanciar
+# Também passa sem playwright: o import do driver é preguiçoso.
+
+python -c "import raspe; raspe.{fonte}().raspar({param}='teste')"
 # Aqui deve levantar DriverNotInstalledError se não tiver playwright.
 ```
 
 ## Registro em `scraper_manager.py` e testes
 
-Para fontes HTTP, registre também a classe no `mapping` da função
+Para fontes HTTP, a convenção recente (a partir da CAPES; CFM, Folha e
+NYT não estão no `mapping`) é registrar também a classe no `mapping` da função
 `scraper()` em `src/raspe/scraper_manager.py`, o que habilita
 `scraper("{FONTE}")` além de `raspe.{fonte}()`:
 
