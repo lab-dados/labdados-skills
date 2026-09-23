@@ -73,14 +73,14 @@ n = tjsp.cjpg(pesquisa='fornecimento medicamento', assunto=10070, count_only=Tru
 
 Retorna `int`; `paginas` e ignorado com `UserWarning`. Com `auto_chunk=True`, janelas longas sao somadas sem dedup por `id_processo`, entao a contagem pode divergir de `len(tjsp.cjpg(...))`.
 
-### `cjsg` — extras em relacao ao eSAJ padrao
+### `cjsg` — diferencas em relacao ao eSAJ padrao
 
-Alem dos parametros eSAJ documentados em `tribunais.md`, o TJSP aceita:
-- `comarca=None` — filtro por comarca (exclusivo TJSP na familia eSAJ)
-- `tipo_decisao='acordao'|'monocratica'`
-- `baixar_sg=True`
+Os parametros eSAJ estao em `tribunais.md`. `comarca`, `tipo_decisao` e `count_only` valem para toda a familia eSAJ. No TJSP:
+- `baixar_sg=True` substitui `origem`;
+- `numero_recurso` e `data_publicacao_*` nao existem, e passar qualquer um deles da erro;
 - **`pesquisa=""` aceito** `[v0.4.0+]` — antes era obrigatorio; agora `tjsp.cjsg(classe='...', assunto='...')` sem termo textual funciona, igualando o comportamento de `cjpg`.
-- **`count_only=True` aceito** `[v0.4.0+]` — retorna `int` com o total estimado de resultados em vez de `DataFrame`. Mesmo contrato do `cjpg`: ignora `paginas` com warning e soma janelas longas sem dedup.
+
+`count_only=True` `[v0.4.0+]`, comum a toda a familia eSAJ, retorna `int` com o total estimado de resultados em vez de `DataFrame`. Mesmo contrato do `cjpg`: ignora `paginas` com warning e soma janelas longas sem dedup.
 
 ## Cobertura temporal
 

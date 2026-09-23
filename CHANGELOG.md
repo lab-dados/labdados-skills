@@ -4,6 +4,19 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.12.1] — 2026-09-23
+
+Corrigido:
+
+- `dataframeit` (plugin 1.1.1): a `description` do frontmatter passa a caber no limite de 1024
+  caracteres da especificacao de skills (tinha 1101); sairam gatilhos redundantes.
+- `juscraper` (plugin 1.3.1): `comarca`, `tipo_decisao` e `count_only` deixam de aparecer como
+  exclusivos do TJSP em `tribunais.md`, `api.md` e `tjsp.md`. Na v0.4.0 os tres valem para toda a
+  familia eSAJ; a diferenca real do TJSP no `cjsg` e `baixar_sg` no lugar de `origem`, sem
+  `numero_recurso` nem `data_publicacao_*`.
+- `openalex` (plugin 1.1.1): o custo de US$1 por mil de filtros `*.search*` passa a constar tambem
+  no resumo de custos da `SKILL.md` e em `references/api.md`, e nao so em `references/cli.md`.
+
 ## [1.12.0] — 2026-09-23
 
 Corrigido:

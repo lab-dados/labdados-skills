@@ -421,7 +421,7 @@ More budget: prepaid usage in $1 increments, or annual plans (Member $20/day, Me
 | Operation | Cost | Free tier daily |
 |-----------|------|-----------------|
 | Get singleton (by ID/DOI) | Free | Unlimited |
-| List + Filter | $0.10 / 1,000 calls | ~10,000 calls |
+| List + Filter | $0.10 / 1,000 calls ($1 / 1,000 if the filter has a `*.search*` term) | ~10,000 calls |
 | Search (keyword + semantic) | $1 / 1,000 calls | ~1,000 calls |
 | Content download (PDF/XML) | $10 / 1,000 ($0.01 each) | ~100 files |
 
@@ -623,7 +623,7 @@ for year in range(2020, 2027):
 7. **Implement exponential backoff** — errors are common at scale
 8. **Use select=** to limit fields — much faster responses
 9. **Use sample= for random sampling**, not arbitrary page numbers
-10. **Content downloads cost credits** ($0.01 each); metadata list calls cost $0.10/1K, only lookups by ID are free
+10. **Content downloads cost credits** ($0.01 each); metadata list calls cost $0.10/1K ($1/1K with a `*.search*` filter), only lookups by ID are free
 11. **Use cursor pagination** for >10K results — page-based caps at 10K
 12. **Booleans must be lowercase** — `true`/`false`, not `True`/`False`
 13. **`cites` vs `cited_by` direction** — `cites:W123` = "who cites W123?" (forward/incoming); `cited_by:W123` = "what does W123 cite?" (backward/outgoing). The filter name describes the *returned* works' relationship to the ID.
