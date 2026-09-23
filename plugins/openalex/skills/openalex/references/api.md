@@ -18,7 +18,7 @@ Base URL: `https://api.openalex.org`
 12. [Group By / Aggregation](#group-by)
 13. [Select Fields](#select-fields)
 14. [Autocomplete](#autocomplete)
-15. [Semantic Search (Deprecated)](#semantic-search)
+15. [Semantic Search](#semantic-search)
 16. [Abstracts](#abstracts)
 17. [Full-Text Content via API](#full-text-content-via-api)
 18. [Response Structure](#response-structure)
@@ -31,15 +31,24 @@ Base URL: `https://api.openalex.org`
 
 ## Authentication
 
-Always include your API key:
+Always include your API key, as a query parameter or as a bearer token (both work identically):
 ```
 https://api.openalex.org/works?api_key=$OPENALEX_API_KEY
+curl -H "Authorization: Bearer $OPENALEX_API_KEY" "https://api.openalex.org/works"
 ```
+
+Without a key the API still answers, but the budget is only $0.10/day (a tenth of the
+free key's $1/day); once it is spent, requests return HTTP 429. Content downloads
+(`content.openalex.org`) return 401 without a key.
+
+> **No polite pool.** The `mailto=`/`email=` parameter was replaced by API keys in
+> February 2026 and is now ignored: it gives no extra budget. Do NOT use `mailto` as a
+> free fallback when the key is missing. Ask the user for a key instead.
 
 ## Entity Endpoints
 
 ```
-/works          — 240M+ scholarly documents (articles, books, datasets, preprints)
+/works          — 320M+ scholarly documents in the default corpus; 460M+ with `corpus=all`
 /authors        — Researcher profiles with disambiguated identities
 /sources        — Journals, repositories, conferences (~250K)
 /institutions   — Universities, research organizations
@@ -55,14 +64,16 @@ https://api.openalex.org/works?api_key=$OPENALEX_API_KEY
 ## Query Parameters
 
 ```
-api_key=        — Your API key (required)
+api_key=        — Your API key (or send `Authorization: Bearer <key>`)
 filter=         — Filter results (see syntax below)
 search=         — Full-text search across title/abstract/fulltext
+search.exact=   — Same, without stemming (needed for wildcards)
+search.semantic= — Search by meaning (see Semantic Search)
 sort=           — Sort results (e.g., cited_by_count:desc)
-per_page=       — Results per page (default: 25, max: 100)
+per_page=       — Results per page (default: 25, max: 100; 200 is legacy and deprecated)
 page=           — Page number for pagination
 cursor=         — Cursor for deep pagination (see Cursor Pagination)
-sample=         — Random results (e.g., sample=50)
+sample=         — Random results (e.g., sample=50; max 10,000)
 seed=           — Seed for reproducible sampling
 select=         — Limit returned fields (e.g., select=id,title)
 group_by=       — Aggregate results by a field
@@ -77,10 +88,32 @@ The `search=` parameter searches across title, abstract, AND fulltext simultaneo
 /works?search=climate+AND+change
 /works?search=CRISPR+OR+gene+editing
 /works?search=neural+NOT+network
+/works?search=(elmo AND "sesame street") NOT (cookie OR monster)
 ```
 
+Boolean operators `AND`, `OR`, `NOT` must be uppercase; words without an operator are
+treated as `AND`. The search is stemmed ("possums" also matches "possum").
+
+```
+# Exact phrase
+/works?search="fierce creatures"
+# Proximity: words within N positions of each other
+/works?search="climate change"~5
+# Unstemmed search; wildcards (*, ?) only work here
+/works?search.exact=machin*
+```
+
+Only one search parameter per request: `search`, `search.exact`, or `search.semantic`.
+
+**URL length limit**: the whole request URL is limited to about 4 KB (4,094 bytes).
+Longer URLs, typically long Boolean `OR` lists in systematic reviews, return `400`
+"Request URL too long". Split the `OR` list into chunks, run each, and take the union
+of the returned IDs client-side (same result set, each chunk billed separately).
+
 > **Deprecated**: Field-specific `.search` filters (`title.search`, `abstract.search`,
-> `display_name.search`, `fulltext.search`) are deprecated. Use the `search=` parameter instead.
+> `display_name.search`, `fulltext.search`) still work but are not recommended. Use the
+> `search=` parameter instead. Exception: to mix stemmed and wildcard terms in one query,
+> use the filter form, e.g. `filter=fulltext.search:treatment,fulltext.search.exact:psoriat*`.
 
 ## Filter Syntax
 
@@ -195,7 +228,7 @@ You can look up entities directly by external identifiers:
 # Pages needed: ceil(meta.count / per_page)
 ```
 
-**Page-based pagination has a hard cap of 10,000 results.**
+**Page-based pagination has a hard cap of 10,000 results** (`page × per_page` must not exceed 10,000).
 For larger result sets, use cursor pagination (see below).
 
 ## Cursor Pagination
@@ -282,9 +315,28 @@ Fast type-ahead (~200ms):
 
 ## Semantic Search
 
-> **Deprecated**: The `semantic.search` filter was deprecated. There is no documented
-> replacement endpoint. For similar-paper discovery, use keyword search with relevant
-> terms or citation network analysis (`cites`/`cited_by` filters).
+Finds works closest in meaning to the query (embeddings of title and abstract), even when
+the wording differs. Useful with long inputs such as an abstract or a research question.
+
+```
+/works?search.semantic=predicting drug toxicity from molecular structure
+/works?search.semantic=mRNA vaccine immunogenicity in older adults&filter=publication_year:>2020,is_oa:true&select=id,title,relevance_score
+```
+
+| Constraint | Value |
+|------------|-------|
+| Max input length | 2,000 characters (longer input is truncated) |
+| Max results | 50 per query |
+| Rate limit | 1 request per second |
+| Cost | $1 / 1,000 calls (same as keyword search) |
+
+Only a whitelist of filters is supported; other filters return `400` listing the
+allowed ones (observed on 2026-09-23): `author.id`, `authorships.author.id`,
+`authorships.institutions.id`, `authorships.institutions.lineage`, `funders.id`,
+`has_abstract`, `has_fulltext`, `institution.id`, `institutions.id`, `is_oa`,
+`is_retracted`, `language`, `open_access.is_oa`, `primary_location.license`,
+`primary_location.source.id`, `publication_year`, `type`. Not supported include
+`cited_by_count`, `topics.id`, `has_content.*`, `cites`/`cited_by` and `from_publication_date`.
 
 ## Abstracts
 
@@ -315,10 +367,16 @@ text for downstream processing (e.g., feeding to an LLM).
 
 Works with `has_content.pdf:true` or `has_content.grobid_xml:true` have downloadable content.
 
-Direct content URLs:
+Direct content URLs (also listed in each work's `content_urls` field):
 ```
 https://content.openalex.org/works/{WORK_ID}.pdf?api_key=$OPENALEX_API_KEY
 https://content.openalex.org/works/{WORK_ID}.grobid-xml?api_key=$OPENALEX_API_KEY
+```
+
+TEI XML is served with `Content-Encoding: gzip`. `requests`/`httpx` decode it
+transparently; with `curl`, pass `--compressed` or you get raw gzip bytes:
+```
+curl --compressed "https://content.openalex.org/works/W3038568908.grobid-xml?api_key=$OPENALEX_API_KEY"
 ```
 
 ```
@@ -357,7 +415,8 @@ Each content download costs $0.01. For bulk downloads, use the CLI instead.
 
 ## Rate Limits and Pricing
 
-**Free daily allowance:** $1/day, resets at midnight UTC.
+**Free daily allowance:** $1/day with a free key ($0.10/day without a key), resets at midnight UTC.
+More budget: prepaid usage in $1 increments, or annual plans (Member $20/day, Member+ $100/day, Partner $200+/day).
 
 | Operation | Cost | Free tier daily |
 |-----------|------|-----------------|
@@ -366,7 +425,8 @@ Each content download costs $0.01. For bulk downloads, use the CLI instead.
 | Search (keyword + semantic) | $1 / 1,000 calls | ~1,000 calls |
 | Content download (PDF/XML) | $10 / 1,000 ($0.01 each) | ~100 files |
 
-**Hard limit:** 100 requests/second. Exceeding triggers HTTP 429.
+**Hard limit:** 100 requests/second (semantic search: 1/second). Exceeding it, or
+exhausting the daily budget, triggers HTTP 429.
 
 **Rate limit headers** (in every response):
 - `X-RateLimit-Limit` — daily budget
@@ -563,7 +623,7 @@ for year in range(2020, 2027):
 7. **Implement exponential backoff** — errors are common at scale
 8. **Use select=** to limit fields — much faster responses
 9. **Use sample= for random sampling**, not arbitrary page numbers
-10. **Content downloads cost credits** — metadata is free
+10. **Content downloads cost credits** ($0.01 each); metadata list calls cost $0.10/1K, only lookups by ID are free
 11. **Use cursor pagination** for >10K results — page-based caps at 10K
 12. **Booleans must be lowercase** — `true`/`false`, not `True`/`False`
 13. **`cites` vs `cited_by` direction** — `cites:W123` = "who cites W123?" (forward/incoming); `cited_by:W123` = "what does W123 cite?" (backward/outgoing). The filter name describes the *returned* works' relationship to the ID.
@@ -572,9 +632,11 @@ for year in range(2020, 2027):
 
 ## Reference Links
 
-- Full docs: https://developers.openalex.org
-- Filter reference: https://developers.openalex.org/api-entities/works/filter-works
-- Search reference: https://developers.openalex.org/api-entities/works/search-works
+- Full docs: https://help.openalex.org (formerly developers.openalex.org, which now redirects there)
+- Authentication and limits: https://help.openalex.org/api/authentication/
+- Filter reference: https://help.openalex.org/api/filtering/
+- Search reference: https://help.openalex.org/api/searching/
+- Semantic search: https://help.openalex.org/api/semantic-search/
 
 > **Note:** The `pyalex` library (unofficial Python wrapper) exists. This skill
 > focuses on the official REST API and the `openalex-official` CLI.

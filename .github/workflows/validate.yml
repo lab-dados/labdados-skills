@@ -65,3 +65,12 @@ jobs:
               sys.exit(1)
           print("All plugins have at least one SKILL.md.")
           PYEOF
+
+      - name: Validate plugins with Claude Code
+        run: |
+          for plugin in plugins/*; do
+            if [ -f "$plugin/.claude-plugin/plugin.json" ]; then
+              echo "Validating $plugin"
+              npx --yes @anthropic-ai/claude-code@2.1.126 plugin validate "$plugin"
+            fi
+          done
