@@ -328,7 +328,7 @@ tjpe.cjsg(
     classe=None,                        # singular canonico [v0.3.0] (era classe_cnj)
     assunto=None,                       # singular canonico [v0.3.0] (era assunto_cnj)
     meio_tramitacao=None,
-    tipo_decisao=None                   # 'acordaos', 'monocraticas', 'todos'
+    tipo_decisao='acordaos'             # 'acordaos', 'monocraticas', 'todos'
 )
 ```
 
