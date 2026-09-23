@@ -81,7 +81,8 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Playwright MCP configurado no Claude Code (para navegacao e captura de
   requisicoes de rede durante a engenharia reversa)
 - Python >= 3.11
-- Para paginas com captcha text-based: `pip install txtcaptcha`
+- Para paginas com captcha text-based: `txtcaptcha`, que no juscraper entra pelo
+  extra `[tjmg]` (`uv pip install -e ".[dev,tjmg]"` no clone do juscraper)
 
 ### raspe-builder
 

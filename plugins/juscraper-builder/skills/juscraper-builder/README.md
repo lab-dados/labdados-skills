@@ -50,7 +50,7 @@ claude
 3. Submete uma busca de teste e captura as requisições HTTP
 4. Identifica a API/endpoint por baixo do site
 5. Gera código Python usando `requests` (sem Playwright no código final)
-6. Cria testes de integração reais
+6. Cria testes de contrato offline (`responses` + samples capturados), schemas pydantic e, se pedido, testes de integração
 7. Valida que tudo funciona
 
 ## Estrutura
@@ -68,7 +68,7 @@ juscraper-builder/
 │   ├── analyze_requests.py            # Analisa requisições capturadas
 │   └── validate_scraper.py            # Valida scraper gerado
 └── assets/
-    └── template_tribunal.py           # Template base de scraper
+    └── template_tribunal/             # Template base: __init__, client, download, parse, schemas
 ```
 
 ## Requisitos
