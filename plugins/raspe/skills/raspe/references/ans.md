@@ -20,10 +20,11 @@ raspe.ans(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    termo: str | list[str],
-    paginas: range | None = None,
+    termo: str,
 ) -> pd.DataFrame
 ```
+
+Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 ## Colunas retornadas
 
@@ -33,7 +34,7 @@ raspe.ans(
 | `titulo` | Tipo + número + ano (ex.: "Resolução Normativa Nº 465/2021"). |
 | `descricao` | Ementa/descrição do ato. |
 | `situacao` | Status (ex.: "Revogado", "Revogado Tacitamente", etc.). **Vem como `None` quando o ato está vigente** — filtre com `df[df["situacao"].isna()]`. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 
@@ -60,7 +61,7 @@ raspe.ans(
 ```python
 import raspe
 
-df = raspe.ans().raspar(termo="doença rara", paginas=range(1, 4))
+df = raspe.ans().raspar(termo="doença rara")
 print(df.columns.tolist())
 # ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
 

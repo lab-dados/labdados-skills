@@ -4,44 +4,57 @@ Matriz dos hiperparametros aceitos por cada familia de modelo, com
 recomendacao para **extracao estruturada e classificacao de campos
 finitos** (caso de uso central do dataframeit).
 
-Atualizado em abril/2026. Confirme na documentacao oficial do provedor
-antes de executar — provedores ajustam parametros silenciosamente.
+Atualizado em setembro/2026 a partir das paginas de modelos e de
+deprecacao de cada provedor. Confirme na documentacao oficial antes de
+executar: provedores aposentam modelos e mudam parametros com
+frequencia.
+
+**Lembrete do dataframeit**: nos provedores via LangChain, a biblioteca
+cria o cliente com `temperature=0` e depois aplica `model_kwargs`. Para
+modelo que nao aceita `temperature`, passe `{'temperature': None}`; para
+recomendacao diferente de 0, passe o valor explicitamente. Ver
+`api.md §Modelo e temperature`.
 
 ---
 
-## Tabela-resumo por modelo default
+## Tabela-resumo
 
-| Modelo | Provider | `temperature` | `seed` | `max_output_tokens` | Config recomendada (extracao) |
-|---|---|---|---|---|---|
-| **Gemini 3 Flash** (`gemini-3-flash-preview`, default global) | `google_genai` | Aceita 0.0-2.0, **manter 1.0** | Sim | Sim | `{'temperature': 1.0, 'seed': 42}` |
-| Gemini 2.5 Pro | `google_genai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| Gemini 2.5 Flash | `google_genai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| gpt-4o-mini | `openai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| gpt-4.1-mini | `openai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| gpt-4o | `openai` | Aceita 0.0-2.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| **o1 / o1-mini** | `openai` | **Nao aceita** | Nao | `max_completion_tokens` | Nao se aplica a extracao |
-| **o3 / o3-mini** | `openai` | **Nao aceita** | Nao | `max_completion_tokens` | Nao se aplica a extracao |
-| **GPT-5 (raciocinio)** | `openai` | **Nao aceita** | Nao | `max_completion_tokens` | Nao se aplica a extracao |
-| Claude Haiku 4.5 | `anthropic` | Aceita 0.0-1.0 | Nao | `max_tokens` | `{'temperature': 0}` |
-| Claude Sonnet 4.6 | `anthropic` | Aceita 0.0-1.0 | Nao | `max_tokens` | `{'temperature': 0}` — desligar adaptive thinking |
-| Claude Opus 4.7 | `anthropic` | Aceita 0.0-1.0, interage com adaptive thinking | Nao | `max_tokens` | Nao e default — apenas escalacao para raciocinio livre justificada |
-| Mistral Small | `mistral` | Aceita 0.0-1.5 | `random_seed` | Sim | `{'temperature': 0, 'random_seed': 42}` |
-| Mistral Large | `mistral` | Aceita 0.0-1.5 | `random_seed` | Sim | `{'temperature': 0, 'random_seed': 42}` |
-| Cohere Command R | `cohere` | Aceita 0.0-5.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| Cohere Command R+ | `cohere` | Aceita 0.0-5.0 | Sim | Sim | `{'temperature': 0, 'seed': 42}` |
-| Groq Llama 3.3 70B Versatile | `groq` | Aceita 0.0-2.0 | Sim | `max_tokens` | `{'temperature': 0, 'seed': 42}` |
-| Groq Llama 3.1 8B Instant | `groq` | Aceita 0.0-2.0 | Sim | `max_tokens` | `{'temperature': 0, 'seed': 42}` |
+| Modelo (`model=`) | Provider | `temperature` | `seed` | Config recomendada (extracao) |
+|---|---|---|---|---|
+| **`gemini-3-flash-preview`** (default do dataframeit, ainda em preview) | `google_genai` | Aceita, **manter 1.0** | Sim | `{'temperature': 1.0, 'seed': 42}` |
+| `gemini-3.5-flash-lite`, `gemini-3.6-flash` a `gemini-3.8-flash` | `google_genai` | **Deprecada** | Nao confirmado | `{'temperature': None}` |
+| `gemini-3.1-pro-preview` | `google_genai` | Aceita, manter 1.0 | Sim | Nao e default, so escalacao justificada |
+| `gpt-4.1-mini`, `gpt-4o-mini` (nao-raciocinio) | `openai` | Aceita 0.0-2.0 | Deprecado no Chat Completions | `{'temperature': 0}` |
+| **GPT-6 Luna / Sol** (`gpt-6-luna`, `gpt-6-sol`) | `openai` | So com `reasoning_effort='none'` | Deprecado | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| GPT-6 Astra (`gpt-6-astra`) | `openai` | **Nao aceita** (sem nivel `none`) | Deprecado | `{'temperature': None}`. Nao e default para extracao |
+| GPT-5 (`gpt-5`, `gpt-5-mini`, `gpt-5-nano`) | `openai` | So com raciocinio `none` | Deprecado | Snapshots saem em 11/12/2026, migrar |
+| **o1, o3, o3-mini** | `openai` | **Nao aceita** | Nao | o1 e o3-mini saem em 23/10/2026, o3 em 11/12/2026 |
+| `claude-haiku-4-5` | `anthropic` | Aceita 0.0-1.0 | Nao | `{'temperature': 0}` |
+| `claude-sonnet-4-6` | `anthropic` | Aceita 0.0-1.0 | Nao | `{'temperature': 0}` |
+| `claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`, Opus 4.7/4.8 | `anthropic` | **Nao aceita** (erro 400) | Nao | `{'temperature': None}`. Nao e default para extracao |
+| `mistral-small-latest` (hoje Mistral Small 4) | `mistralai` | Aceita, 0-0.7 recomendado | `random_seed` | `{'temperature': 0, 'random_seed': 42}` |
+| `mistral-large-latest` (hoje Mistral Large 3) | `mistralai` | Aceita | `random_seed` | `{'temperature': 0, 'random_seed': 42}` |
+| `command-a-03-2025` | `cohere` | Aceita | Sim | `{'temperature': 0, 'seed': 42}` |
+| `openai/gpt-oss-120b`, `openai/gpt-oss-20b` | `groq` | Aceita 0.0-2.0 | Sim | `{'temperature': 0, 'seed': 42}` |
+
+**Aposentados ou restritos que ainda aparecem em codigo antigo**: Gemini
+1.5 (desligado em 29/09/2025); Gemini 2.5 Pro/Flash (nao deprecados, mas
+com acesso restrito a quem ja usava; para projeto novo o Google indica
+3.5 Flash-Lite ou 3.8 Flash); aliases `command-r`/`command-r-plus` da Cohere (deprecados desde
+15/09/2025); `llama-3.3-70b-versatile` e `llama-3.1-8b-instant` na Groq
+(desligados em 16/08/2026 nos planos free e developer).
 
 **Regra geral**:
 
 1. Para extracao/classificacao, **modelo pequeno** sempre — ver
-   roteamento em `dataframeit-skill/SKILL.md` §Roteamento Passo 1.
+   roteamento em `SKILL.md §Roteamento Passo 1`.
 2. Determinismo por `temperature=0` quando o modelo aceita, **exceto**
-   Gemini 3 Flash (ver §Google abaixo).
+   Gemini 3 (ver §Google abaixo).
 3. `seed` fixo sempre que disponivel — cumulativo com `temperature=0`.
-4. **Reasoning models** (o1/o3/GPT-5 raciocinio) nao aceitam
-   `temperature`, usam `reasoning_effort` e `verbosity`, e nao se
-   aplicam a extracao estruturada — ver §OpenAI abaixo.
+4. **Modelos de raciocinio** (OpenAI o-series, GPT-5/GPT-6 com
+   raciocinio ligado, Claude Sonnet 5/Opus) nao aceitam `temperature`.
+   Para extracao, prefira modelo nao-raciocinio ou desligue o raciocinio
+   quando o provedor permite (GPT-6 com `reasoning_effort='none'`).
 
 ---
 
@@ -56,11 +69,11 @@ from dataframeit import dataframeit
 resultado = dataframeit(
     df, CodificacaoDecisao, "...",
     provider='anthropic',
-    model='claude-haiku-4-5-20251001',
+    model='claude-haiku-4-5',
     model_kwargs={'temperature': 0},
 )
 
-# Gemini 3 Flash
+# Gemini 3 Flash (default)
 resultado = dataframeit(
     df, CodificacaoDecisao, "...",
     provider='google_genai',
@@ -68,12 +81,12 @@ resultado = dataframeit(
     model_kwargs={'temperature': 1.0, 'seed': 42},
 )
 
-# gpt-4o-mini
+# GPT-6 Luna sem raciocinio
 resultado = dataframeit(
     df, CodificacaoDecisao, "...",
     provider='openai',
-    model='gpt-4o-mini',
-    model_kwargs={'temperature': 0, 'seed': 42},
+    model='gpt-6-luna',
+    model_kwargs={'reasoning_effort': 'none', 'temperature': 0},
 )
 ```
 
@@ -86,7 +99,12 @@ nomes.
 
 ## §Google (`provider='google_genai'`)
 
-### Gemini 3 Flash (default)
+### Gemini 3 Flash preview (default do dataframeit)
+
+`gemini-3-flash-preview` continua em preview, sem data de desligamento
+anunciada, mas o Google ja o chama de modelo Flash legado: a pagina de
+deprecacoes indica `gemini-3.6-flash` como substituto e, para projeto
+novo, 3.5 Flash-Lite ou 3.8 Flash. Nao existe `gemini-3-flash` GA.
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
@@ -95,79 +113,85 @@ nomes.
 | `top_p` | 0.0 – 1.0 | — | Nao alterar |
 | `top_k` | int | — | Nao alterar |
 | `max_output_tokens` | int | ~8192 | Dimensionar conforme tamanho Pydantic |
-| `response_mime_type` | str | — | `'application/json'` quando extracao via JSON |
 
-**Cuidado — nao reduzir `temperature`**: Google recomenda manter
-`temperature=1.0` (default) para Gemini 3 Flash. Reduzir abaixo de
-1.0 pode causar looping ou degradacao, especialmente em tarefas
-envolvendo raciocinio matematico/logico. Para reprodutibilidade,
-fixe `seed` — nao `temperature`.
+**Cuidado — nao reduzir `temperature`**: o Google recomenda manter
+`temperature=1.0` nos Gemini 3. Reduzir pode causar looping ou
+degradacao. Como o dataframeit injeta `temperature=0`, passe 1.0
+explicitamente. Para reprodutibilidade, fixe `seed`, nao `temperature`.
 
-Fonte: Gemini 3 Developer Guide (Google AI for Developers, 2026).
+### Gemini 3.5 Flash-Lite, 3.6 Flash, 3.7 Flash, 3.8 Flash (estaveis)
 
-### Gemini 2.5 Pro / 2.5 Flash / 1.5 Pro / 1.5 Flash (legados)
+`temperature`, `top_p` e `top_k` estao deprecados a partir do
+Gemini 3.6 Flash e do 3.5 Flash-Lite (changelog de 21/07/2026), e o
+guia de migracao para o 3.8 manda remove-los. O `langchain-google-genai`
+4.4 so descarta `temperature` sozinho para `gemini-3.5-flash-lite` e
+`gemini-3.6-flash`; nos demais, passe `{'temperature': None}`. Nao foi
+confirmado se `seed` continua valendo nesses modelos.
 
-| Parametro | Aceita | Default | Recomendacao extracao |
-|---|---|---|---|
-| `temperature` | 0.0 – 2.0 | 1.0 | **0** |
-| `seed` | int | aleatorio | Fixar |
-| `top_p` | 0.0 – 1.0 | — | Nao alterar |
-| `top_k` | int | — | Nao alterar |
-| `max_output_tokens` | int | varia | Dimensionar |
+### Gemini 3.1 Pro preview
 
-Nos modelos legados, `temperature=0` ainda e o caminho tradicional.
+Unico Pro de texto disponivel (`gemini-3-pro-preview` foi desligado em
+09/03/2026). Mesma recomendacao de `temperature=1.0`. Reservar para
+escalacao justificada.
 
 ---
 
 ## §OpenAI (`provider='openai'`)
 
-### gpt-4o-mini, gpt-4o, gpt-4.1-mini, gpt-4.1 (nao-raciocinio)
+### gpt-4.1-mini, gpt-4o-mini (nao-raciocinio)
+
+Continuam disponiveis como aliases (so alguns snapshots antigos saem
+em 23/10/2026).
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
 | `temperature` | 0.0 – 2.0 | 1.0 | **0** |
-| `seed` | int | — | Fixar |
+| `seed` | int | — | Marcado como deprecado no Chat Completions |
 | `top_p` | 0.0 – 1.0 | 1.0 | Nao alterar |
 | `max_completion_tokens` | int | varia | Dimensionar |
-| `response_format` | dict | — | `{'type': 'json_schema', ...}` quando aplicavel |
 
-`temperature=0` + `seed=42` e a combinacao tradicional de reprodutibilidade
-em modelos nao-raciocinio da OpenAI.
+### GPT-6 (`gpt-6-luna`, `gpt-6-sol`, `gpt-6-astra`)
 
-### o1, o1-mini, o3, o3-mini, GPT-5 (modo raciocinio)
+Familia corrente. `gpt-6-luna` e o modelo mais barato. O raciocinio vem
+ligado (`medium`) por padrao, e nesse modo `temperature` e `top_p` sao
+rejeitados. Luna e Sol aceitam `reasoning_effort='none'`; o Astra nao
+(niveis `low` a `max`). Duas saidas:
 
-**Nao aceitam `temperature`** — a tentativa retorna erro 400:
+- Extracao deterministica (Luna/Sol): `{'reasoning_effort': 'none', 'temperature': 0}`.
+- Manter o raciocinio (inclusive Astra): `{'temperature': None}`, porque
+  o `langchain-openai` 1.6.5 envia o `temperature=0` do dataframeit para
+  a GPT-6 (na GPT-5 ele ja tirava sozinho). Com `use_search=True`, o
+  agente do dataframeit usa tools, e a OpenAI documenta function calling
+  em Chat Completions para Luna/Sol so com `reasoning_effort='none'`
+  (nao testado aqui).
 
-```
-Error: Unsupported parameter: 'temperature' is not supported with this model.
-```
+### GPT-5, o1, o3, o3-mini (em aposentadoria)
 
-Tambem nao aceitam: `top_p`, `presence_penalty`, `frequency_penalty`,
-`logit_bias`, `seed` (na pratica, desconsiderado).
-
-Parametros proprios:
+o1 e o3-mini desligam em 23/10/2026; o3 e os snapshots `-2025-08-07`
+de `gpt-5`, `gpt-5-mini` e `gpt-5-nano` em 11/12/2026. A OpenAI indica
+os `gpt-5.6-*` como substitutos. Nao aceitam `temperature` (GPT-5 so com
+raciocinio `none`). Parametros proprios dos modelos de raciocinio:
 
 | Parametro | Valores | O que faz |
 |---|---|---|
-| `reasoning_effort` | `'low'`, `'medium'`, `'high'` | Quanta "cadeia de raciocinio" o modelo gera |
-| `verbosity` | `'low'`, `'medium'`, `'high'` | Verbosidade da resposta final |
+| `reasoning_effort` | `'none'` (GPT-5/6), `'low'`, `'medium'`, `'high'` | Quanta "cadeia de raciocinio" o modelo gera |
 | `max_completion_tokens` | int | Total (inclui tokens de raciocinio invisiveis) |
 
-**Recomendacao para extracao estruturada**: nao usar. Esses modelos
-sao apropriados para tarefas de raciocinio livre (ex: sumarizar
-divergencias doutrinarias extensas, classificar tipos de argumentacao
-em texto juridico complexo). Para campos `Literal[...]` e extracao
-direta, use gpt-4o-mini / gpt-4.1-mini ou equivalente pequeno de outro
-provider.
-
-Fonte: OpenAI Developer Community threads sobre unsupported parameter
-error; documentacao de reasoning models.
+**Recomendacao para extracao estruturada**: raciocinio desligado ou
+modelo nao-raciocinio. Raciocinio so para tarefas de raciocinio livre
+(ex: sumarizar divergencias doutrinarias extensas).
 
 ---
 
 ## §Anthropic (`provider='anthropic'`)
 
-### Claude Haiku 4.5
+IDs sem sufixo de data: `claude-haiku-4-5`, `claude-sonnet-4-6`,
+`claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5-1`.
+A Anthropic anuncia a aposentadoria do Haiku 4.5 para nao antes de
+15/10/2026: confira a pagina de deprecacoes antes de fixa-lo num
+pipeline longo.
+
+### Claude Haiku 4.5 e Sonnet 4.6
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
@@ -175,47 +199,45 @@ error; documentacao de reasoning models.
 | `top_p` | 0.0 – 1.0 | — | Nao alterar |
 | `top_k` | int | — | Nao alterar |
 | `max_tokens` | int | obrigatorio | Dimensionar conforme Pydantic |
-| `system` | str | — | Prompt-sistema |
 
-Nao ha parametro `seed` oficial — a Anthropic nao expoe controle de
-seed via API publica. Para reprodutibilidade, `temperature=0` +
-`top_p` default basta na maioria dos casos.
+Nao ha parametro `seed`: a Anthropic nao expoe controle de seed. Para
+reprodutibilidade, `temperature=0` basta na maioria dos casos.
 
-### Claude Sonnet 4.6 e Opus 4.6 / 4.7 com adaptive thinking
+### Claude Sonnet 5, Opus 4.7/4.8, Opus 5, Opus 5.5 e Fable
 
-| Parametro | Observacao |
-|---|---|
-| `temperature` | Aceita, mas **interage com adaptive thinking** em Claude 4.x |
-| `thinking` | Objeto com `effort` e configuracao de adaptive thinking |
+**Nao aceitam `temperature`, `top_p` nem `top_k`**: qualquer valor
+diferente do padrao volta com erro 400. Como o dataframeit injeta
+`temperature=0`, passe `model_kwargs={'temperature': None}`. No Fable,
+o `langchain-anthropic` recusa antes da chamada, com `ValueError`, e a
+saida e a mesma.
 
-**Nota sobre adaptive thinking**: extended thinking foi deprecado em
-Claude 4.6+. Adaptive thinking e o substituto e, em Claude Opus 4.7, e
-o **unico modo de thinking** suportado — nao aceita mais
-`thinking: {type: "enabled", budget_tokens: N}`. Em adaptive thinking,
-o modelo calibra automaticamente conforme `effort` + complexidade da
-query.
-
-Para extracao estruturada com Sonnet/Opus (quando ja justificou
-escalacao), **desligue adaptive thinking** (nao passe `thinking={...}`)
-e use `temperature=0` — comporta-se como modelo nao-pensante para
-extracao reprodutivel.
+O thinking desses modelos e adaptativo e controlado por `effort`; no
+Opus 5.5 e no Fable ele nao pode ser desligado. Para extracao, esses modelos nao
+sao default: use Haiku 4.5 e escale so com justificativa.
 
 Fonte: Claude API Docs — Models overview, Adaptive thinking, Migration
 guide.
 
 ---
 
-## §Mistral (`provider='mistral'`)
+## §Mistral (`provider='mistralai'`)
+
+Nome do provider no LangChain: `'mistralai'`, nao `'mistral'`. Instalar
+com `pip install dataframeit langchain-mistralai` (nao ha extra
+`[mistral]`).
 
 ### Mistral Small / Mistral Large
 
+`mistral-small-latest` aponta hoje para o Small 4 (`mistral-small-2603`)
+e `mistral-large-latest` para o Large 3 (`mistral-large-2512`). Para
+reprodutibilidade, registre o ID datado.
+
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
-| `temperature` | 0.0 – 1.5 | 0.7 | **0** |
+| `temperature` | 0.0 – 1.5 (0-0.7 recomendado) | 0.7 | **0** |
 | `random_seed` | int | — | Fixar |
 | `top_p` | 0.0 – 1.0 | 1.0 | Nao alterar |
 | `max_tokens` | int | — | Dimensionar |
-| `response_format` | dict | — | `{'type': 'json_object'}` quando aplicavel |
 
 Note: o parametro se chama `random_seed`, nao `seed`.
 
@@ -223,18 +245,22 @@ Note: o parametro se chama `random_seed`, nao `seed`.
 
 ## §Cohere (`provider='cohere'`)
 
-### Command R / Command R+
+Instalar com `pip install dataframeit langchain-cohere` (nao ha extra
+`[cohere]`).
+
+### Command A
+
+Os aliases `command-r` e `command-r-plus` estao deprecados desde
+15/09/2025; o substituto indicado e `command-a-03-2025`. As versoes
+`command-r-08-2024` e `command-r-plus-08-2024` ainda estao no ar.
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
-| `temperature` | 0.0 – 5.0 | 0.3 | **0** |
+| `temperature` | float | 0.3 | **0** |
 | `seed` | int | — | Fixar |
 | `p` | 0.01 – 0.99 | — | Nao alterar (analogo a top_p) |
 | `k` | int | — | Nao alterar (analogo a top_k) |
 | `max_tokens` | int | — | Dimensionar |
-
-Range de temperatura vai ate 5.0 (mais amplo que outros providers),
-mas para extracao estruturada isso e irrelevante — use 0.
 
 ---
 
@@ -242,8 +268,7 @@ mas para extracao estruturada isso e irrelevante — use 0.
 
 Modo especial — delega as chamadas ao `claude-agent-sdk` e consome
 tokens do plano Claude Code do usuario. Modelos disponiveis seguem o
-plano: Haiku 4.5, Sonnet 4.6, Opus 4.7 (conforme tier). Zero custo
-incremental de API, mas consome quota do plano.
+plano. Zero custo incremental de API, mas consome quota do plano.
 
 ### Quando (nao) usar
 
@@ -261,28 +286,31 @@ por aproveitar melhor o plano.
 
 ### Requisitos
 
-- `pip install claude-agent-sdk`
+- `pip install dataframeit[claude-code]` (instala o `claude-agent-sdk`)
 - Rodar dentro de um ambiente Claude Code com subscription ativa
-- Nao suporta `use_search=True` — para busca web, use `provider='google_genai'`
-  ou `'openai'`
+- Nao suporta `use_search=True` (levanta `ValueError`) — para busca web,
+  use `provider='google_genai'` ou `'openai'`
+- As colunas `_input_tokens` e `_output_tokens` saem zeradas neste modo:
+  o SDK devolve custo em USD, nao contagem de tokens
 
-### Aliases de modelo
+### Modelo (obrigatorio passar)
 
-**Aliases aceitos**: `'haiku'`, `'sonnet'`, `'opus'` — o SDK resolve
-para a versao atual da familia no plano. Alternativa: passar o ID
-completo (ex: `'claude-haiku-4-5-20251001'`) quando voce precisa fixar
-uma versao especifica para reprodutibilidade.
+O dataframeit repassa `model` ao SDK. Como o default da funcao e
+`'gemini-3-flash-preview'`, **passe sempre `model=`**. Aliases aceitos:
+`'haiku'`, `'sonnet'`, `'opus'` (o SDK resolve para a versao atual da
+familia no plano). Alternativa: o ID completo (ex: `'claude-haiku-4-5'`)
+quando for preciso fixar a versao.
 
 ### Hiperparametros (via `model_kwargs`)
 
 | Parametro | Valores | O que faz |
 |---|---|---|
-| `effort` | `'low'`, `'medium'`, `'high'` | Profundidade do raciocinio no agente SDK. `'low'` adequado para extracao direta; `'medium'`/`'high'` consomem mais tokens do plano |
+| `effort` | `'low'`, `'medium'`, `'high'`, `'xhigh'`, `'max'` | Profundidade do raciocinio no agente SDK. `'low'` adequado para extracao direta; niveis mais altos consomem mais tokens do plano |
 | `max_turns` | int | Numero maximo de iteracoes do agente por linha (padrao: `1`). Subir so quando a codificacao exige ferramentas/raciocinio encadeado |
 | `max_budget_usd` | float | Teto de gasto por linha em USD (padrao: `0.50`). Linha ultrapassando o teto e marcada como erro |
 
-Parametros classicos de geracao (`temperature`, `top_p`) seguem a regra
-da familia Anthropic — na pratica, sao pouco expostos neste modo.
+Outras chaves de `model_kwargs` (inclusive `temperature` e `top_p`) sao
+ignoradas neste modo: o dataframeit so repassa as tres acima.
 
 ### Exemplo
 
@@ -290,8 +318,7 @@ da familia Anthropic — na pratica, sao pouco expostos neste modo.
 resultado = dataframeit(
     df, Codificacao, "Codifique: {texto}",
     provider='claude_code',
-    model='haiku',                       # alias; equivalente ao ID completo da familia
-    # model='claude-haiku-4-5-20251001', # ou o ID completo se preferir fixar versao
+    model='haiku',                 # alias; ou 'claude-haiku-4-5' para fixar versao
     model_kwargs={
         'max_turns': 3,            # mais iteracoes de ferramenta/raciocinio
         'max_budget_usd': 1.00,    # teto de gasto por linha
@@ -304,7 +331,12 @@ resultado = dataframeit(
 
 ## §Groq (`provider='groq'`)
 
-### Llama 3.3 70B Versatile (default Groq) / Llama 3.1 8B Instant
+### GPT-OSS 120B / 20B
+
+`llama-3.3-70b-versatile` e `llama-3.1-8b-instant` foram desligados em
+16/08/2026 nos planos free e developer (seguem so no Enterprise). Os
+substitutos indicados pela Groq sao `openai/gpt-oss-120b` e
+`openai/gpt-oss-20b`.
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
@@ -312,14 +344,30 @@ resultado = dataframeit(
 | `seed` | int | — | Fixar |
 | `top_p` | 0.0 – 1.0 | 1.0 | Nao alterar |
 | `max_tokens` | int | varia | Dimensionar conforme Pydantic |
-| `response_format` | dict | — | `{'type': 'json_object'}` quando aplicavel |
 
-Groq roda modelos open-weight (Llama, Mixtral, Gemma) em hardware
-proprio otimizado para latencia; tokens/s ficam bem acima dos
-provedores proprietarios, com custo competitivo. Bom default para
-classificacao em alto volume quando a qualidade de um Llama 70B basta.
-Para campos finitos (`Literal[...]`) com descricoes bem escritas,
-Llama 3.3 70B tipicamente iguala gpt-4o-mini.
+Groq roda modelos open-weight em hardware proprio otimizado para
+latencia; tokens/s ficam bem acima dos provedores proprietarios, com
+custo competitivo. Bom default para classificacao em alto volume quando
+a qualidade de um modelo aberto basta. A Groq troca modelos com
+frequencia: confira a pagina de deprecacoes antes de um run longo.
+
+---
+
+## Provedores hospedados no Brasil `[unreleased]`
+
+A main do dataframeit (0.7.1, ainda nao no PyPI) documenta receitas
+para rodar em Sao Paulo via Vertex AI (`southamerica-east1`), AWS
+Bedrock (`sa-east-1`) e Azure OpenAI (Brazil South), com mensagens de
+erro que indicam o pacote certo (`langchain-google-vertexai`,
+`langchain-aws`, `langchain-openai`). Os providers do LangChain
+funcionam de modo diferente conforme a versao. Na 0.6.0 so
+`google_vertexai` passa: a validacao de dependencias roda antes da
+chamada e deduz o pacote como `langchain-<provider>`, entao
+`azure_openai` pede `langchain-azure-openai` e `bedrock_converse` pede
+`langchain-bedrock-converse`, pacotes que nao existem, mesmo com
+`langchain-openai`/`langchain-aws` instalados. Bedrock e Azure exigem a
+main (0.7.1). Ver `docs/guides/providers.md` no repositorio do
+dataframeit.
 
 ---
 
@@ -328,9 +376,11 @@ Llama 3.3 70B tipicamente iguala gpt-4o-mini.
 Para reprodutibilidade (registre no protocolo de pesquisa):
 
 - `provider` (ex: `google_genai`, `anthropic`, `openai`)
-- `model` exato (ex: `gemini-3-flash-preview`, `claude-haiku-4-5-20251001`)
-- `temperature` (ou "nao suportado" em reasoning models)
+- `model` exato, de preferencia o ID datado quando o provedor usa alias
+  movel (ex: `mistral-small-2603` em vez de `mistral-small-latest`)
+- `temperature` (ou "nao suportado")
 - `seed` / `random_seed` (ou "nao suportado")
+- `reasoning_effort` / `effort`, se usado
 - `top_p`, `top_k` (se alterados do default)
 - `max_output_tokens` / `max_tokens` / `max_completion_tokens`
 - Data da execucao

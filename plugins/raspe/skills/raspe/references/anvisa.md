@@ -20,10 +20,11 @@ raspe.anvisa(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    termo: str | list[str],
-    paginas: range | None = None,
+    termo: str,
 ) -> pd.DataFrame
 ```
+
+Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDatalegis`.
 
@@ -35,7 +36,7 @@ A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDa
 | `titulo` | Tipo + número + ano (ex.: "Resolução Nº 34, de 25/02/2021"). |
 | `descricao` | Ementa do ato. |
 | `situacao` | Status. **`None` = vigente**, caso contrário mostra "Revogado", "Revogado Tacitamente", etc. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 
@@ -56,7 +57,7 @@ Iguais aos de `raspe.ans()`:
 ```python
 import raspe
 
-df = raspe.anvisa().raspar(termo="dispositivo médico", paginas=range(1, 4))
+df = raspe.anvisa().raspar(termo="dispositivo médico")
 print(df.columns.tolist())
 
 # Concentrar em vigentes

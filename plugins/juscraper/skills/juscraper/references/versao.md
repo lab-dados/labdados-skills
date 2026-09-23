@@ -4,18 +4,16 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.1.0** esta alinhada com:
-
-- **juscraper v0.3.0** (PyPI, publicado em 2026-05-03)
-- **main HEAD em 2026-05-13** (commit `6c5703d`, 43 commits a frente de v0.3.0)
+A skill **v1.3.0** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15). O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
 ## Tabela de bumps
 
-| Skill | juscraper PyPI | main snapshot | Principais inclusoes |
+| Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
-| 1.1.0 | 0.3.0 (2026-05-03) | `6c5703d` (2026-05-13) | +TJGO, +TJMG (`[v0.3.0+, requer extra tjmg]`), +TJRJ, +TRF1/TRF3/TRF5 (`[unreleased]`), +ComunicaCNJ, +PDPJ (`[unreleased]`); refactor `HTTPScraper` + `RetryExhaustedError`; singulares `classe`/`assunto`/`vara`/`tamanho_pagina`; pydantic `extra="forbid"` em todos os endpoints; auto-chunk eSAJ |
+| 1.3.0 | 0.4.0 (2026-09-15) + `main` | `5ebde28` (main) | Primeira publicacao depois da 1.1.0 (a 1.2.0 ficou so em branch, nunca publicada, e foi fundida aqui). Da 0.4.0: +TRF1/TRF3/TRF5/TRF6 (`cpopg`; TRF6 via eproc/`txtcaptcha`), `download_pecas`/`diretorio` em TRF1/TRF3/TRF5, +PDPJ, +STF (`listar_decisoes`/`contar_decisoes`, extra `stf`); `count_only=True` em eSAJ/TJSP; `listar_classes`/`listar_assuntos`/`listar_orgaos`/`listar_varas`; migracao para `HTTPScraper` + `RetryExhaustedError`; singulares `classe`/`assunto`/`vara`; JusBR com `auth(exp)`, coluna `processo` e validacao em `download_documents`; excecoes anti-bot (`BotChallengeBlockedError`, `TJAPSecurityCheckError`); `pyarrow` fora das dependencias base; contrato de `paginas` validado antes do HTTP; Datajud respeita `range(3, 6)`. `[unreleased]`: STF com `checkpoint_dir`/`resume` e coleta integral acima de 10.000 registros |
+| 1.1.0 | 0.3.0 (2026-05-03) + `main` | `6c5703d` (2026-05-13) | Na skill: +TJGO, +TJMG, +TJRJ (na biblioteca desde a 0.2.1). Da 0.3.0: extra `[tjmg]` (`[v0.3.0+, requer extra tjmg]`), +ComunicaCNJ; `tamanho_pagina` canonico; pydantic `extra="forbid"` nos endpoints wired; auto-chunk eSAJ. Da `main` em `6c5703d`, publicados so na 0.4.0: +TRF1/TRF3/TRF5, +PDPJ, migracao para `HTTPScraper` + `RetryExhaustedError`, singulares `classe`/`assunto`/`vara` (TJSP `cjpg`, TJBA, Datajud) |
 | 1.0.0 | ~0.1.x — 0.2.x | — | 22 tribunais estaduais (TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS) + Datajud + JusBR |
 
 ## Vocabulario de tags
@@ -27,11 +25,10 @@ Ao longo das references, recursos novos ganham tags inline:
 | (sem tag) | Disponivel desde versoes antigas (v0.1.x/v0.2.x), estavel no PyPI | `pip install juscraper` resolve |
 | `[v0.3.0+]` | Adicionado na v0.3.0 (estavel no PyPI hoje) | `pip install juscraper>=0.3.0` |
 | `[v0.3.0+, requer extra tjmg]` | Estavel no PyPI, mas requer dependencia extra | `pip install 'juscraper[tjmg]>=0.3.0'` |
-| `[unreleased]` | Existe apenas na branch `main` do GitHub, ainda nao publicado no PyPI | `pip install git+https://github.com/jtrecenti/juscraper.git` |
+| `[v0.4.0+]` | Adicionado na v0.4.0 (PyPI, 2026-09-15) | `pip install -U 'juscraper>=0.4.0'` |
+| `[unreleased]` | So na `main` do repositorio (snapshot `5ebde28`), ainda sem release no PyPI | `pip install "git+https://github.com/jtrecenti/juscraper.git"` (com extra: `pip install "juscraper[stf] @ git+https://github.com/jtrecenti/juscraper.git"`) |
 
-Quando um recurso `[unreleased]` for promovido a release oficial, atualizar:
-1. O texto da tag inline (para `[v0.3.1+]` ou similar).
-2. A tabela acima com nova linha de bump.
+Quando aparecer nova release oficial, atualizar a tabela acima com nova linha de bump.
 
 ## Procedimento para os proximos bumps
 
@@ -57,7 +54,7 @@ for v, files in sorted(d['releases'].items())[-5:]:
 ### 2. Identificar o que mudou desde o ultimo alinhamento
 
 ```bash
-cd ~/Desktop/dev/juscraper   # ou onde o clone estiver
+cd juscraper   # clone local do repositorio
 git fetch --tags origin
 git log --oneline v<ultima-tag>..HEAD   # delta da main
 git log --oneline v<penultima>..v<ultima>   # delta da release passada
@@ -85,7 +82,7 @@ python3 -c "
 import juscraper
 print(sorted(getattr(juscraper, '_SCRAPERS', {}).keys()))
 "
-grep -hoE "'(tj[a-z]+|trf[0-9]+|datajud|jusbr|pdpj|comunica_cnj)'" \
+grep -hoE "'(tj[a-z]+|trf[0-9]+|stf|datajud|jusbr|pdpj|comunica_cnj)'" \
   plugins/juscraper/skills/juscraper/SKILL.md \
   plugins/juscraper/skills/juscraper/references/*.md | sort -u
 # Diff manual entre as duas saidas
@@ -93,6 +90,6 @@ grep -hoE "'(tj[a-z]+|trf[0-9]+|datajud|jusbr|pdpj|comunica_cnj)'" \
 
 ## Decisoes de escopo registradas
 
-- A skill cobre tanto o que esta em PyPI quanto o que esta unreleased na `main`, marcando inline as funcionalidades unreleased. O default permanece `pip install juscraper` (PyPI); features `[unreleased]` ganham a instrucao explicita de instalar pela `main`.
-- TRF1/TRF3/TRF5 e PDPJ atualmente exigem instalacao via `git+...`. Quando saírem na proxima release, as tags `[unreleased]` viram `[v0.X.Y+]`.
+- A skill cobre a release publicada do `juscraper` (0.4.0); o default e `pip install -U juscraper` ou `uv add -U juscraper`. O que so existe na `main` entra com `[unreleased]` e instalacao via `git+https://github.com/jtrecenti/juscraper.git`; ao sair nova release, essas tags viram `[v0.X.0+]`.
+- TRF1/TRF3/TRF5/TRF6, PDPJ e STF sao `[v0.4.0+]`.
 - A arvore de assuntos do TJSP (`references/assuntos-tjsp.json`) foi coletada em 2026-04-16 e nao precisa ser re-coletada a cada bump da skill — a Tabela Processual Unificada do CNJ muda lentamente. Re-coletar so quando aparecer divergencia reportada por usuario ou pesquisa que use codigo desconhecido.

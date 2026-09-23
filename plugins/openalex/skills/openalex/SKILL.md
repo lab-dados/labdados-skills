@@ -27,14 +27,26 @@ If not found, ask the user:
 > Register at https://openalex.org/settings/api — gives $1/day in free credits.
 > Save as `OPENALEX_API_KEY` in your `.env`.
 
-Do NOT proceed without a configured key.
+Do NOT proceed without a configured key. Without a key the API allows only $0.10/day
+(HTTP 429 once spent) and content downloads return 401.
+
+Send the key as the `api_key=` query parameter or as the header `Authorization: Bearer <key>`.
+
+The old polite pool is gone: since February 2026 the `mailto=`/`email=` parameter is
+ignored and gives no extra budget. Never use it as a free fallback for a missing key.
 
 ### 2. CLI (if needed)
 
 Only for download tasks. Check if `openalex` is available:
-- Preferred: `uv tool install openalex-official`
-- Alternative: `pipx install openalex-official`
-- Fallback: `pip install openalex-official`
+- Preferred: `uv tool install git+https://github.com/ourresearch/openalex-official`
+- Alternative: `pipx install git+https://github.com/ourresearch/openalex-official`
+- Fallback: `pip install git+https://github.com/ourresearch/openalex-official`
+
+Install from GitHub until 0.3.4 is on PyPI. The PyPI release (0.3.3) only works for
+metadata: since 2026-07-30 every `--content` download fails with "Unexpected status: 200",
+because the content API now serves files directly instead of redirecting. `openalex --version`
+prints 0.3.2 in both releases; check the installed release with `uv tool list`
+(or `pipx list` / `pip show openalex-official`, depending on how it was installed).
 
 The CLI is a standalone tool — do NOT install inside the project venv with `uv add`.
 
@@ -48,7 +60,8 @@ Before running any content download (PDF or TEI XML):
    Example: "This filter found 2,340 works with PDF. Download will cost ~$23.40 in credits. Proceed?"
 3. **Wait for explicit confirmation** before executing.
 
-Metadata downloads (JSON without `--content`) are free — no warning needed.
+Metadata downloads (JSON without `--content`) are not free but cheap: ~$0.10 per 1,000
+list requests (only lookups by ID are free). No warning needed.
 The free tier gives $1/day (~100 files). Warn if cost exceeds the daily limit.
 
 ## When to use what
@@ -62,7 +75,7 @@ The free tier gives $1/day (~100 files). Warn if cost exceeds the daily limit.
 |---|---|---|
 | Search works by keyword, abstract, or fulltext | API | `references/api.md` |
 | Filter works by year, topic, institution, OA status | API | `references/api.md` |
-| ~~Find semantically similar papers~~ | ~~API~~ | Deprecated — use keyword search or citation network |
+| Find semantically similar papers (e.g. from an abstract) | API (`search.semantic=`) | `references/api.md` |
 | Retrieve metadata for specific DOIs/IDs | API | `references/api.md` |
 | Analyze citation networks | API | `references/api.md` |
 | Trace forward/backward citations | API | `references/api.md` |
@@ -80,7 +93,7 @@ The free tier gives $1/day (~100 files). Warn if cost exceeds the daily limit.
 **Abstracts**: Stored as inverted index (not plaintext) due to legal constraints. API search
 works on them natively; reconstruct to plaintext only if you need the text for LLM processing.
 
-**Full-text content**: ~60M works have cached PDFs; ~43M have TEI XML (structured text via GROBID).
+**Full-text content**: 50M+ works have cached PDFs; ~43M have TEI XML (structured text via GROBID).
 TEI XML is preferred for automated processing. Content downloads cost $0.01 each.
 
 **Two-step lookup**: Never filter by entity names. Always resolve to an OpenAlex ID first,
@@ -92,7 +105,7 @@ then filter by that ID. Example: search `/authors?search=Einstein` → get ID �
 - `cited_by:W123` → "works cited by W123" = outgoing references (backward)
 - Mnemonic: `cites:X` = "who cites X?"; `cited_by:X` = "what does X cite?"
 
-**Rate limits**: 100 req/sec hard limit. Free: $1/day (resets midnight UTC).
+**Rate limits**: 100 req/sec hard limit (`search.semantic`: 1 req/sec). Free: $1/day (resets midnight UTC).
 Singleton lookups free; list+filter $0.10/1K; search $1/1K; content $0.01/file.
 Check usage: `GET /rate-limit?api_key=KEY`
 
@@ -102,7 +115,7 @@ Check usage: `GET /rate-limit?api_key=KEY`
 ## Coverage limitations (especially for Brazilian legal research)
 
 OpenAlex indexes 460M+ works from journals, preprint servers, books,
-and theses. Coverage is strongest where publications are indexed in
+and theses (320M+ in the default corpus that `/works` returns; `corpus=all` adds the rest). Coverage is strongest where publications are indexed in
 Scopus / Web of Science / Crossref / DOAJ. For **Brazilian legal
 research**, part of the production lives outside those sources:
 

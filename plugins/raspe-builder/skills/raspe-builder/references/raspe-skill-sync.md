@@ -57,12 +57,16 @@ Exemplo, se a fonte nova for Tesouro Nacional:
 ### Frontmatter `description`
 
 A `description` no frontmatter lista as fontes cobertas e termos-gatilho.
-Adicione menção à nova fonte. Padrão atual (extraído da `SKILL.md` da
-raspe):
+Adicione menção à nova fonte. A especificação de skills limita a
+`description` a 1024 caracteres, e a da raspe já está perto do teto:
+meça depois de editar e, se passar, corte um gatilho redundante. Leia a `description` atual da `SKILL.md`
+da raspe antes de editar; o padrão é agrupar as fontes por categoria,
+como em:
 
 > Cobre legislacao federal (Presidencia, Camara, Senado), agencias
-> reguladoras (ANS, ANVISA, SaudeLegis, CFM), orgaos de pesquisa e
-> controle (IPEA, CNJ) e imprensa (Folha de Sao Paulo, New York Times).
+> reguladoras (ANS, ANVISA, SaudeLegis, CFM), orgaos de pesquisa (IPEA),
+> base bibliografica academica (CAPES Periodicos) e imprensa (Folha de
+> Sao Paulo, New York Times).
 
 Reescreva incluindo a nova fonte na categoria certa. Adicione também
 termos-gatilho específicos (ex: "dívida pública", "leilões do tesouro")
