@@ -4,6 +4,24 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] — 2026-09-23
+
+Corrigido:
+
+- `openalex`: instalacao da CLI passa a apontar para o GitHub (`uv tool install git+https://github.com/ourresearch/openalex-official`). A 0.3.3 do PyPI falha em todo download com `--content` desde 2026-07-30, quando o `content.openalex.org` passou a servir o arquivo direto (HTTP 200) em vez de redirecionar; a correcao esta na 0.3.4, ainda nao publicada no PyPI. Registra que `openalex --version` imprime 0.3.2 nas duas versoes.
+- `openalex`: autenticacao documenta o header `Authorization: Bearer <key>`, o orcamento de US$0,10/dia sem chave (HTTP 429 ao estourar; download de conteudo da 401) e nega explicitamente o polite pool: `mailto`/`email` sao ignorados desde fevereiro de 2026 e nao servem de alternativa a chave (#15).
+- `openalex`: busca semantica (`search.semantic=`) deixa de constar como descontinuada; documenta os limites (2.000 caracteres, 50 resultados, 1 req/s) e a lista fechada de 17 filtros aceitos, observada em 2026-09-23 (ficam de fora, entre outros, `cited_by_count`, `topics.id`, `has_content.*` e `cites`/`cited_by`).
+- `openalex`: filtros `*.search*` (como `fulltext.search:`) passam a constar como cobrados a preco de busca (US$1 por mil requisicoes), inclusive na CLI.
+- `openalex`: contagem de obras alinhada entre SKILL.md e api.md (320M+ no corpus padrao, 460M+ com `corpus=all`); api.md dizia 240M+.
+- `openalex`: download de metadados deixa de constar como gratuito (~US$0,10 por mil requisicoes de listagem; so consulta por ID e gratis). Vazao da CLI atualizada para a documentacao oficial (5-15 arquivos/s, 20-50 mil por hora). Paginacao registra `page × per_page <= 10.000` e `per_page=200` como legado.
+- `openalex`: receita da CLI usava o filtro invalido `search:` (a API responde 400); passa a usar `fulltext.search:`.
+- `openalex`: links de `developers.openalex.org` trocados por `help.openalex.org`, para onde o dominio antigo redireciona.
+
+Adicionado:
+
+- `openalex`: opcoes `--sample N` (1-10.000) e `--seed` da CLI, e o filtro `has_content.*:true` que a CLI acrescenta sozinha com `--content`.
+- `openalex`: na API, `search.exact`, busca booleana e por proximidade (`"..."~N`), `fulltext.search.exact` para misturar termos com e sem truncamento, limite de ~4 KB de URL, campo `content_urls`, TEI servido com gzip (`curl --compressed`) e os planos pagos.
+
 ## [1.9.0] — 2026-09-23
 
 Adicionado:
