@@ -76,7 +76,8 @@ Antes de iniciar, verifique:
    com `BROWSER_HEADERS` e não usa `_request_with_retry`): não copie
    essa estrutura.
    O `_build_params` do TJMG é privado e anterior à convenção de payload
-   builder público. No scraper novo, exponha `build_cjsg_payload` em
+   builder público. No scraper novo, exponha um `build_<endpoint>_payload`
+   (ex.: `build_cjsg_payload`) em
    `download.py`, que o `validate_scraper.py` exige.
    Também leia `src/juscraper/utils/params.py` (em especial
    `apply_input_pipeline_search`) e `src/juscraper/core/http.py`

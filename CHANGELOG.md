@@ -19,9 +19,9 @@ Corrigido:
   deprecados; integracao e opcional e fica fora do `pytest` padrao (`pytest -m ""` roda
   tudo). `validate_scraper.py` deixou de exigir marker `integration` em todo teste e de
   reprovar mocks.
-- `validate_scraper.py` passa a exigir `download.py`/`parse.py`/`schemas.py`, `build_*`
-  publico e `test_*_filters_contract.py` em scraper com endpoint de busca, com dispensa
-  para subclasses de `_esaj`/`_trf`. A falta de `tqdm` e de pausa entre paginas virou
+- `validate_scraper.py` passa a exigir `test_*_filters_contract.py` em scraper com endpoint
+  de busca e, fora das subclasses de `_esaj`/`_trf`, `download.py`/`parse.py`/`schemas.py`
+  e `build_*` publico. A falta de `tqdm` e de pausa entre paginas virou
   aviso. TJMG (captcha) e `_trf/base.py` (`cpopg`) substituem o TRF6 como modelo, porque
   o TRF6 e anterior a migracao para `HTTPScraper`.
 - `juscraper-builder` deixa de encerrar ao encontrar captcha e encaminha para
