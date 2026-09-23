@@ -49,35 +49,37 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] `python -c "import raspe; print(raspe.<fonte>)"` funciona
 - [ ] (Playwright) `import raspe` continua funcionando mesmo sem
   `[browser]` instalado
-- [ ] (HTTP) Classe registrada no `mapping` de `scraper()` em
-  `src/raspe/scraper_manager.py`
+- [ ] (HTTP, convenção recente a partir da CAPES) Classe registrada no
+  `mapping` de `scraper()` em `src/raspe/scraper_manager.py`
 - [ ] Caso da factory em `tests/test_init.py` e, se registrada no
   `mapping`, em `tests/test_scraper_manager.py`
 
 ## 4. Testes (`tests/<fonte>/`)
 
 - [ ] (*) `tests/<fonte>/__init__.py` vazio criado
-- [ ] (*) Script de captura `tests/fixtures/capture/<fonte>.py` criado
-- [ ] (*) Samples HTML salvos em `tests/<fonte>/samples/raspar/`:
+- [ ] (*) (HTTP) Script de captura `tests/fixtures/capture/<fonte>.py` criado
+- [ ] (*) (HTTP) Samples HTML salvos em `tests/<fonte>/samples/raspar/`:
   - `page_01.html` (paginação típica)
   - `page_02.html` (segunda página, se paginar)
   - `single_page.html` (cenário 1 página de resultados)
   - `no_results.html` (cenário zero resultados)
-- [ ] (*) `tests/<fonte>/test_raspar_contract.py` criado seguindo o
+- [ ] (*) (HTTP) `tests/<fonte>/test_raspar_contract.py` criado seguindo o
   padrão `responses` (modelo: `tests/ipea/test_raspar_contract.py`)
-- [ ] (*) Casos cobertos:
+- [ ] (*) (HTTP) Casos cobertos:
   - `test_typical_paginacao`
   - `test_single_page`
   - `test_no_results`
-- [ ] Matcher de payload sempre que possível (`query_param_matcher` para
-  GET, `urlencoded_params_matcher(..., strict_match=False)` para POST de
-  formulário, `json_params_matcher` para POST JSON)
+- [ ] (HTTP) Matcher de payload sempre que possível, sob
+  `registries.OrderedRegistry` (`query_param_matcher` para GET,
+  `urlencoded_params_matcher(..., strict_match=False)` para POST de
+  formulário, que exige `responses>=0.26.1` no `pyproject.toml` do raspe,
+  `json_params_matcher` para POST JSON)
 - [ ] Colunas validadas por subconjunto (`<=`), nunca igualdade
 - [ ] `mocker.patch("time.sleep")` em todos os testes
 - [ ] (Se aplicável) Fluxo multi-etapa com
   `registries.OrderedRegistry`; captcha, token dinâmico ou import lazy
   mockados via `mocker.patch.dict(sys.modules, ...)`
-- [ ] (Playwright) Em vez de testar `raspar()` end-to-end,
+- [ ] (*) (Playwright) Em vez de testar `raspar()` end-to-end,
   `tests/<fonte>/test_config.py` testa configuração (`url_base`,
   `pagination_strategy`, `_max_pages`) e `_parse_page` sobre
   `samples/parse/typical.html` e `no_results.html`
@@ -122,7 +124,8 @@ Conforme `references/raspe-skill-sync.md`:
 ## 8. Linting e estilo
 
 - [ ] `pre-commit run --all-files` passa (isort, pylint, flake8, mypy,
-  pyright; linha máxima de 120 caracteres)
+  pyright; linha máxima de 120 caracteres). (Playwright) Se o mypy acusar
+  o uso de `self._page`, incluir o módulo em `[[tool.mypy.overrides]]`
 - [ ] Imports organizados (stdlib → third-party → relativo)
 - [ ] Type hints nos métodos públicos e privados não-triviais
 - [ ] Sem `print()` — usar `self.logger.{debug,info,warning,error}`

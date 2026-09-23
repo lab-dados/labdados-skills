@@ -69,7 +69,7 @@ respostas reais do site. Para regerar, ver
 
 import pytest
 import responses
-from responses import matchers
+from responses import matchers, registries
 
 from raspe.scrapers.{fonte} import Scraper{Fonte}
 from tests._helpers import load_sample_bytes
@@ -84,7 +84,10 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    # OrderedRegistry consome os `add` na ordem. Com o registry padrão, um
+    # request com params errados cairia num `add` sem matcher e o matcher
+    # não verificaria nada.
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """N resultados → M páginas: 1 request inicial + M requests de página."""
         mocker.patch("time.sleep")
@@ -169,6 +172,13 @@ Os três cenários são o mínimo por método público exigido pelo
   `matchers.query_param_matcher(...)` para GET,
   `matchers.urlencoded_params_matcher(..., strict_match=False)` para POST
   de formulário, `matchers.json_params_matcher(...)` para POST JSON.
+  Matcher só verifica algo sob `OrderedRegistry` ou quando todo `add`
+  daquela URL tem matcher; com o registry padrão, request errado cai no
+  `add` seguinte.
+- **`strict_match` em `urlencoded_params_matcher` exige
+  `responses>=0.26.1`.** O piso do raspe é `responses>=0.25.0`, e em
+  0.25.x ou 0.26.0 o kwarg levanta `TypeError`. Se usar esse matcher,
+  suba o piso no `pyproject.toml` do raspe.
 - **Schema por subconjunto**: `COLUNAS_OBRIGATORIAS <= set(df.columns)`,
   nunca igualdade.
 - **Sem `@pytest.mark.integration`** no contrato, e sem dependência de
