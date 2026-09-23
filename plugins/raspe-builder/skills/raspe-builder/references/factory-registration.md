@@ -165,7 +165,7 @@ python -c "import raspe; raspe.{fonte}"  # acessar a função (não chama)
 python -c "import raspe; raspe.{fonte}()"  # instanciar
 # Também passa sem playwright: o import do driver é preguiçoso.
 
-python -c "import raspe; raspe.{fonte}().raspar({param}='teste')"
+python -c "import raspe; raspe.{fonte}().raspar(termo='teste')"
 # Aqui deve levantar DriverNotInstalledError se não tiver playwright.
 ```
 
