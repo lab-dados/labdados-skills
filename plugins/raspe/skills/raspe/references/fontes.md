@@ -1,6 +1,6 @@
 # Matriz de fontes — raspe
 
-Visão comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando precisar escolher entre fontes, estimar volume/limites, ou verificar se uma tarefa cabe na skill.
+Visão comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando precisar escolher entre fontes, estimar volume/limites, ou verificar se uma tarefa cabe na skill.
 
 ## Matriz geral
 
@@ -9,7 +9,6 @@ Visão comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando
 | Presidência da República | `raspe.presidencia()` | legislacao.presidencia.gov.br | HTTP POST | nenhuma | `pesquisa` |
 | Câmara dos Deputados | `raspe.camara()` | camara.leg.br/legislacao/busca | HTTP GET | nenhuma | `pesquisa` |
 | Senado Federal | `raspe.senado()` | www6g.senado.leg.br/busca | HTTP GET | nenhuma | `pesquisa` |
-| CNJ (Comunica) | `raspe.cnj()` | comunicaapi.pje.jus.br | HTTP GET (JSON) | nenhuma | `pesquisa` |
 | IPEA | `raspe.ipea()` | ipea.gov.br/portal/.../busca-publicacoes | HTTP GET | nenhuma | `pesquisa` |
 | CAPES Periódicos | `raspe.capes()` | www.periodicos.capes.gov.br/.../buscador.html | HTTP GET | nenhuma | `pesquisa` |
 | CFM | `raspe.cfm()` | portal.cfm.org.br/buscar-normas-cfm-e-crm | HTTP GET | nenhuma | `texto` |
@@ -21,12 +20,11 @@ Visão comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando
 
 ## Colunas retornadas
 
-| Fonte | Colunas (além de `termo_busca`) |
+| Fonte | Colunas (além de `termo_busca`, quando gerada; regra em `references/api.md`) |
 |---|---|
 | `presidencia` | `nome`, `link`, `ficha`, `revogacao`, `descricao` |
 | `camara` | `link`, `titulo`, `descricao`, `ementa` |
 | `senado` | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao` |
-| `cnj` | Campos do JSON oficial (`texto`, `numero_processo`, `siglaTribunal`, `dataDisponibilizacao`, etc.) |
 | `ipea` | `titulo`, `link`, `autores`, `data`, `assuntos` |
 | `capes` | `id` (OpenAlex Work ID), `tipo`, `titulo`, `link`, `autores`, `ano`, `revista`, `instituicao`, `topicos`, `resumo`, `doi`, `link_editor`, `acesso_aberto`, `producao_nacional`, `revisado_por_pares` |
 | `cfm` | `Tipo`, `UF`, `Nº/Ano`, `Situação`, `Ementa`, `Link` |
@@ -43,9 +41,8 @@ Visão comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando
 | `presidencia` | nenhum explícito | Sítio tem workaround SSL interno por certificado incompleto |
 | `camara` | nenhum explícito | Sessão estabelecida automaticamente via página inicial |
 | `senado` | nenhum explícito | — |
-| `cnj` | 5 itens/página | API de comunicações processuais. Paginação implícita |
 | `ipea` | nenhum explícito | — |
-| `capes` | nenhum explícito; **default `_find_n_pags` calcula `total // 30`** | Buscas genéricas retornam dezenas de milhões de páginas — sempre use `paginas=range(1, N)` com N pequeno |
+| `capes` | nenhum explícito; **`_find_n_pags` arredonda para cima `total / itens por página`**, lendo o tamanho da página do atributo `data-per-page` do `<nav>` (fallback: 20) | Buscas genéricas passam de 1 milhão de páginas: sempre use `paginas=range(1, N)` com N pequeno |
 | `cfm` | 15 itens/página, 1-based | — |
 | `folha` | **10.000 resultados (400 páginas)** | Biblioteca emite warning ao atingir o teto; divida por `data_inicio`/`data_fim` |
 | `nyt` | **1000 resultados (100 páginas), 5 req/min, 500 req/dia** | Scraper já aplica `sleep_time=12s`. Divida por `ano` ou datas |
@@ -57,7 +54,6 @@ Visão comparada das 12 fontes cobertas pela biblioteca. Use este arquivo quando
 
 - **Legislação federal**: Presidência (atos da chefia do executivo), Câmara (proposições PLs, PECs), Senado (proposições do Senado). Buscas genéricas como "saúde" retornam >10.000 resultados por fonte. Use filtros.
 - **Atos regulatórios**: ANS (saúde suplementar), ANVISA (vigilância sanitária), SaudeLegis (Ministério da Saúde em geral), CFM (ética médica). Juntos cobrem quase todo o universo normativo de saúde pública no Brasil.
-- **CNJ Comunica**: intimações e comunicados processuais — não é o mesmo que jurisprudência. Para acórdãos e julgados, use `juscraper-skill`.
 - **CAPES Periódicos**: base bibliográfica acadêmica indexada via OpenAlex, com 29+ milhões de itens (artigos, livros, capítulos). Cobre tanto produção nacional quanto internacional, com flags para acesso aberto e revisão por pares. Acesso ao **texto completo** dos artigos geralmente exige login institucional via CAFe — o raspador coleta apenas metadados da página pública de busca.
 - **Imprensa**: Folha cobre desde 1994 para jornal impresso, online varia por período. NYT tem cobertura desde 1851 na API.
 
@@ -70,7 +66,6 @@ Ao aplicar `dataframeit-skill` sobre um DataFrame coletado, identifique o campo 
 | `presidencia` | `descricao` |
 | `camara` | `ementa` (fallback: `titulo`) |
 | `senado` | `descricao` |
-| `cnj` | `texto` |
 | `ipea` | `titulo` (não há abstract) |
 | `capes` | `resumo` (fallback: `titulo` + `topicos`) |
 | `cfm` | `Ementa` |

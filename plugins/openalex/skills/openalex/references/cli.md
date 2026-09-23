@@ -27,16 +27,23 @@ The OpenAlex CLI is a standalone tool. Install in an isolated environment:
 
 ```bash
 # Preferred (isolated environment, like pipx)
-uv tool install openalex-official
+uv tool install git+https://github.com/ourresearch/openalex-official
 
 # Alternative
-pipx install openalex-official
+pipx install git+https://github.com/ourresearch/openalex-official
 
 # Fallback (pip global)
-pip install openalex-official
+pip install git+https://github.com/ourresearch/openalex-official
 ```
 
-Verify: `openalex --help`
+Install from GitHub until 0.3.4 reaches PyPI. The PyPI release `openalex-official` 0.3.3
+works for metadata only: since 2026-07-30 `content.openalex.org` serves files directly
+(HTTP 200) instead of redirecting, and 0.3.3 fails every `--content` download with
+"Unexpected status: 200". 0.3.4 (GitHub) accepts the direct response and unwraps gzipped TEI.
+If 0.3.3 is already installed, reinstall with `uv tool install --force git+https://github.com/ourresearch/openalex-official`.
+
+Verify: `openalex --help`. Note that `openalex --version` prints `0.3.2` in both 0.3.3 and
+0.3.4; use `uv tool list` (or `pipx list` / `pip show openalex-official`) to see the installed release.
 
 Note: Package was previously named `openalex-content-downloader`. If installed, uninstall and switch.
 
@@ -85,6 +92,18 @@ openalex download \
   --ids "W2741809807,10.1038/nature12373"
 ```
 
+### Random sample
+```bash
+openalex download \
+  --api-key $OPENALEX_API_KEY \
+  --output ./sample \
+  --filter "publication_year:2024,type:article" \
+  --sample 500 --seed 42
+```
+
+`--sample N` (1-10,000) uses the API's `sample` parameter; `--seed` makes it reproducible.
+Cannot be combined with `--ids` or `--stdin`.
+
 ### By list of IDs via stdin
 ```bash
 cat work_ids.txt | openalex download \
@@ -129,8 +148,15 @@ Same syntax as the API. Examples:
 --content pdf       # Download PDFs only
 --content xml       # Download TEI XML only (GROBID-parsed structured text)
 --content pdf,xml   # Download both
-# (omit --content)  # Metadata JSON only (free)
+# (omit --content)  # Metadata JSON only (~$0.10 per 1,000 list requests)
 ```
+
+A `*.search*` filter (e.g. `fulltext.search:`) makes each list request bill as a search:
+$1 per 1,000 requests (`X-RateLimit-Credits-Used: 10`) instead of $0.10.
+
+In filter and sample modes, `--content` makes the CLI prepend a content filter on its own:
+`has_content.pdf:true` for `pdf` or `pdf,xml`, and `has_content.grobid_xml:true` for `xml`.
+So `--content pdf,xml` skips works that have TEI XML but no PDF.
 
 **TEI XML is preferred for automated processing** — it's structured text with sections,
 paragraphs, references, and metadata extracted by GROBID. Much easier to parse than raw PDF.
@@ -217,13 +243,16 @@ Additional flags:
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--workers N` | Parallel download workers (1-200) | `50` |
+| `--sample N` | Random sample of N works (1-10,000); not with `--ids`/`--stdin` | off |
+| `--seed N` | Seed for a reproducible `--sample` | none |
 | `--nested` | Organize into W##/##/ subfolders (for >10K files) | `false` |
 | `--quiet` / `-q` | Minimal output (log file only) | `false` |
 | `--verbose` / `-v` | Debug output | `false` |
 
-Typical speeds:
-- Home connection (~400 Mbps): ~10-15 files/sec (~1M files/day)
-- Cloud instance: higher with more workers
+Typical speeds (content downloads are bandwidth-bound; PDFs average ~5 MB):
+- Fast home connection (200-400 Mbit/s): ~5-15 files/sec, about 20,000-50,000 files/hour, a few hundred thousand a day
+- Cloud VM with multi-gigabit networking: several times that
+- Metadata-only runs are far faster (a few KB per record)
 
 ## S3 Storage
 
@@ -246,7 +275,7 @@ Use the API to check `meta.count` with `has_content.pdf:true`, multiply by $0.01
 
 | What | Cost |
 |------|------|
-| Metadata (JSON) | Free |
+| Metadata (JSON) | ~$0.10 per 1,000 list requests (works by ID are free); $1 per 1,000 if the filter has a `*.search*` term |
 | PDF download | $0.01 per file |
 | TEI XML download | $0.01 per file |
 | Free daily allowance | $1/day (~100 content files) |
@@ -259,10 +288,11 @@ To estimate costs: count works with `has_content.pdf:true` in your filter via th
 ### Build a corpus for LLM screening
 ```bash
 # Download TEI XML for a topic
+# fulltext.search bills each list request as a search ($1 per 1,000), plus $0.01 per file
 openalex download \
   --api-key $OPENALEX_API_KEY \
   --output ./screening-corpus \
-  --filter "search:rare+diseases+litigation,language:pt|en,publication_year:>2015,has_content.grobid_xml:true" \
+  --filter "fulltext.search:rare diseases litigation,language:pt|en,publication_year:>2015,has_content.grobid_xml:true" \
   --content xml
 ```
 
@@ -292,7 +322,7 @@ cat selected.txt | openalex download \
 
 ## Reference Links
 
-- CLI docs: https://developers.openalex.org/download-all-data/openalex-cli
-- Full-text PDFs docs: https://developers.openalex.org/download-all-data/full-text-pdfs
+- CLI docs: https://help.openalex.org/access/cli/
+- Full-text PDFs docs: https://help.openalex.org/access/fulltext/
 - GitHub: https://github.com/ourresearch/openalex-official
-- Filter reference: https://developers.openalex.org/api-entities/works/filter-works
+- Filter reference: https://help.openalex.org/api/filtering/
