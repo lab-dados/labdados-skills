@@ -62,7 +62,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 ### openalex
 
 - API key do OpenAlex (gratis, https://openalex.org/settings/api)
-- CLI `openalex-official` (apenas para downloads em massa)
+- CLI `openalex-official` (apenas para downloads em massa; instalar do GitHub, `uv tool install git+https://github.com/ourresearch/openalex-official`, ate a 0.3.4 sair no PyPI)
 
 ### raspe
 
