@@ -52,9 +52,12 @@ print(f"Tokens totais: {total_tokens:,}")
 ## Exemplo 2 — Extracao com busca web e campos condicionais
 
 Pydantic mais rico: `json_schema_extra` com `depends_on`/`condition` e
-busca web por campo. Campos com `json_schema_extra` exigem
-`use_search=True, search_per_field=True` (sem isso, `ValueError`), e a
-condicao so e avaliada nesse modo sem `search_groups`.
+busca web por campo. As chaves de configuracao por campo (`prompt`,
+`prompt_replace`, `prompt_append`, `search_depth`, `max_results`)
+exigem `use_search=True, search_per_field=True` (sem isso, `ValueError`).
+`depends_on`/`condition` sozinhos nao dao erro fora desse modo: a
+condicao e ignorada em silencio. Ela so e avaliada com
+`search_per_field=True` e sem `search_groups`.
 
 ```python
 import pandas as pd

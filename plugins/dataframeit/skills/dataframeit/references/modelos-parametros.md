@@ -25,7 +25,8 @@ recomendacao diferente de 0, passe o valor explicitamente. Ver
 | `gemini-3.5-flash-lite`, `gemini-3.6-flash` a `gemini-3.8-flash` | `google_genai` | **Deprecada** | Nao confirmado | `{'temperature': None}` |
 | `gemini-3.1-pro-preview` | `google_genai` | Aceita, manter 1.0 | Sim | Nao e default, so escalacao justificada |
 | `gpt-4.1-mini`, `gpt-4o-mini` (nao-raciocinio) | `openai` | Aceita 0.0-2.0 | Deprecado no Chat Completions | `{'temperature': 0}` |
-| **GPT-6** (`gpt-6-luna`, `gpt-6-sol`, `gpt-6-astra`) | `openai` | So com `reasoning_effort='none'` | Deprecado | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| **GPT-6 Luna / Sol** (`gpt-6-luna`, `gpt-6-sol`) | `openai` | So com `reasoning_effort='none'` | Deprecado | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| GPT-6 Astra (`gpt-6-astra`) | `openai` | **Nao aceita** (sem nivel `none`) | Deprecado | `{'temperature': None}`. Nao e default para extracao |
 | GPT-5 (`gpt-5`, `gpt-5-mini`, `gpt-5-nano`) | `openai` | So com raciocinio `none` | Deprecado | Snapshots saem em 11/12/2026, migrar |
 | **o1, o3, o3-mini** | `openai` | **Nao aceita** | Nao | o1 e o3-mini saem em 23/10/2026, o3 em 11/12/2026 |
 | `claude-haiku-4-5` | `anthropic` | Aceita 0.0-1.0 | Nao | `{'temperature': 0}` |
@@ -36,9 +37,10 @@ recomendacao diferente de 0, passe o valor explicitamente. Ver
 | `command-a-03-2025` | `cohere` | Aceita | Sim | `{'temperature': 0, 'seed': 42}` |
 | `openai/gpt-oss-120b`, `openai/gpt-oss-20b` | `groq` | Aceita 0.0-2.0 | Sim | `{'temperature': 0, 'seed': 42}` |
 
-**Aposentados que ainda aparecem em codigo antigo**: Gemini 1.5 (desligado
-em 29/09/2025); Gemini 2.5 Pro/Flash (acesso restrito a quem ja usava);
-aliases `command-r`/`command-r-plus` da Cohere (deprecados desde
+**Aposentados ou restritos que ainda aparecem em codigo antigo**: Gemini
+1.5 (desligado em 29/09/2025); Gemini 2.5 Pro/Flash (nao deprecados, mas
+com acesso restrito a quem ja usava; para projeto novo o Google indica
+3.5 Flash-Lite ou 3.8 Flash); aliases `command-r`/`command-r-plus` da Cohere (deprecados desde
 15/09/2025); `llama-3.3-70b-versatile` e `llama-3.1-8b-instant` na Groq
 (desligados em 16/08/2026 nos planos free e developer).
 
@@ -100,8 +102,9 @@ nomes.
 ### Gemini 3 Flash preview (default do dataframeit)
 
 `gemini-3-flash-preview` continua em preview, sem data de desligamento
-anunciada. Nao existe `gemini-3-flash` GA: as versoes estaveis sao as
-numeradas abaixo.
+anunciada, mas o Google ja o chama de modelo Flash legado: a pagina de
+deprecacoes indica `gemini-3.6-flash` como substituto e, para projeto
+novo, 3.5 Flash-Lite ou 3.8 Flash. Nao existe `gemini-3-flash` GA.
 
 | Parametro | Aceita | Default | Recomendacao extracao |
 |---|---|---|---|
@@ -151,12 +154,16 @@ em 23/10/2026).
 
 Familia corrente. `gpt-6-luna` e o modelo mais barato. O raciocinio vem
 ligado (`medium`) por padrao, e nesse modo `temperature` e `top_p` sao
-rejeitados. Duas saidas:
+rejeitados. Luna e Sol aceitam `reasoning_effort='none'`; o Astra nao
+(niveis `low` a `max`). Duas saidas:
 
-- Extracao deterministica: `{'reasoning_effort': 'none', 'temperature': 0}`.
-- Manter o raciocinio: `{'temperature': None}`, porque o
-  `langchain-openai` 1.6.5 envia o `temperature=0` do dataframeit para
-  a GPT-6 (na GPT-5 ele ja tirava sozinho).
+- Extracao deterministica (Luna/Sol): `{'reasoning_effort': 'none', 'temperature': 0}`.
+- Manter o raciocinio (inclusive Astra): `{'temperature': None}`, porque
+  o `langchain-openai` 1.6.5 envia o `temperature=0` do dataframeit para
+  a GPT-6 (na GPT-5 ele ja tirava sozinho). Com `use_search=True`, o
+  agente do dataframeit usa tools, e a OpenAI documenta function calling
+  em Chat Completions para Luna/Sol so com `reasoning_effort='none'`
+  (nao testado aqui).
 
 ### GPT-5, o1, o3, o3-mini (em aposentadoria)
 
@@ -179,7 +186,10 @@ modelo nao-raciocinio. Raciocinio so para tarefas de raciocinio livre
 ## §Anthropic (`provider='anthropic'`)
 
 IDs sem sufixo de data: `claude-haiku-4-5`, `claude-sonnet-4-6`,
-`claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`.
+`claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5-1`.
+A Anthropic anuncia a aposentadoria do Haiku 4.5 para nao antes de
+15/10/2026: confira a pagina de deprecacoes antes de fixa-lo num
+pipeline longo.
 
 ### Claude Haiku 4.5 e Sonnet 4.6
 
@@ -202,7 +212,7 @@ o `langchain-anthropic` recusa antes da chamada, com `ValueError`, e a
 saida e a mesma.
 
 O thinking desses modelos e adaptativo e controlado por `effort`; no
-Opus 5.5 ele nao pode ser desligado. Para extracao, esses modelos nao
+Opus 5.5 e no Fable ele nao pode ser desligado. Para extracao, esses modelos nao
 sao default: use Haiku 4.5 e escale so com justificativa.
 
 Fonte: Claude API Docs — Models overview, Adaptive thinking, Migration
@@ -350,10 +360,14 @@ para rodar em Sao Paulo via Vertex AI (`southamerica-east1`), AWS
 Bedrock (`sa-east-1`) e Azure OpenAI (Brazil South), com mensagens de
 erro que indicam o pacote certo (`langchain-google-vertexai`,
 `langchain-aws`, `langchain-openai`). Os providers do LangChain
-(`google_vertexai`, `bedrock_converse`, `azure_openai`) ja funcionam na
-0.6.0 com o pacote de integracao instalado; o que a 0.7.1 acrescenta e
-a documentacao e as mensagens de erro. Ver `docs/guides/providers.md`
-no repositorio do dataframeit.
+funcionam de modo diferente conforme a versao. Na 0.6.0 so
+`google_vertexai` passa: a validacao de dependencias roda antes da
+chamada e deduz o pacote como `langchain-<provider>`, entao
+`azure_openai` pede `langchain-azure-openai` e `bedrock_converse` pede
+`langchain-bedrock-converse`, pacotes que nao existem, mesmo com
+`langchain-openai`/`langchain-aws` instalados. Bedrock e Azure exigem a
+main (0.7.1). Ver `docs/guides/providers.md` no repositorio do
+dataframeit.
 
 ---
 

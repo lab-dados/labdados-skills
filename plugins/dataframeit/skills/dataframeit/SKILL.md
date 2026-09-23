@@ -28,7 +28,10 @@ resultado = dataframeit(df, Sentimento, "Analise o sentimento do texto: {texto}"
 
 Tres elementos: (1) uma **classe Pydantic** definindo o que extrair, (2) os **dados**
 como primeiro argumento, (3) um **prompt** com `{texto}` como placeholder.
-Os defaults ja cobrem o caso comum: Google Gemini, resume habilitado, tracking de tokens.
+Os defaults cobrem o caso comum (Google Gemini, resume habilitado, tracking de tokens),
+com uma ressalva: o dataframeit envia `temperature=0`, e o Google recomenda 1.0 nos
+Gemini 3. Para seguir a recomendacao, acrescente `model_kwargs={'temperature': 1.0, 'seed': 42}`
+(ver "Hiperparametros por modelo" abaixo).
 
 ### Gotcha: coluna de texto do DataFrame
 
@@ -61,7 +64,7 @@ Verifique se `dataframeit` esta instalado:
 
 | Extra | Comando | Quando usar |
 |---|---|---|
-| `[google]` | `pip install dataframeit[google]` | Padrao, Google Gemini (mais barato) |
+| `[google]` | `pip install dataframeit[google]` | Padrao, Google Gemini |
 | `[openai]` | `pip install dataframeit[openai]` | OpenAI (GPT) |
 | `[anthropic]` | `pip install dataframeit[anthropic]` | Anthropic (Claude) |
 | `[groq]` | `pip install dataframeit[groq]` | Groq, alta taxa de tokens/s e custo baixo |
@@ -92,7 +95,7 @@ validos sao os do LangChain. Verifique a chave nesta ordem: `echo $VARIAVEL` →
 
 Se nenhuma key estiver configurada, pergunte ao usuario:
 > Para usar o dataframeit, voce precisa de uma API key de um provedor LLM.
-> O Google Gemini e o padrao e mais barato. Crie uma chave em https://aistudio.google.com
+> O Google Gemini e o padrao. Crie uma chave em https://aistudio.google.com
 > e salve como `GOOGLE_API_KEY` no `.env` do projeto.
 
 **Modo `provider='claude_code'`**: delega as chamadas ao `claude-agent-sdk` e consome
@@ -118,7 +121,8 @@ chamada volta com erro 400.
 | **Claude Haiku 4.5 / Sonnet 4.6** | `{'temperature': 0}`, a Anthropic nao expoe `seed` |
 | **Claude Sonnet 5 / Opus 4.7 ou mais novo** | `{'temperature': None}`: nao aceitam temperature |
 | **gpt-4.1-mini / gpt-4o-mini** | `{'temperature': 0}` |
-| **GPT-6 (`gpt-6-luna` etc.)** | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| **GPT-6 Luna / Sol** | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| **GPT-6 Astra** | `{'temperature': None}`: nao tem nivel `none` de raciocinio |
 | **o1 / o3 / o3-mini** | Em aposentadoria (23/10 e 11/12/2026), **nao aceitam temperature**, nao usar para extracao |
 | **Mistral Small / Large** (`provider='mistralai'`) | `{'temperature': 0, 'random_seed': 42}` |
 | **Cohere Command A** (`command-a-03-2025`) | `{'temperature': 0, 'seed': 42}` |
@@ -166,7 +170,7 @@ estruturada.
 | Situacao | Recomendacao |
 |---|---|
 | **Default para qualquer extracao/classificacao** | Modelo pequeno: `provider='google_genai'` (Gemini 3 Flash), `'openai'` (`gpt-4.1-mini` ou `gpt-6-luna` sem raciocinio), `'anthropic'` (`claude-haiku-4-5`), `'mistralai'` (Mistral Small), `'cohere'` (Command A), `'groq'` (`openai/gpt-oss-20b` ou `-120b`) |
-| Inicio rapido / custo minimo | `provider='google_genai'` (Gemini 3 Flash) |
+| Inicio rapido (default da biblioteca) | `provider='google_genai'` (Gemini 3 Flash). Para custo minimo, compare precos atuais: `gpt-6-luna` sem raciocinio custa menos por token que o Gemini 3 Flash preview |
 | Ecossistema OpenAI / ja tem key | `provider='openai'` com `model='gpt-4.1-mini'` |
 | Ja tem chave Anthropic | `provider='anthropic'` com `model='claude-haiku-4-5'` |
 | **Alta vazao / latencia minima** (classificacao em lote com modelo aberto) | `provider='groq'` com `model='openai/gpt-oss-120b'` |
@@ -198,7 +202,7 @@ ver `references/pydantic-patterns.md §Campo de dificuldade`.
 | Informacao ja esta no texto do DataFrame | `use_search=False` (padrao) |
 | Informacao precisa ser buscada na internet | `use_search=True` |
 | Cada campo precisa de busca diferente | `use_search=True, search_per_field=True` |
-| Campos relacionados podem compartilhar busca | `use_search=True, search_groups={...}` |
+| Campos relacionados podem compartilhar busca | `use_search=True, search_per_field=True, search_groups={...}` |
 
 Detalhes de cada configuracao em **`references/busca-web.md`**.
 
@@ -266,7 +270,7 @@ operadores condicionais e tecnica de self-reflection com citacao academica
 |---|---|---|
 | `use_search=True` | Informacao nao esta no texto, precisa buscar na web | `busca-web.md` |
 | `search_per_field=True` | Cada campo precisa de fontes web diferentes | `busca-web.md` |
-| `search_groups={...}` | 2+ campos podem compartilhar uma busca | `busca-web.md` |
+| `search_groups={...}` | 2+ campos podem compartilhar uma busca (exige `search_per_field=True`) | `busca-web.md` |
 | `save_trace="full"` | Depurar extracoes inesperadas | `runs-longos.md` |
 | `reprocess_columns=[...]` | Corrigir campos especificos sem reprocessar tudo | `runs-longos.md` |
 | `parallel_requests=N` | Dataset com 50+ linhas | `runs-longos.md` |

@@ -80,6 +80,7 @@ Campos relacionados compartilham uma unica busca:
 resultado = dataframeit(
     df, Modelo, prompt,
     use_search=True,
+    search_per_field=True,   # obrigatorio com search_groups (senao ValueError)
     search_groups={
         "localizacao": {
             "fields": ["cidade", "estado", "pais"],

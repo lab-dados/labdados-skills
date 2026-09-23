@@ -108,7 +108,8 @@ antes de estimar, eles mudam frequentemente.
 
 | Provedor | Modelo de exemplo | Entrada | Saida |
 |---|---|---|---|
-| Google Gemini | gemini-3-flash-preview | ~$0.10 | ~$0.40 |
+| Google Gemini | gemini-3-flash-preview | ~$0.50 | ~$3.00 (raciocinio incluido) |
+| OpenAI | gpt-6-luna | ~$0.10 | ~$0.50 |
 | OpenAI | gpt-4o-mini | ~$0.15 | ~$0.60 |
 | Anthropic | claude-haiku-4-5 | ~$1.00 | ~$5.00 |
 | Mistral | mistral-small-latest | ~$0.20 | ~$0.60 |
@@ -117,7 +118,7 @@ antes de estimar, eles mudam frequentemente.
 
 ```python
 # Google Gemini (gemini-3-flash-preview)
-custo = (total_input * 0.10 + total_output * 0.40) / 1_000_000
+custo = (total_input * 0.50 + total_output * 3.00) / 1_000_000
 
 # OpenAI (gpt-4o-mini)
 custo = (total_input * 0.15 + total_output * 0.60) / 1_000_000
