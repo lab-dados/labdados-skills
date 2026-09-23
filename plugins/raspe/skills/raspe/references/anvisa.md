@@ -36,7 +36,7 @@ A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDa
 | `titulo` | Tipo + número + ano (ex.: "Resolução Nº 34, de 25/02/2021"). |
 | `descricao` | Ementa do ato. |
 | `situacao` | Status. **`None` = vigente**, caso contrário mostra "Revogado", "Revogado Tacitamente", etc. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 

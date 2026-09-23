@@ -25,7 +25,7 @@ Assinaturas públicas exportadas em `raspe/__init__.py`. Todas as factories reto
 | `raspe.ans()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
 | `raspe.anvisa()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
 
-Essas três fontes não usam `paginas`. Se ele for passado, é ignorado sem erro: a coleta percorre todas as páginas que o site informa na primeira tela de resultados, até o teto `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Ao atingir o teto, a coleta para sem warning; o log INFO mostra `Total de páginas: N`. O teto é atributo interno da instância, sem parâmetro público, e é o único controle de volume. Para uma coleta de teste curta:
+Essas três fontes não usam `paginas`. Se ele for passado, é ignorado sem erro: a coleta percorre todas as páginas que o site informa na primeira tela de resultados, até o teto `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Ao atingir o teto, a coleta para sem warning. O log INFO mostra `Total de páginas: N`, mas esse N já vem cortado por `_max_pages`: N igual ao teto indica que o site pode ter mais páginas. O teto é atributo interno da instância, sem parâmetro público, e é o único controle de volume. Para uma coleta de teste curta:
 
 ```python
 s = raspe.anvisa()
@@ -68,7 +68,9 @@ A coluna `termo_busca` não aparece sempre. Regra do código:
 
 - **Busca por lista (só fontes HTTP):** sempre gera `termo_busca`, com o valor de cada iteração, qualquer que seja o nome do parâmetro.
 - **Busca por string única, fontes HTTP:** só gera quando o parâmetro se chama `pesquisa`, `termo`, `q` ou `query`. `cfm` e `nyt` usam `texto` e voltam sem a coluna.
-- **Busca por string única, fontes Playwright:** gera quando o parâmetro é `assunto`, `pesquisa`, `termo`, `q` ou `query`, o que cobre `saudelegis`, `ans` e `anvisa`.
+- **Busca por string única, fontes Playwright:** gera quando o parâmetro é `assunto`, `pesquisa`, `termo`, `q` ou `query`, o que cobre `saudelegis`, `ans` e `anvisa`, desde que haja resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna.
+
+Como a coluna pode faltar, teste antes de usar: `if "termo_busca" in df`.
 
 ## Utilitários exportados
 
@@ -92,7 +94,7 @@ Em `raspe.exceptions` (todas também disponíveis em `raspe.*`):
 | `ScraperError` | Base de todas as exceções da biblioteca | — |
 | `APIKeyError` | API key faltando/inválida (só NYT hoje) | — |
 | `RateLimitError` | 429 persistente após `max_retries` na requisição inicial. Capturado pela biblioteca, não chega a `.raspar()` | `retry_after: int \| None` |
-| `APIError` | Erro HTTP. Propaga só no NYT (4xx diferente de 429); 5xx persistente na requisição inicial é capturado | `status_code: int`, `response_text: str` (truncado em 500 chars) |
+| `APIError` | Erro HTTP. Propaga só no NYT (4xx diferente de 401 e 429; 401 vira `APIKeyError`); 5xx persistente na requisição inicial é capturado | `status_code: int`, `response_text: str` (truncado em 500 chars) |
 | `ValidationError` | Parâmetro inválido (data mal formatada, valor fora de enum) | — |
 | `BrowserError` | Falha em Playwright (elemento/timeout/Cloudflare) | — |
 | `DriverNotInstalledError` | Playwright não instalado; subclasse de `BrowserError` | — |
@@ -110,7 +112,7 @@ Essas duas exceções não chegam a quem chamou `.raspar()`: `_get_n_pags` as re
 
 Erros 4xx (exceto 429) não são retried — são devolvidos imediatamente para as subclasses decidirem.
 
-**Páginas seguintes não têm retry.** Em `_download_data`, um 5xx numa página é registrado no log como warning e a página é pulada; exceções de rede naquela página têm o mesmo destino. O DataFrame volta sem erro, mas pode estar incompleto. Em coletas que importam, confira os warnings do log antes de usar o resultado.
+**Páginas seguintes não têm retry.** Em `_download_data`, um 5xx numa página gera `WARNING - Server error ... ignorando página N` e a página é pulada; uma exceção de rede ou timeout gera `ERROR - Erro ao baixar página N` e a página também é pulada. Um 4xx ou 429 numa página seguinte não gera log: o corpo da resposta de erro é salvo e parseado como se fosse página. No NYT, onde 429 é o risco típico, isso vira zero linhas sem rastro. O DataFrame volta sem erro, mas pode estar incompleto. Em coletas que importam, confira o log e compare o número de linhas com o esperado.
 
 ## Seleção por nome (`scraper_manager`)
 

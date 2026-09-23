@@ -34,7 +34,7 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 | `titulo` | Tipo + número + ano (ex.: "Resolução Normativa Nº 465/2021"). |
 | `descricao` | Ementa/descrição do ato. |
 | `situacao` | Status (ex.: "Revogado", "Revogado Tacitamente", etc.). **Vem como `None` quando o ato está vigente** — filtre com `df[df["situacao"].isna()]`. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 

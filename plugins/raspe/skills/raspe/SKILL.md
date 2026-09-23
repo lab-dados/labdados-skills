@@ -136,20 +136,26 @@ Hierarquia de exceções (em `raspe.exceptions`). Nem todas chegam a quem chama 
 - `ScraperError` — base de tudo.
   - `APIKeyError` — NYT sem API key (no construtor) ou com key inválida (401 na requisição inicial). Propaga. Mostre ao usuário como cadastrar.
   - `RateLimitError` — 429 persistente após os retries da requisição inicial. **Não propaga**: a biblioteca registra o erro no log e `.raspar()` devolve DataFrame vazio. O atributo `retry_after` existe, mas não chega ao usuário.
-  - `APIError` — erro HTTP. Atributos: `status_code`, `response_text` (500 chars). Só propaga no NYT, para 4xx diferente de 429 ou resposta com status inválido. 5xx persistente na requisição inicial tem o destino do `RateLimitError`: log e DataFrame vazio.
+  - `APIError` — erro HTTP. Atributos: `status_code`, `response_text` (500 chars). Só propaga no NYT, para 4xx diferente de 401 e 429 (401 vira `APIKeyError`) ou resposta com status inválido. 5xx persistente na requisição inicial tem o destino do `RateLimitError`: log e DataFrame vazio.
   - `ValidationError` — parâmetro inválido (data mal formatada, `site` fora de `{todos, online, jornal}`, `pesquisa` vazia na CAPES etc.). Propaga.
   - `BrowserError` — falha em Playwright (elemento não encontrado, timeout, bypass de Cloudflare falhou). Propaga.
-    - `DriverNotInstalledError` — sintoma clássico: usuário chamou `raspe.ans()` sem `[browser]`. Solução: `pip install "raspe[browser]"` + `playwright install chromium`.
+    - `DriverNotInstalledError` — sintoma clássico: usuário chamou `raspe.ans().raspar(...)` sem `[browser]`. O construtor funciona sem Playwright, porque o import é preguiçoso; o erro só sai no `.raspar()`. Solução: `pip install "raspe[browser]"` + `playwright install chromium`.
 
 Fora dessa hierarquia também propagam: `ValueError` (mais de um parâmetro passado como lista), `requests.HTTPError` (4xx diferente de 429 na requisição inicial das demais fontes HTTP) e erros de conexão ou timeout do `requests` na requisição inicial.
 
-**Como detectar a falha silenciosa.** O logger de cada scraper escreve no stderr por padrão. DataFrame vazio (`df.empty`) acompanhado de `ERROR - Erro na requisição inicial` no log significa 429 ou 5xx esgotados, não ausência de resultados: espere e tente de novo, com menos páginas. Linhas `WARNING - Server error ... ignorando página N` significam páginas puladas, e o DataFrame veio incompleto.
+**Como detectar a falha silenciosa.** O logger de cada scraper escreve no stderr por padrão. Sinais no log:
+
+- DataFrame vazio (`df.empty`) com `ERROR - Erro na requisição inicial`: 429 ou 5xx esgotados na requisição que conta as páginas, não ausência de resultados. Reduzir `paginas` não ajuda, porque foi essa primeira requisição que falhou. Espere alguns minutos ou tente em outro horário e rode a mesma busca de novo.
+- `WARNING - Server error ... ignorando página N`: 5xx numa página seguinte, que foi pulada.
+- `ERROR - Erro ao baixar página N`: erro de rede ou timeout numa página seguinte, que foi pulada.
+
+Nos dois últimos casos o DataFrame veio incompleto. Um 4xx ou 429 numa página seguinte não deixa rastro: o corpo da resposta de erro é tratado como página e, no NYT, vira zero linhas. Esse é o risco típico do NYT, com limite de 5 requisições por minuto; confira se o número de linhas bate com o esperado (10 por página no NYT).
 
 Padrão geral: se uma fonte falhar com timeout ou 5xx, aumente `paginas` para um range menor, tente em outro horário (sites governamentais ficam lentos em horário comercial), e confirme com o usuário antes de repetir.
 
 ## O que fazer com os dados coletados
 
-- **Exploração rápida**: `df.head()`, `df.shape`, `df['termo_busca'].value_counts()`.
+- **Exploração rápida**: `df.head()`, `df.shape` e, se a coluna existir (`if "termo_busca" in df`), `df["termo_busca"].value_counts()`.
 - **Salvar para análise**: `df.to_parquet("coleta.parquet")` (melhor para volumes grandes) ou `df.to_excel("coleta.xlsx", index=False)` (compatível com o fluxo Excel da maioria dos pesquisadores).
 - **Múltiplas fontes**: colete em DataFrames separados e concatene com `pd.concat([df1, df2], ignore_index=True)`; as colunas variam entre scrapers, então o concat fica com `NaN` nos campos específicos.
 - **Deduplicação**: `raspe` exporta `raspe.remove_duplicates(df)` para casos comuns.

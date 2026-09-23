@@ -6,7 +6,7 @@ Portal SaudeLegis do Ministério da Saúde — `https://saudelegis.saude.gov.br/
 
 ## Requisitos
 
-**Extra `[browser]` obrigatório**. Sem ele, o construtor levanta `DriverNotInstalledError`:
+**Extra `[browser]` obrigatório**. Sem ele, `.raspar()` levanta `DriverNotInstalledError` (o construtor funciona, porque o import do Playwright é preguiçoso):
 
 ```bash
 pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
@@ -36,7 +36,7 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 | `origem` | Órgão emissor. |
 | `ementa` | Ementa da norma. |
 | `link_url` | URL para o texto completo. |
-| `termo_busca` | Adicionada automaticamente. |
+| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
 
 ## Parâmetros específicos
 

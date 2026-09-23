@@ -20,6 +20,7 @@ Corrigido:
 - `raspe`: fontes Playwright (SaudeLegis, ANS, ANVISA) ignoram `paginas` e nao aceitam lista; o volume e limitado pelo atributo interno `_max_pages`. Assinaturas, exemplos e `playwright.md` corrigidos.
 - `raspe`: lista de excecoes descreve o que de fato propaga. `RateLimitError` e 5xx esgotados na requisicao inicial nao chegam ao usuario: `.raspar()` devolve DataFrame vazio e o erro fica no log.
 - `raspe`: CAPES incluida na lista de fontes das descriptions do plugin e do marketplace.
+- `raspe`: `DriverNotInstalledError` so sai no `.raspar()` (o construtor funciona sem Playwright); `PaginationStrategy` com os valores reais; orientacao de logging (handler proprio, `logging.basicConfig` sem efeito); sinais de log de paginas puladas e o 4xx/429 sem rastro em paginas seguintes; `termo_busca` tratada como opcional nos exemplos.
 
 Adicionado:
 
