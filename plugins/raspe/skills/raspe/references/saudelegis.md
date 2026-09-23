@@ -20,10 +20,11 @@ raspe.saudelegis(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    assunto: str | list[str],
-    paginas: range | None = None,
+    assunto: str,
 ) -> pd.DataFrame
 ```
+
+Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 ## Colunas retornadas
 
@@ -56,12 +57,12 @@ raspe.saudelegis(
 ```python
 import raspe
 
-df = raspe.saudelegis().raspar(assunto="doença rara", paginas=range(1, 4))
+df = raspe.saudelegis().raspar(assunto="doença rara")
 print(df[["tipo_norma", "numero", "data_pub", "ementa"]].head())
 ```
 
 Para debug visual:
 
 ```python
-df = raspe.saudelegis(headless=False).raspar(assunto="doença rara", paginas=range(1, 2))
+df = raspe.saudelegis(headless=False).raspar(assunto="doença rara")
 ```

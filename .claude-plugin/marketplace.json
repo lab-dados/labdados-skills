@@ -45,7 +45,7 @@
     {
       "name": "raspe",
       "source": "./plugins/raspe",
-      "description": "Raspar dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) via biblioteca raspe — retorna DataFrame pandas pronto para analise.",
+      "description": "Raspar dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, IPEA, CAPES, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) via biblioteca raspe — retorna DataFrame pandas pronto para analise.",
       "version": "1.1.0",
       "author": { "name": "lab-dados" },
       "keywords": ["scraping", "legislacao", "anvisa", "ans", "folha", "nyt", "playwright", "pandas", "brasil"],

@@ -21,15 +21,23 @@ Assinaturas públicas exportadas em `raspe/__init__.py`. Todas as factories reto
 
 | Factory | Construtor | Parâmetros de `.raspar()` |
 |---|---|---|
-| `raspe.saudelegis()` | `debug: bool = True`, `headless: bool = True` | `assunto: str \| list[str]`, `paginas: range = None` |
-| `raspe.ans()` | `debug: bool = True`, `headless: bool = True` | `termo: str \| list[str]`, `paginas: range = None` |
-| `raspe.anvisa()` | `debug: bool = True`, `headless: bool = True` | `termo: str \| list[str]`, `paginas: range = None` |
+| `raspe.saudelegis()` | `debug: bool = True`, `headless: bool = True` | `assunto: str` |
+| `raspe.ans()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
+| `raspe.anvisa()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
+
+Essas três fontes não usam `paginas`. Se ele for passado, é ignorado sem erro: a coleta percorre todas as páginas que o site informa na primeira tela de resultados, até o teto `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Ao atingir o teto, a coleta para sem warning; o log INFO mostra `Total de páginas: N`. O teto é atributo interno da instância, sem parâmetro público, e é o único controle de volume. Para uma coleta de teste curta:
+
+```python
+s = raspe.anvisa()
+s._max_pages = 3  # atributo interno; pode mudar em versões futuras
+df = s.raspar(termo="dispositivo médico")
+```
 
 ## Parâmetros comuns
 
 ### `paginas: range | None`
 
-Controla quantas páginas baixar. `range(1, 4)` baixa páginas 1, 2, 3 (1-based). Default `None` = todas as páginas disponíveis até o limite da fonte.
+Controla quantas páginas baixar, **só nas fontes HTTP** (as Playwright ignoram, ver acima). `range(1, 4)` baixa páginas 1, 2, 3 (1-based). Default `None` = todas as páginas disponíveis até o limite da fonte.
 
 **Sempre passe um range pequeno em buscas novas** para checar o volume antes de expandir.
 
@@ -83,8 +91,8 @@ Em `raspe.exceptions` (todas também disponíveis em `raspe.*`):
 |---|---|---|
 | `ScraperError` | Base de todas as exceções da biblioteca | — |
 | `APIKeyError` | API key faltando/inválida (só NYT hoje) | — |
-| `RateLimitError` | 429 persistente após `max_retries` | `retry_after: int \| None` |
-| `APIError` | Erro HTTP genérico (4xx/5xx não tratado) | `status_code: int`, `response_text: str` (truncado em 500 chars) |
+| `RateLimitError` | 429 persistente após `max_retries` na requisição inicial. Capturado pela biblioteca, não chega a `.raspar()` | `retry_after: int \| None` |
+| `APIError` | Erro HTTP. Propaga só no NYT (4xx diferente de 429); 5xx persistente na requisição inicial é capturado | `status_code: int`, `response_text: str` (truncado em 500 chars) |
 | `ValidationError` | Parâmetro inválido (data mal formatada, valor fora de enum) | — |
 | `BrowserError` | Falha em Playwright (elemento/timeout/Cloudflare) | — |
 | `DriverNotInstalledError` | Playwright não instalado; subclasse de `BrowserError` | — |

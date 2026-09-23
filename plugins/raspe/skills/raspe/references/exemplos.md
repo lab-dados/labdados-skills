@@ -54,8 +54,12 @@ import raspe
 #   pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
 #   python -m playwright install chromium
 
-# Coleta (começar com 3 páginas — cada página Playwright leva ~20s)
-df = raspe.anvisa().raspar(termo="dispositivo médico", paginas=range(1, 4))
+# Coleta de teste com 3 páginas. As fontes Playwright ignoram `paginas`;
+# o volume é limitado pelo atributo interno `_max_pages` (padrão 100).
+# Cada página Playwright leva ~20s.
+scraper = raspe.anvisa()
+scraper._max_pages = 3
+df = scraper.raspar(termo="dispositivo médico")
 
 print(f"Total coletado: {len(df)}")
 print(df["situacao"].value_counts(dropna=False))
@@ -73,7 +77,7 @@ with pd.ExcelWriter("anvisa_dispositivo_medico.xlsx") as w:
 print(f"Vigentes: {len(vigentes)} | Revogados: {len(revogados)}")
 ```
 
-**Saída esperada**: coleta ~30-60 registros nas 3 primeiras páginas. Se o usuário pedir a coleção completa, ajuste para `paginas=None` (até 100 páginas, ~30 min).
+**Saída esperada**: coleta ~30-60 registros nas 3 primeiras páginas. Se o usuário pedir a coleção completa, não altere `_max_pages` (até 100 páginas, ~30 min).
 
 **Alerta**: se aparecer `DriverNotInstalledError` ou `BrowserError: Timeout`, consulte `references/playwright.md`.
 
