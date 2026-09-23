@@ -1,6 +1,6 @@
 ---
 name: dataframeit
-description: Use esta skill para aplicar um LLM linha a linha em um DataFrame (pandas ou polars) usando a biblioteca dataframeit: defina um modelo Pydantic com os campos desejados, escreva um prompt com placeholder {texto} e obtenha saida validada em escala. Cobre classificacao e extracao estruturada, preenchimento de campos faltantes, anotacao automatica para pesquisa empirica, categorizacao de respostas abertas, enriquecimento com busca web (Tavily/Exa), campos condicionais (depends_on), paralelismo com rate limit, checkpointing retomavel em runs longos, e escolha de provedor (Gemini, OpenAI, Anthropic, Groq, Mistral, Cohere, Claude Code). Acione sempre que o usuario falar em processar cada linha de um DataFrame com IA, enriquecer dados com LLM, extrair informacao estruturada de texto, classificar respostas abertas, codificar decisoes judiciais com LLM, pipeline ETL com IA, analise de sentimento em escala, anotacao automatica com Pydantic, dataframeit — mesmo que nao nomeie a biblioteca. Nao use para raspagem de dados, revisao de literatura academica ou chamadas LLM avulsas fora de um DataFrame.
+description: "Use esta skill para aplicar um LLM linha a linha em um DataFrame (pandas ou polars) usando a biblioteca dataframeit: defina um modelo Pydantic com os campos desejados, escreva um prompt com placeholder {texto} e obtenha saida validada em escala. Cobre classificacao e extracao estruturada, preenchimento de campos faltantes, anotacao automatica para pesquisa empirica, categorizacao de respostas abertas, enriquecimento com busca web (Tavily/Exa), campos condicionais (depends_on), paralelismo com rate limit, checkpointing retomavel em runs longos, e escolha de provedor (Gemini, OpenAI, Anthropic, Groq, Mistral, Cohere, Claude Code). Acione sempre que o usuario falar em processar cada linha de um DataFrame com IA, enriquecer dados com LLM, extrair informacao estruturada de texto, classificar respostas abertas, codificar decisoes judiciais com LLM, pipeline ETL com IA, analise de sentimento em escala, anotacao automatica com Pydantic, dataframeit — mesmo que nao nomeie a biblioteca. Nao use para raspagem de dados, revisao de literatura academica ou chamadas LLM avulsas fora de um DataFrame."
 ---
 
 # DataFrameIt Skill
@@ -28,7 +28,10 @@ resultado = dataframeit(df, Sentimento, "Analise o sentimento do texto: {texto}"
 
 Tres elementos: (1) uma **classe Pydantic** definindo o que extrair, (2) os **dados**
 como primeiro argumento, (3) um **prompt** com `{texto}` como placeholder.
-Os defaults ja cobrem o caso comum: Google Gemini, resume habilitado, tracking de tokens.
+Os defaults cobrem o caso comum (Google Gemini, resume habilitado, tracking de tokens),
+com uma ressalva: o dataframeit envia `temperature=0`, e o Google recomenda 1.0 nos
+Gemini 3. Para seguir a recomendacao, acrescente `model_kwargs={'temperature': 1.0, 'seed': 42}`
+(ver "Hiperparametros por modelo" abaixo).
 
 ### Gotcha: coluna de texto do DataFrame
 
@@ -61,22 +64,24 @@ Verifique se `dataframeit` esta instalado:
 
 | Extra | Comando | Quando usar |
 |---|---|---|
-| `[google]` | `pip install dataframeit[google]` | Padrao — Google Gemini (mais barato) |
+| `[google]` | `pip install dataframeit[google]` | Padrao, Google Gemini |
 | `[openai]` | `pip install dataframeit[openai]` | OpenAI (GPT) |
 | `[anthropic]` | `pip install dataframeit[anthropic]` | Anthropic (Claude) |
-| `[cohere]` | `pip install dataframeit[cohere]` | Cohere |
-| `[mistral]` | `pip install dataframeit[mistral]` | Mistral |
-| `[groq]` | `pip install dataframeit[groq]` | Groq — alta taxa de tokens/s e custo baixo |
-| `[all]` | `pip install dataframeit[all]` | Todos os provedores |
-| `[search]` | `pip install dataframeit[google,search]` | Busca web (Tavily/Exa) |
+| `[groq]` | `pip install dataframeit[groq]` | Groq, alta taxa de tokens/s e custo baixo |
+| `[claude-code]` | `pip install dataframeit[claude-code]` | Modo `provider='claude_code'` (instala o `claude-agent-sdk`), ver `references/modelos-parametros.md §Claude Code` |
+| `[all]` | `pip install dataframeit[all]` | Os quatro provedores acima, Claude Code, Tavily, Exa, polars e excel |
+| `[search]` | `pip install dataframeit[google,search]` | Busca web com Tavily (so Tavily) |
+| `[search-exa]` | `pip install dataframeit[google,search-exa]` | Busca web com Exa |
+| `[search-all]` | `pip install dataframeit[google,search-all]` | Busca web com Tavily e Exa |
 | `[polars]` | `pip install dataframeit[google,polars]` | Suporte a Polars DataFrames |
 | `[excel]` | `pip install dataframeit[google,excel]` | Leitura/escrita de `.xlsx` via `openpyxl` |
-| Claude Code SDK | `pip install claude-agent-sdk` | Modo `provider='claude_code'` — ver `references/modelos-parametros.md §Claude Code` |
+| Outro provedor do LangChain | `pip install dataframeit langchain-mistralai` (ou `langchain-cohere`, etc.) | Mistral, Cohere e qualquer provedor aceito pelo `init_chat_model` do LangChain. Nao existem extras `[mistral]` nem `[cohere]`: o pip ignora extra inexistente com um aviso e o pacote de integracao fica faltando |
 
 ### 2. Provedor de LLM (escolha um)
 
 Cada provedor requer uma API key configurada como variavel de ambiente.
-Verifique nesta ordem: `echo $VARIAVEL` → `.env` do projeto → usuario ja forneceu na conversa.
+O dataframeit repassa `provider` ao `init_chat_model` do LangChain, entao os nomes
+validos sao os do LangChain. Verifique a chave nesta ordem: `echo $VARIAVEL` → `.env` do projeto → usuario ja forneceu na conversa.
 
 | Provedor | `provider=` | Variavel de ambiente | Obtencao |
 |---|---|---|---|
@@ -84,13 +89,13 @@ Verifique nesta ordem: `echo $VARIAVEL` → `.env` do projeto → usuario ja for
 | OpenAI | `'openai'` | `OPENAI_API_KEY` | https://platform.openai.com |
 | Anthropic | `'anthropic'` | `ANTHROPIC_API_KEY` | https://console.anthropic.com |
 | Cohere | `'cohere'` | `COHERE_API_KEY` | https://dashboard.cohere.com |
-| Mistral | `'mistral'` | `MISTRAL_API_KEY` | https://console.mistral.ai |
+| Mistral | `'mistralai'` (nao `'mistral'`) | `MISTRAL_API_KEY` | https://console.mistral.ai |
 | Groq | `'groq'` | `GROQ_API_KEY` | https://console.groq.com |
 | **Claude Code (plano)** | `'claude_code'` | — (usa sessao Claude Code) | Plano Claude Code ativo — **perguntar ao usuario primeiro** |
 
 Se nenhuma key estiver configurada, pergunte ao usuario:
 > Para usar o dataframeit, voce precisa de uma API key de um provedor LLM.
-> O Google Gemini e o padrao e mais barato. Crie uma chave em https://aistudio.google.com
+> O Google Gemini e o padrao. Crie uma chave em https://aistudio.google.com
 > e salve como `GOOGLE_API_KEY` no `.env` do projeto.
 
 **Modo `provider='claude_code'`**: delega as chamadas ao `claude-agent-sdk` e consome
@@ -105,16 +110,26 @@ Os parametros aceitos variam por modelo — nao ha regra universal.
 **Consulte `references/modelos-parametros.md` antes de configurar `model_kwargs`.**
 Resumo operacional:
 
+O dataframeit cria o cliente com `temperature=0` e depois aplica `model_kwargs`:
+modelo que nao aceita `temperature` precisa de `{'temperature': None}`, senao a
+chamada volta com erro 400.
+
 | Modelo | Config recomendada para extracao |
 |---|---|
-| **Gemini 3 Flash** (`gemini-3-flash-preview`, default) | `{'temperature': 1.0, 'seed': 42}` — **nao reduzir temperature** (recomendacao Google) |
-| **Claude Haiku 4.5 / Sonnet 4.6 / Opus 4.7** | `{'temperature': 0}` — Anthropic nao expoe `seed` oficial |
-| **gpt-4o-mini / gpt-4.1-mini / gpt-4o** | `{'temperature': 0, 'seed': 42}` |
-| **o1 / o3 / GPT-5 raciocinio** | **Nao aceita `temperature`** — nao usar para extracao |
-| **Mistral Small / Large** | `{'temperature': 0, 'random_seed': 42}` |
-| **Cohere Command R / R+** | `{'temperature': 0, 'seed': 42}` |
-| **Gemini 2.5 Pro / Flash (legado)** | `{'temperature': 0, 'seed': 42}` |
-| **Groq Llama 3.3 70B Versatile** | `{'temperature': 0, 'seed': 42}` |
+| **Gemini 3 Flash preview** (`gemini-3-flash-preview`, default) | `{'temperature': 1.0, 'seed': 42}` — **nao reduzir temperature** (recomendacao Google) |
+| **Gemini 3.5 Flash-Lite / 3.6 a 3.8 Flash** | `{'temperature': None}`: temperature deprecada nesses modelos |
+| **Claude Haiku 4.5 / Sonnet 4.6** | `{'temperature': 0}`, a Anthropic nao expoe `seed` |
+| **Claude Sonnet 5 / Opus 4.7 ou mais novo** | `{'temperature': None}`: nao aceitam temperature |
+| **gpt-4.1-mini / gpt-4o-mini** | `{'temperature': 0}` |
+| **GPT-6 Luna / Sol** | `{'reasoning_effort': 'none', 'temperature': 0}` |
+| **GPT-6 Astra** | `{'temperature': None}`: nao tem nivel `none` de raciocinio |
+| **o1 / o3 / o3-mini** | Em aposentadoria (23/10 e 11/12/2026), **nao aceitam temperature**, nao usar para extracao |
+| **Mistral Small / Large** (`provider='mistralai'`) | `{'temperature': 0, 'random_seed': 42}` |
+| **Cohere Command A** (`command-a-03-2025`) | `{'temperature': 0, 'seed': 42}` |
+| **Groq GPT-OSS** (`openai/gpt-oss-120b`, `-20b`) | `{'temperature': 0, 'seed': 42}` |
+
+Modelos aposentados (Gemini 1.5, Cohere `command-r`, Groq Llama 3.x) e as datas estao em
+`references/modelos-parametros.md`.
 
 ```python
 resultado = dataframeit(
@@ -135,7 +150,8 @@ So necessario se a tarefa exigir enriquecimento com dados da internet (`use_sear
 - **Tavily** (padrao): `TAVILY_API_KEY` — https://tavily.com (1000 buscas/mes gratis)
 - **Exa**: `EXA_API_KEY` — https://exa.ai (mais economico em alto volume)
 
-Instale o extra: `pip install dataframeit[google,search]`.
+Instale o extra do buscador: `pip install dataframeit[google,search]` para Tavily,
+`[google,search-exa]` para Exa ou `[google,search-all]` para os dois.
 
 Para configurar busca por campo (`search_per_field`), agrupar campos em `search_groups`,
 custos detalhados e warnings de rate limit, consulte **`references/busca-web.md`**.
@@ -153,23 +169,23 @@ estruturada.
 
 | Situacao | Recomendacao |
 |---|---|
-| **Default para qualquer extracao/classificacao** | Modelo pequeno: `provider='google_genai'` (Gemini 3 Flash), `'openai'` (gpt-4o-mini), `'anthropic'` (Claude Haiku 4.5), `'mistral'` (Mistral Small), `'cohere'` (Command R), `'groq'` (Llama 3.3 70B) |
-| Inicio rapido / custo minimo | `provider='google_genai'` (Gemini 3 Flash) |
-| Ecossistema OpenAI / ja tem key | `provider='openai'` com `model='gpt-4o-mini'` |
-| Ja tem chave Anthropic | `provider='anthropic'` com `model='claude-haiku-4-5-20251001'` |
-| **Alta vazao / latencia minima** (classificacao em lote com modelo aberto) | `provider='groq'` com `model='llama-3.3-70b-versatile'` |
-| Contexto muito longo (> 1M tokens no P95 do corpus) | Escalar para Gemini 1.5/2.5 Pro |
+| **Default para qualquer extracao/classificacao** | Modelo pequeno: `provider='google_genai'` (Gemini 3 Flash), `'openai'` (`gpt-4.1-mini` ou `gpt-6-luna` sem raciocinio), `'anthropic'` (`claude-haiku-4-5`), `'mistralai'` (Mistral Small), `'cohere'` (Command A), `'groq'` (`openai/gpt-oss-20b` ou `-120b`) |
+| Inicio rapido (default da biblioteca) | `provider='google_genai'` (Gemini 3 Flash). Para custo minimo, compare precos atuais: `gpt-6-luna` sem raciocinio custa menos por token que o Gemini 3 Flash preview |
+| Ecossistema OpenAI / ja tem key | `provider='openai'` com `model='gpt-4.1-mini'` |
+| Ja tem chave Anthropic | `provider='anthropic'` com `model='claude-haiku-4-5'` |
+| **Alta vazao / latencia minima** (classificacao em lote com modelo aberto) | `provider='groq'` com `model='openai/gpt-oss-120b'` |
+| Contexto muito longo (textos no P95 perto da janela do modelo pequeno) | Gemini 3.1 Pro preview; conferir a janela de contexto na doc do Google |
 | Campo especifico onde piloto mostra erro apos refinamento de prompt | Escalar **so naquele campo** via `reprocess_columns=['campo']` |
-| Raciocinio livre (nao extracao) — ex: sumarizar argumentacao | Claude Sonnet 4.6 ou Opus 4.7 — justificar o uso |
+| Raciocinio livre (nao extracao) — ex: sumarizar argumentacao | Claude Sonnet 5 ou Opus 5, ou Gemini 3.1 Pro, com o uso justificado |
 | Usuario tem plano Claude Code **e confirmou** preferencia | `provider='claude_code'` (ver `references/modelos-parametros.md §Claude Code`) |
 
 **NAO usar como default**:
 
-- **Reasoning models** (o1, o3, o3-mini, GPT-5 raciocinio): nao aceitam
+- **Reasoning models** (o1, o3, GPT-5/GPT-6 com raciocinio ligado): nao aceitam
   `temperature` e custam 10-50× sem ganho em extracao estruturada.
   Reservar para raciocinio livre extenso. Ver
   `references/modelos-parametros.md §OpenAI`.
-- **Modelos top-tier generalistas** (Opus 4.7, GPT-4o, Gemini 2.5 Pro)
+- **Modelos top-tier generalistas** (Claude Opus 5, GPT-6 Astra, Gemini 3.1 Pro)
   como default para extracao. Custam 10-50× sem acuracia mensuravel a
   mais em campos finitos.
 
@@ -186,7 +202,7 @@ ver `references/pydantic-patterns.md §Campo de dificuldade`.
 | Informacao ja esta no texto do DataFrame | `use_search=False` (padrao) |
 | Informacao precisa ser buscada na internet | `use_search=True` |
 | Cada campo precisa de busca diferente | `use_search=True, search_per_field=True` |
-| Campos relacionados podem compartilhar busca | `use_search=True, search_groups={...}` |
+| Campos relacionados podem compartilhar busca | `use_search=True, search_per_field=True, search_groups={...}` |
 
 Detalhes de cada configuracao em **`references/busca-web.md`**.
 
@@ -211,11 +227,11 @@ Antes de executar `dataframeit()` em datasets grandes:
    ```python
    entrada = resultado['_input_tokens'].sum()
    saida = resultado['_output_tokens'].sum()
-   raciocinio = resultado.get('_reasoning_tokens', pd.Series([0])).sum()
-   total = entrada + saida + raciocinio
+   total = entrada + saida
    print(f"Tokens usados: {total:,}")
    ```
-   Nao existe coluna `_total_tokens` — some `_input_tokens + _output_tokens + _reasoning_tokens`.
+   Nao existe coluna `_total_tokens`: some `_input_tokens + _output_tokens`.
+   Nao some `_reasoning_tokens` de novo, porque ele ja esta contido em `_output_tokens`.
 3. **Avise o usuario** se o dataset tiver mais de 1000 linhas. Mostre a estimativa de custo
    e peca confirmacao antes de prosseguir.
 4. **Use `resume=True`** (padrao) para nao repagar linhas ja processadas em caso de interrupcao.
@@ -237,7 +253,10 @@ Hierarquia de tecnicas (cada item rende mais que trocar de modelo):
 3. **`Optional[tipo]`** para campos que podem nao existir — sem Optional, o LLM inventa.
 4. **`json_schema_extra`** para customizacao avancada por campo (prompt proprio, busca
    web dedicada, campos condicionais).
-5. **Campos condicionais (`depends_on`)** — extrair `valor_multa` so se `tem_multa` for True.
+5. **Campos condicionais (`depends_on`/`condition`)** — extrair `valor_multa` so se `tem_multa`
+   for True. So sao avaliados com `use_search=True, search_per_field=True` e sem
+   `search_groups`: e o unico modo que processa um campo por vez. Fora dele, a
+   condicao e ignorada e todos os campos sao extraidos.
 6. **Campo de dificuldade (self-reflection)** — pedir ao LLM que sinalize ambiguidade;
    sinal valioso em pesquisa empirica.
 
@@ -251,7 +270,7 @@ operadores condicionais e tecnica de self-reflection com citacao academica
 |---|---|---|
 | `use_search=True` | Informacao nao esta no texto, precisa buscar na web | `busca-web.md` |
 | `search_per_field=True` | Cada campo precisa de fontes web diferentes | `busca-web.md` |
-| `search_groups={...}` | 2+ campos podem compartilhar uma busca | `busca-web.md` |
+| `search_groups={...}` | 2+ campos podem compartilhar uma busca (exige `search_per_field=True`) | `busca-web.md` |
 | `save_trace="full"` | Depurar extracoes inesperadas | `runs-longos.md` |
 | `reprocess_columns=[...]` | Corrigir campos especificos sem reprocessar tudo | `runs-longos.md` |
 | `parallel_requests=N` | Dataset com 50+ linhas | `runs-longos.md` |
@@ -265,10 +284,11 @@ operadores condicionais e tecnica de self-reflection com citacao academica
 | `_error_details` | Mensagem de erro (se houver) |
 | `_input_tokens` | Tokens de entrada (sempre presente com `track_tokens=True`, padrao) |
 | `_output_tokens` | Tokens de saida |
-| `_reasoning_tokens` | Tokens de raciocinio "invisiveis" (o1/o3, GPT-5 raciocinio, Claude adaptive thinking). `0` para modelos nao-raciocinio. |
+| `_reasoning_tokens` | Tokens de raciocinio "invisiveis" (o1/o3, GPT-5 raciocinio, Claude adaptive thinking), ja contidos em `_output_tokens`. `0` para modelos nao-raciocinio. |
+| `_search_credits` | Creditos do provedor de busca consumidos na linha. So aparece com `use_search=True` |
 
-Para o total, some `_input_tokens + _output_tokens + _reasoning_tokens`. Nao existe
-coluna `_total_tokens` agregada.
+Para o total, some `_input_tokens + _output_tokens`. Nao existe coluna `_total_tokens`
+agregada, e `_reasoning_tokens` e um detalhamento de `_output_tokens`, nao uma parcela a somar.
 
 ## Workflow tipico do agente
 

@@ -62,7 +62,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - Python >= 3.10
 - `pip install dataframeit[google]` (ou outro extra do provedor)
 - API key do provedor LLM escolhido (Google, OpenAI, Anthropic, Cohere, Mistral)
-- Para busca web: `pip install dataframeit[search]` + `TAVILY_API_KEY` ou `EXA_API_KEY`
+- Para busca web: `pip install dataframeit[search]` (Tavily) + `TAVILY_API_KEY`, ou `dataframeit[search-exa]` (Exa) + `EXA_API_KEY`
 
 ### openalex
 

@@ -24,7 +24,7 @@
       "name": "dataframeit",
       "source": "./plugins/dataframeit",
       "description": "Aplicar LLM linha a linha em DataFrames com Pydantic: classificacao, extracao estruturada, busca web, checkpointing retomavel, multi-provedor (Gemini/OpenAI/Anthropic/Groq).",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": { "name": "lab-dados" },
       "keywords": ["llm", "dataframe", "pydantic", "extracao", "classificacao", "pandas", "groq", "checkpointing"],
       "category": "data-enrichment",
