@@ -232,7 +232,9 @@ lazy, só para obter o cookie `aws-waf-token`; a busca segue em
 
 - Python >= 3.11
 - Linha máxima: 120 caracteres
-- Pre-commit hooks: trailing whitespace, isort, pylint, flake8, mypy
+- Pre-commit hooks: trailing whitespace, ruff (inclui `PERF`, `SIM`, `RET`,
+  `PTH`), isort, pylint, flake8, mypy e bandit (só em `src/`); rodar
+  `pre-commit run --files <arquivos>`
 - Gerenciador de pacotes: `uv` (`uv pip install -e ".[dev]"`)
 - Sem hacks de `sys.path` nos testes
 

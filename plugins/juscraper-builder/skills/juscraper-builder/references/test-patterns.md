@@ -316,6 +316,9 @@ def test_cpopg_retorna_dataframe(mocker):
 - Não confie que a ordem dos resultados será estável
 - `filterwarnings = ["error"]` no pyproject: todo warning esperado
   precisa de `pytest.warns`
+- Em teste de filtro de data, passe `*_inicio` e `*_fim` juntos: com
+  só uma ponta, `fill_open_ended_dates` completa a outra e emite
+  `UserWarning`, que o `filterwarnings = ["error"]` transforma em falha
 - Helpers em `tests/_helpers.py`: `load_sample`, `load_sample_bytes`
   (quando o parser trata o encoding, ex.: latin-1),
   `assert_unknown_kwarg_raises`

@@ -63,9 +63,15 @@ Antes de iniciar, verifique:
    ls src/juscraper/courts/
    # Ler um scraper de referência completo (cjsg sobre HTTPScraper)
    cat src/juscraper/courts/tjro/{client,download,parse,schemas}.py
-   # Ler outro para comparar padrões (cpopg com captcha: trf6)
-   cat src/juscraper/courts/trf6/{client,download,schemas}.py
+   # Captcha de imagem sobre HTTPScraper, com request_fn: tjmg
+   cat src/juscraper/courts/tjmg/{client,download,schemas}.py
+   # cpopg (consulta por CNJ): base da família PJe
+   cat src/juscraper/courts/_trf/base.py
    ```
+   O TRF6 também tem `cpopg` com captcha, mas é anterior à migração
+   para `HTTPScraper` (herda `BaseScraper`, cria a própria `Session`
+   com `BROWSER_HEADERS` e não usa `_request_with_retry`): não copie
+   essa estrutura.
    Também leia `src/juscraper/utils/params.py` (em especial
    `apply_input_pipeline_search`) e `src/juscraper/core/http.py`
    (`HTTPScraper`) para entender a normalização de parâmetros e a
@@ -102,7 +108,10 @@ Antes de iniciar, verifique:
    reCAPTCHA que o backend não valida e o TJGO aceita os campos de
    reCAPTCHA/Turnstile vazios; TJMG e TRF6 validam captcha de imagem
    e o resolvem com `txtcaptcha`. Captcha interativo validado no
-   backend não tem solução (o TJAP, com Turnstile, está bloqueado).
+   backend não tem solução: TJAP e TJSE (Cloudflare Turnstile) e TJMA
+   (reCAPTCHA v2 invisível) estão bloqueados, os dois últimos
+   registrados em `docs/captcha/tjse_captcha.md` e
+   `docs/captcha/tjma_captcha.md`.
 
 5. Informe o usuário sobre os campos encontrados e peça confirmação
    antes de prosseguir:
@@ -472,11 +481,11 @@ para que o pytest descubra os testes.
    - **`ConnectionError` do `responses` no contrato**: o payload
      enviado não bateu com o matcher; comparar com `build_cjsg_payload`
 
-4. Rodar linting:
+4. Rodar os hooks do pre-commit (ruff, isort, pylint, flake8, mypy
+   e bandit, conforme `.pre-commit-config.yaml`) nos arquivos novos:
    ```bash
-   pylint src/juscraper/courts/{tribunal}/ --max-line-length=120
-   flake8 src/juscraper/courts/{tribunal}/ --max-line-length=120
-   mypy src/juscraper/courts/{tribunal}/
+   pre-commit run --files src/juscraper/courts/{tribunal}/*.py tests/{tribunal}/*.py \
+       tests/fixtures/capture/{tribunal}.py
    ```
 
 5. Se tudo passar, prosseguir para a Etapa 6 (Documentação).

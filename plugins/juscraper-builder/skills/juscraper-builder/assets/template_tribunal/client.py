@@ -49,7 +49,8 @@ class TJXXScraper(HTTPScraper):
         )
 
     # Descomente só se o site exigir: adapter TLS, cookies iniciais ou um
-    # User-Agent de navegador no lugar do padrão do juscraper.
+    # User-Agent de navegador no lugar do padrão do juscraper. A anotação
+    # pede ``import requests`` no topo do módulo.
     # def _configure_session(self, session: requests.Session) -> None:
     #     session.headers.update({"User-Agent": "Mozilla/5.0 ..."})
 

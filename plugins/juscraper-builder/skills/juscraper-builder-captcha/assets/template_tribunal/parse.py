@@ -18,19 +18,20 @@ def cjsg_parse_manager(resultados_brutos: list) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Uma linha por decisão; vazio quando não há resultados.
     """
-    registros = []
-    for resposta in resultados_brutos:
-        # TODO: caminho real até a lista de itens e nomes reais das chaves.
-        for item in resposta.get("itens", []):
-            registros.append({
-                "processo": item.get("numeroProcesso"),
-                "classe": item.get("classe"),
-                "relator": item.get("relator"),
-                "orgao_julgador": item.get("orgaoJulgador"),
-                "data_julgamento": item.get("dataJulgamento"),
-                "data_publicacao": item.get("dataPublicacao"),
-                "ementa": clean_html(item.get("ementa")),
-            })
+    # TODO: caminho real até a lista de itens e nomes reais das chaves.
+    registros = [
+        {
+            "processo": item.get("numeroProcesso"),
+            "classe": item.get("classe"),
+            "relator": item.get("relator"),
+            "orgao_julgador": item.get("orgaoJulgador"),
+            "data_julgamento": item.get("dataJulgamento"),
+            "data_publicacao": item.get("dataPublicacao"),
+            "ementa": clean_html(item.get("ementa")),
+        }
+        for resposta in resultados_brutos
+        for item in resposta.get("itens", [])
+    ]
 
     df = pd.DataFrame(registros)
     if df.empty:

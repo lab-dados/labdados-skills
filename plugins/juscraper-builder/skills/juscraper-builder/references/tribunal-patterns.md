@@ -104,6 +104,8 @@ headers = {
 | TJRJ     | reCAPTCHA exibido, não validado no backend | ✓ Funciona |
 | TJGO     | Campos de reCAPTCHA/Turnstile enviados vazios | ✓ Funciona |
 | TJAP     | Cloudflare Turnstile, validado | ✗ Bloqueado |
+| TJSE     | Cloudflare Turnstile, validado (`docs/captcha/tjse_captcha.md`) | ✗ Sem scraper |
+| TJMA     | reCAPTCHA v2 invisível, validado (`docs/captcha/tjma_captcha.md`) | ✗ Sem scraper |
 | STF      | Sem captcha; desafio JavaScript do AWS WAF | ✓ Funciona (token via extra `[stf]`) |
 
 **Nota**: Esta tabela pode estar desatualizada. Sempre verificar

@@ -5,7 +5,7 @@ Uso:
     python validate_scraper.py <tribunal>
 
 Exemplo:
-    python validate_scraper.py tjmg
+    python validate_scraper.py tjro
 
 Roda a partir do diretório raiz do juscraper.
 """
@@ -26,6 +26,21 @@ def _package_sources(tribunal: str) -> dict[Path, str]:
     return {f: f.read_text() for f in sorted(base.glob("*.py"))}
 
 
+def _scraper_bases(tribunal: str) -> set[str]:
+    """Nomes das classes base de ``{SIGLA}Scraper`` em client.py (vazio se não achar)."""
+    client_path = Path(f"src/juscraper/courts/{tribunal}/client.py")
+    if not client_path.exists():
+        return set()
+    expected_name = f"{tribunal.upper()}Scraper"
+    for node in ast.walk(ast.parse(client_path.read_text())):
+        if isinstance(node, ast.ClassDef) and node.name == expected_name:
+            return {
+                b.id if isinstance(b, ast.Name) else getattr(b, "attr", "")
+                for b in node.bases
+            }
+    return set()
+
+
 def check_file_structure(tribunal: str) -> list[str]:
     """Verifica se os arquivos necessários existem."""
     errors = []
@@ -41,11 +56,35 @@ def check_file_structure(tribunal: str) -> list[str]:
     if not (base / "client.py").exists():
         errors.append(f"Falta: {base / 'client.py'}")
 
+    # Subclasse de família (_esaj/, _trf/) herda download, parse e schema
+    # compartilhados; não precisa dos módulos próprios nem do payload builder.
+    if not _scraper_bases(tribunal) & FAMILY_BASES:
+        for modulo in ("download.py", "parse.py", "schemas.py"):
+            if not (base / modulo).exists():
+                errors.append(f"Falta: {base / modulo}")
+        download = base / "download.py"
+        if download.exists() and not re.search(r"^def build_\w+", download.read_text(), re.MULTILINE):
+            errors.append(
+                f"{download}: sem payload builder público (def build_<endpoint>_payload). "
+                "O script de captura e os contratos importam essa função."
+            )
+
     tests_dir = Path(f"tests/{tribunal}")
     if not tests_dir.exists():
         errors.append(f"Diretório de testes não existe: {tests_dir}")
-    elif not (tests_dir / "__init__.py").exists():
-        errors.append(f"Falta: {tests_dir / '__init__.py'}")
+    else:
+        if not (tests_dir / "__init__.py").exists():
+            errors.append(f"Falta: {tests_dir / '__init__.py'}")
+        # Contrato de filtros só vale para endpoint de busca: consulta por CNJ
+        # (cpopg/cposg) recebe o número, não filtros de backend.
+        busca = "EsajSearchScraper" in _scraper_bases(tribunal) or re.search(
+            r"def (cjsg|cjpg|listar_)\w*\(", "\n".join(_package_sources(tribunal).values())
+        )
+        if busca and not list(tests_dir.glob("test_*_filters_contract.py")):
+            errors.append(
+                f"Nenhum test_*_filters_contract.py em {tests_dir}. "
+                "Todos os filtros e aliases deprecados precisam de contrato."
+            )
 
     return errors
 
@@ -132,19 +171,9 @@ def check_class_conventions(tribunal: str) -> list[str]:
                 errors.append(f"{path.name}: linha {i} tem {len(line)} chars (max 120)")
                 break  # Só reportar a primeira
 
-    # Subclasse de família herda download, pausa e barra de progresso.
+    # Subclasse de família herda as requisições com retry da base.
     if not familia:
         todo_codigo = "\n".join(sources.values())
-        if "time.sleep" not in todo_codigo:
-            errors.append(
-                "Não encontrei time.sleep() no pacote. "
-                "Inclua a pausa entre páginas (sleep_time)."
-            )
-        if "tqdm" not in todo_codigo:
-            errors.append(
-                "Não encontrei tqdm no pacote. "
-                "Inclua barra de progresso no download."
-            )
         if "_request_with_retry" not in todo_codigo:
             errors.append(
                 "Não encontrei self._request_with_retry. "
@@ -152,6 +181,22 @@ def check_class_conventions(tribunal: str) -> list[str]:
             )
 
     return errors
+
+
+def check_recommendations(tribunal: str) -> list[str]:
+    """Recomendações que o CONTRIBUTING não exige; viram aviso, não erro."""
+    if _scraper_bases(tribunal) & FAMILY_BASES:
+        return []
+    todo_codigo = "\n".join(_package_sources(tribunal).values())
+    avisos = []
+    if not re.search(r"time\.sleep\(|from time import sleep", todo_codigo):
+        avisos.append(
+            "Não encontrei pausa entre páginas (time.sleep/sleep). "
+            "Use self.sleep_time se o download paginar."
+        )
+    if "tqdm" not in todo_codigo:
+        avisos.append("Não encontrei tqdm. Barra de progresso no download é recomendada.")
+    return avisos
 
 
 def check_factory_registration(tribunal: str) -> list[str]:
@@ -232,7 +277,7 @@ def check_tests(tribunal: str) -> list[str]:
 def main():
     if len(sys.argv) < 2:
         print("Uso: python validate_scraper.py <tribunal>")
-        print("Exemplo: python validate_scraper.py tjmg")
+        print("Exemplo: python validate_scraper.py tjro")
         sys.exit(1)
 
     tribunal = sys.argv[1].lower()
@@ -269,6 +314,12 @@ def main():
     print(f"   {'✓ OK' if not errs else f'✗ {len(errs)} problema(s)'}")
     for e in errs:
         print(f"   - {e}")
+
+    print("\n5. Avisos (não mudam o resultado)...")
+    avisos = check_recommendations(tribunal)
+    print(f"   {'✓ Nenhum' if not avisos else f'! {len(avisos)} aviso(s)'}")
+    for a in avisos:
+        print(f"   - {a}")
 
     print("\n" + "=" * 50)
     if all_errors:
