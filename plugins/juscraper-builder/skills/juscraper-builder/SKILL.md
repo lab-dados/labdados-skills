@@ -28,7 +28,10 @@ a API por baixo. O **código final gerado usa apenas `requests`** (ou
 `httpx` se necessário). Nunca gere código final que dependa de
 Selenium, Playwright, ou qualquer automatizador de navegador, a menos
 que o usuário explicitamente autorize após ser informado de que não
-há alternativa.
+há alternativa. O precedente no juscraper é o STF: o Playwright entra
+como extra opcional (`juscraper[stf]`), com import lazy, só para obter
+o cookie do desafio JavaScript do AWS WAF; a busca continua em
+`requests`.
 
 ## Pré-requisitos
 
@@ -48,7 +51,9 @@ Antes de iniciar, verifique:
    `CLAUDE.md` do projeto para relembrar as convenções.
 
 3. **Dependências de dev**: Confirme que `uv pip install -e ".[dev]"`
-   foi executado.
+   foi executado. Leia também o `CONTRIBUTING.md` (seções "Adding a
+   new tribunal" e "Schemas pydantic"): é lá que está a lista de itens
+   que o PR precisa ter.
 
 4. **Aprender com os existentes**: Antes de gerar qualquer código
    novo, **sempre** leia pelo menos dois scrapers existentes para
@@ -56,13 +61,15 @@ Antes de iniciar, verifique:
    ```bash
    # Listar tribunais existentes
    ls src/juscraper/courts/
-   # Ler um scraper de referência (ex: TJRS por ser compacto)
-   cat src/juscraper/courts/tjrs/client.py
-   # Ler outro para comparar padrões
-   cat src/juscraper/courts/tjdft/client.py
+   # Ler um scraper de referência completo (cjsg sobre HTTPScraper)
+   cat src/juscraper/courts/tjro/{client,download,parse,schemas}.py
+   # Ler outro para comparar padrões (cpopg com captcha: trf6)
+   cat src/juscraper/courts/trf6/{client,download,schemas}.py
    ```
-   Também leia `src/juscraper/utils/params.py` para entender a
-   normalização de parâmetros.
+   Também leia `src/juscraper/utils/params.py` (em especial
+   `apply_input_pipeline_search`) e `src/juscraper/core/http.py`
+   (`HTTPScraper`) para entender a normalização de parâmetros e a
+   camada HTTP.
 
    Consulte `references/juscraper-conventions.md` nesta skill para
    um resumo das convenções. Mas o código real é sempre a referência
@@ -89,19 +96,13 @@ Antes de iniciar, verifique:
    - **Tecnologia**: formulário HTML tradicional, SPA (React/Angular/
      Vue), eSAJ, ou outro sistema
 
-4. **Se houver captcha**: Informe o usuário e encerre:
-   ```
-   ⚠️ O site do {TRIBUNAL} usa captcha ({tipo detectado}).
-
-   Por enquanto, não é possível automatizar a raspagem deste tribunal.
-   Registrando a informação para tratamento futuro.
-
-   Tipo de captcha: {tipo}
-   URL: {url}
-   Observações: {notas adicionais}
-   ```
-   Crie `docs/captcha/{tribunal}_captcha.md` com essas informações e
-   encerre o trabalho.
+4. **Se houver captcha**: não encerre. Interrompa este fluxo e siga
+   a skill `juscraper-builder-captcha`, que cobre esse caso. Ela testa
+   primeiro se o backend valida o captcha. No juscraper, o TJRJ exibe
+   reCAPTCHA que o backend não valida e o TJGO aceita os campos de
+   reCAPTCHA/Turnstile vazios; TJMG e TRF6 validam captcha de imagem
+   e o resolvem com `txtcaptcha`. Captcha interativo validado no
+   backend não tem solução (o TJAP, com Turnstile, está bloqueado).
 
 5. Informe o usuário sobre os campos encontrados e peça confirmação
    antes de prosseguir:
@@ -218,121 +219,156 @@ OBSERVAÇÕES:
 
 ### Etapa 4 — Geração de Código
 
-**Antes de escrever código, leia os scrapers existentes** (Etapa 0
-dos pré-requisitos) para alinhar com os padrões atuais. Sempre use
+**Antes de escrever código, leia os scrapers existentes** (item 4
+dos Pré-requisitos) para alinhar com os padrões atuais. Sempre use
 o código real como referência, não apenas as convenções documentadas.
 
-Gere os seguintes arquivos:
+Antes de criar um scraper do zero, veja se o site pertence a uma
+família já implementada: eSAJ vira subclasse de `EsajSearchScraper`
+(`courts/_esaj/`), PJe consulta pública vira subclasse de
+`TRFConsultaScraper` (`courts/_trf/`). Só generalize algo para uma
+família nova com 2+ ocorrências concretas.
+
+Gere os seguintes arquivos. O template em `assets/template_tribunal/`
+tem os cinco módulos prontos para adaptar (placeholders `TJXX`/`tjxx`):
 
 #### 4.1 Client: `src/juscraper/courts/{tribunal}/client.py`
 
-Estrutura obrigatória:
+API pública. Herda de `juscraper.core.http.HTTPScraper`, valida a
+entrada e delega para `download.py` e `parse.py`. Estrutura obrigatória:
 
 ```python
 """Scraper para o {Nome Completo do Tribunal} ({SIGLA})."""
-
-import logging
-import time
-from pathlib import Path
+from typing import Any
 
 import pandas as pd
-import requests
-from tqdm import tqdm
 
-from juscraper.utils.params import normalize_params
+from juscraper.core.http import HTTPScraper
+from juscraper.utils.params import apply_input_pipeline_search
 
-logger = logging.getLogger(__name__)
+from .download import cjsg_download_manager
+from .parse import cjsg_parse_manager
+from .schemas import InputCJSG{SIGLA}
 
 
-class {SIGLA}Scraper:
+class {SIGLA}Scraper(HTTPScraper):
     """Scraper para o {Nome Completo do Tribunal}."""
 
     BASE_URL = "{url_base_do_tribunal}"
 
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": (
-                "juscraper/0.1 "
-                "(https://github.com/jtrecenti/juscraper)"
-            ),
-        })
+    def __init__(self, verbose: int = 0, download_path: str | None = None,
+                 sleep_time: float = 1.0, **kwargs: Any):
+        super().__init__("{SIGLA}", verbose=verbose, download_path=download_path,
+                         sleep_time=sleep_time, **kwargs)
 
     # --- cjsg (jurisprudência) ---
 
-    def cjsg(self, pesquisa, paginas=None, **kwargs):
-        """Consulta de jurisprudência do {SIGLA}.
+    def cjsg(self, pesquisa: str | None = None,
+             paginas: int | list | range | None = None, **kwargs) -> pd.DataFrame:
+        """Busca jurisprudência no {SIGLA}.
 
-        Parameters
-        ----------
-        pesquisa : str
-            Termo de busca.
-        paginas : int, list, range, or None
-            Páginas a baixar (1-based). None = todas.
-        {param} : {tipo}
-            {descrição de cada parâmetro extra do formulário}
+        Args:
+            pesquisa (str): Termo de busca livre.
+            paginas (int | list | range | None): Páginas 1-based; ``None``
+                baixa todas. Default ``None``.
+            **kwargs: Filtros aceitos pelo schema :class:`InputCJSG{SIGLA}`.
+                Listados abaixo (todos opcionais; ``None`` = sem filtro):
 
-        Returns
-        -------
-        pd.DataFrame
-            Tabela com os resultados da consulta.
+                * ``{filtro}`` ({tipo}): {descrição}.
+
+        Aliases deprecados (popados com ``DeprecationWarning`` antes do pydantic):
+            * ``query`` / ``termo`` -> ``pesquisa``
+            * ``data_inicio`` / ``data_fim`` -> ``data_julgamento_inicio`` / ``_fim``
+
+        Raises:
+            TypeError: Quando um kwarg desconhecido é passado.
+            ValidationError: Quando um filtro tem formato inválido.
+
+        Returns:
+            pd.DataFrame: Uma linha por decisão, com as colunas canônicas.
+
+        See also:
+            :class:`InputCJSG{SIGLA}`: schema pydantic, fonte da verdade
+            dos filtros aceitos.
         """
-        # Implementação: download para temp + parse
-        ...
+        return self.cjsg_parse(self.cjsg_download(pesquisa, paginas, **kwargs))
 
-    def cjsg_download(self, pesquisa, paginas=None,
-                      diretorio=".", **kwargs):
-        """Baixa arquivos brutos da jurisprudência do {SIGLA}.
+    def cjsg_download(self, pesquisa: str | None = None,
+                      paginas: int | list | range | None = None, **kwargs) -> list:
+        """Baixa as respostas brutas da busca de jurisprudência do {SIGLA}.
 
-        Cria uma pasta dentro de `diretorio` com os arquivos
-        HTML/JSON brutos de cada página.
+        Aceita os mesmos filtros de :meth:`cjsg`; veja lá a lista completa.
 
-        Returns
-        -------
-        Path
-            Caminho da pasta com os arquivos baixados.
+        Returns:
+            list: Uma resposta bruta por página baixada.
         """
-        ...
+        inp = apply_input_pipeline_search(
+            InputCJSG{SIGLA}, "{SIGLA}Scraper.cjsg_download()",
+            pesquisa=pesquisa, paginas=paginas, kwargs=kwargs,
+            consume_pesquisa_aliases=True,
+        )
+        return cjsg_download_manager(
+            inp.pesquisa, inp.paginas,
+            request_fn=self._request_with_retry, sleep_time=self.sleep_time,
+            # filtros validados: inp.data_julgamento_inicio, ...
+        )
 
-    def cjsg_parse(self, diretorio):
-        """Lê e processa arquivos brutos baixados por cjsg_download.
+    def cjsg_parse(self, resultados_brutos: list) -> pd.DataFrame:
+        """Processa as respostas brutas de :meth:`cjsg_download`.
 
-        Parameters
-        ----------
-        diretorio : str or Path
-            Pasta contendo os arquivos brutos.
+        Args:
+            resultados_brutos (list): Saída de :meth:`cjsg_download`.
 
-        Returns
-        -------
-        pd.DataFrame
-            Tabela com os resultados processados.
+        Returns:
+            pd.DataFrame: Mesmo formato de :meth:`cjsg`.
         """
-        ...
+        return cjsg_parse_manager(resultados_brutos)
 ```
+
+`download.py` concentra o HTTP: constantes (`BASE_URL`,
+`RESULTS_PER_PAGE`), o payload builder **público**
+`build_cjsg_payload(...)` (sem underscore, porque o script de captura
+e os contratos o importam) e o `cjsg_download_manager`, que recebe o
+`request_fn` e o `sleep_time` do client. `parse.py` converte as
+respostas brutas em DataFrame e renomeia as chaves do backend para os
+nomes canônicos.
 
 **Regras de geração obrigatórias**:
 
-- `requests.Session()` para manter cookies entre requisições
-- Mapear TODOS os campos do formulário como kwargs opcionais
+- Herdar de `HTTPScraper`: ele cria a `requests.Session()`, monta o
+  User-Agent `juscraper/<versão>` e guarda `sleep_time`. Não fixar
+  User-Agent; se o site exigir UA de navegador, cookies iniciais ou
+  adapter TLS, sobrescrever `_configure_session(session)`
+- Mapear TODOS os campos do formulário como filtros do schema
 - Nomes de parâmetros em português, seguindo convenções do CLAUDE.md:
   - `pesquisa` (nunca `query` ou `termo`)
   - `data_julgamento_inicio`, `data_julgamento_fim`
   - `data_publicacao_inicio`, `data_publicacao_fim`
   - `data_inicio`/`data_fim` como alias de `data_julgamento_*`
-- Usar `normalize_params()` de `juscraper.utils.params` quando
-  aplicável
+  - `tamanho_pagina` para itens por página
+  - nomes canônicos `numero_processo` (Input), `relator`, `classe`,
+    `assunto`
+- Validar a entrada com `apply_input_pipeline_search` de
+  `juscraper.utils.params` (aliases de busca e data, `paginas`,
+  conversão de datas, pydantic e `TypeError` para kwarg desconhecido).
+  Alias específico do tribunal sai antes, com
+  `resolve_deprecated_alias`/`pop_deprecated_alias`
 - Paginação **1-based** conforme convenção do juscraper
 - `tqdm` para barra de progresso no download
-- `time.sleep(1)` mínimo entre requisições (pode ser mais se o
-  site exigir)
-- Retry com backoff em caso de erro HTTP (máx 3 tentativas)
+- `time.sleep(sleep_time)` entre páginas (default `1.0`, pode ser mais
+  se o site exigir)
+- Requisições via `self._request_with_retry`, repassado ao download
+  como `request_fn` (backoff exponencial para 403/429/5xx, máx 3
+  tentativas por padrão)
 - Retornar `pd.DataFrame` nas funções de consulta
 - `logging` ao invés de `print`
 - Tratar `paginas` como `int | list | range | None`
-- Se `paginas` é `None`, buscar total e baixar tudo (com aviso ao
-  usuário sobre o volume)
+- Se `paginas` é `None`, buscar total e baixar tudo
 - Linhas de no máximo 120 caracteres
 - Type hints nos parâmetros principais
+- Docstrings em português, estilo Google (`Args:`/`Returns:`/`Raises:`),
+  com `See also:` apontando o schema; `*_download` referencia o método
+  top-level com `:meth:` em vez de repetir os filtros
 
 #### 4.2 Init: `src/juscraper/courts/{tribunal}/__init__.py`
 
@@ -346,104 +382,95 @@ __all__ = ["{SIGLA}Scraper"]
 
 #### 4.3 Registrar na factory
 
-Atualizar `src/juscraper/__init__.py` (ou o arquivo onde está a
-função `scraper()`) para incluir o novo tribunal no mapeamento.
-Ler o arquivo antes de editar para não quebrar nada.
-
-#### 4.4 Testes: `tests/{tribunal}/test_{tribunal}_cjsg.py`
-
-Testes de integração **reais** (sem mock). Cada teste deve fazer
-requisições reais ao site do tribunal:
+Acrescentar a entrada no dict `_SCRAPERS` de `src/juscraper/__init__.py`,
+no formato `"módulo:Classe"` (a factory importa o módulo só quando a
+sigla é pedida):
 
 ```python
-"""Testes de integração para o scraper do {SIGLA}."""
-
-import pytest
-import juscraper as jus
-
-
-@pytest.mark.integration
-class TestCJSG{SIGLA}:
-    """Testes para cjsg do {SIGLA}."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.scraper = jus.scraper("{tribunal}")
-
-    def test_busca_simples(self):
-        """Busca simples retorna resultados."""
-        df = self.scraper.cjsg("direito", paginas=1)
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) > 0
-
-    def test_colunas_esperadas(self):
-        """Resultado contém colunas mínimas esperadas."""
-        df = self.scraper.cjsg("direito", paginas=1)
-        # Ajustar conforme colunas reais do tribunal
-        colunas_minimas = {"ementa"}  # ou {"decisao", "relator"}
-        assert colunas_minimas.issubset(set(df.columns))
-
-    def test_paginacao(self):
-        """Paginação traz resultados de múltiplas páginas."""
-        df = self.scraper.cjsg("dano moral", paginas=range(1, 3))
-        # Com 2 páginas, deve ter mais resultados que 1 página
-        df_p1 = self.scraper.cjsg("dano moral", paginas=1)
-        assert len(df) > len(df_p1)
-
-    def test_filtro_data(self):
-        """Filtro de data funciona."""
-        df = self.scraper.cjsg(
-            "direito",
-            data_inicio="2024-01-01",
-            data_fim="2024-06-30",
-            paginas=1,
-        )
-        assert len(df) > 0
-
-    def test_download_e_parse(self, tmp_path):
-        """Download + parse produz mesmo resultado que cjsg."""
-        pasta = self.scraper.cjsg_download(
-            "direito", paginas=1, diretorio=str(tmp_path)
-        )
-        df = self.scraper.cjsg_parse(pasta)
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) > 0
-
-    def test_paginas_int(self):
-        """paginas=2 equivale a range(1, 3)."""
-        df_int = self.scraper.cjsg("direito", paginas=2)
-        df_range = self.scraper.cjsg("direito", paginas=range(1, 3))
-        assert len(df_int) == len(df_range)
+"{tribunal}": "juscraper.courts.{tribunal}.client:{SIGLA}Scraper",
 ```
+
+Não editar `src/juscraper/tribunal_manager.py`: é código morto, sem
+nenhum import no pacote.
+
+#### 4.4 Schemas: `src/juscraper/courts/{tribunal}/schemas.py`
+
+Um par `Input<Endpoint><SIGLA>`/`Output<Endpoint><SIGLA>` por método
+implementado (ver `references/juscraper-conventions.md`, seção
+"Schemas pydantic"):
+
+- Input herda de `SearchBase` (traz `pesquisa`, `paginas` e
+  `extra="forbid"`) e dos mixins de data que o backend aceita; consulta
+  por CNJ herda de `CnjInputBase` (`id_cnj: str | list[str]`). Declarar
+  `BACKEND_DATE_FORMAT` quando o backend não usa `DD/MM/AAAA`. Não
+  redeclarar `paginas`.
+- Campos do Input iguais, byte a byte, aos parâmetros explícitos do
+  método público (`tests/schemas/test_signature_parity.py`).
+- Output herda de `OutputCJSGBase` (+ `OutputRelatoriaMixin`,
+  `OutputDataPublicacaoMixin`) ou de `OutputCnjConsultaBase`, com os
+  nomes canônicos de coluna (`processo`, `classe`, `assunto`,
+  `relator`).
+- Registrar o Input em
+  `tests/schemas/test_schema_coverage.py::EXPECTED_COURT_SCHEMAS` e o
+  Output em `tests/schemas/test_output_parity.py::EXPECTED_COURT_OUTPUT_SCHEMAS`.
+
+#### 4.5 Testes: `tests/{tribunal}/`
+
+O `CONTRIBUTING.md` do juscraper bloqueia o PR sem **contrato offline
+por método público**. Seguir `references/test-patterns.md`, que traz a
+lista completa e os templates:
+
+- `tests/fixtures/capture/{tribunal}.py`: script que roda contra o
+  site real, importando `build_cjsg_payload` e `BASE_URL`, e grava os
+  samples em `tests/{tribunal}/samples/cjsg/` (typical com duas
+  páginas, página única, sem resultados). Nunca sintetizar sample à mão.
+- `tests/{tribunal}/test_cjsg_contract.py`: `@responses.activate`,
+  `mocker.patch("time.sleep")`, samples via `load_sample`, matcher de
+  payload montado com `build_cjsg_payload` e colunas conferidas por
+  subset.
+- `tests/{tribunal}/test_cjsg_filters_contract.py`: todos os filtros
+  de uma vez chegando ao body e um teste por alias deprecado, com
+  `pytest.warns(DeprecationWarning)`.
+- Teste de schema (params aceitos, kwarg desconhecido, defaults), no
+  diretório do tribunal ou em `tests/schemas/test_cjsg_schemas.py`.
+- Opcional: `tests/{tribunal}/test_cjsg_integration.py` com
+  `@pytest.mark.integration`, que o `pytest` padrão não roda.
 
 **Importante**: Criar `tests/{tribunal}/__init__.py` (arquivo vazio)
 para que o pytest descubra os testes.
 
 ### Etapa 5 — Validação
 
-1. Rodar os testes:
+1. Rodar os testes offline:
    ```bash
-   pytest tests/{tribunal}/ -v -m integration --tb=short
+   pytest tests/{tribunal}/ tests/schemas/ -v --tb=short
+   ```
+   E, se houver integração, contra o site real:
+   ```bash
+   pytest tests/{tribunal}/ -m integration -v --tb=short
    ```
 
 2. Checklist de validação:
-   - [ ] Todos os testes passam
-   - [ ] DataFrame tem colunas coerentes com o site
+   - [ ] Contratos e `tests/schemas/` passam
+   - [ ] DataFrame tem colunas coerentes com o site e nomes canônicos
    - [ ] Paginação funciona (página 2 ≠ página 1)
-   - [ ] Filtros de data afetam os resultados
-   - [ ] Download cria arquivos no diretório correto
-   - [ ] Parse lê os arquivos corretamente
+   - [ ] Filtros chegam ao body/params (teste de filtros)
+   - [ ] `cjsg_download` devolve as respostas brutas e `cjsg_parse` as processa
+   - [ ] Samples vieram do script de captura
    - [ ] Sem warnings de deprecação do próprio código
 
 3. Se testes falharem, diagnosticar:
-   - **Status 403/429**: Adicionar mais delay, revisar User-Agent,
-     verificar se precisa cookie de sessão
+   - **Status 403/429**: Adicionar mais delay, verificar se o site
+     exige User-Agent de navegador (via `_configure_session`) ou
+     cookie de sessão
    - **HTML de erro no response**: Verificar se headers ou cookies
      estão corretos
    - **Dados vazios**: Verificar parsing (HTML vs JSON), seletores
      CSS, XPath, ou chaves JSON
-   - **Timeout**: Aumentar timeout na Session, verificar se o site
-     está fora do ar
+   - **Timeout**: Aumentar timeout nas requisições, verificar se o
+     site está fora do ar
+   - **`ConnectionError` do `responses` no contrato**: o payload
+     enviado não bateu com o matcher; comparar com `build_cjsg_payload`
 
 4. Rodar linting:
    ```bash
@@ -518,7 +545,11 @@ Em último caso, se o site:
 - Usa WebSockets exclusivamente para dados
 - Tem proteção anti-bot que bloqueia requests normais
 
-Nesse caso, informe o usuário:
+Se o bloqueio for só um desafio JavaScript que emite um cookie
+reutilizável (caso do AWS WAF no STF), a saída já adotada no
+juscraper é obter o cookie com Playwright num extra opcional, com
+import lazy, e seguir a raspagem em `requests`. Fora disso, informe o
+usuário:
 ```
 ⚠️ O site do {TRIBUNAL} não expõe uma API acessível via requests.
 Todo o conteúdo é renderizado via JavaScript no navegador.
@@ -551,7 +582,9 @@ muito irregular, usar `lxml.html` diretamente. Para tabelas simples,
 
 ## Notas de Segurança e Ética
 
-- Incluir User-Agent identificável com link do projeto
+- Manter o User-Agent identificável que o `HTTPScraper` monta
+  (`juscraper/<versão>` com link do projeto); trocar por UA de
+  navegador só quando o site exigir
 - Respeitar `robots.txt` quando presente
 - Manter delay mínimo de 1 segundo entre requisições
 - Não fazer mais requisições do que o necessário para o teste

@@ -7,7 +7,10 @@ fazer a engenharia reversa.
 ## Sistemas comuns
 
 ### eSAJ (Softplan)
-- Usado por: TJSP, TJMS, TJAM, TJCE, TJAL e outros
+- Usado por: TJSP, TJMS, TJAM, TJCE, TJAL, TJAC e outros
+- No juscraper: família `courts/_esaj/`; tribunal eSAJ novo é uma
+  subclasse de `EsajSearchScraper` (ver `CONTRIBUTING.md` > "Adding an
+  eSAJ tribunal")
 - URL tipicamente contém: `esaj.`, `consultasaj.`
 - Formulário: POST com `application/x-www-form-urlencoded`
 - Paginação: parâmetro `paginaConsulta` (1-based)
@@ -22,13 +25,22 @@ fazer a engenharia reversa.
 - Autenticação: pode requerer certificado digital
 - Paginação: offset-based
 - Peculiaridade: API bem estruturada quando acessível
+- No juscraper: TRF1, TRF3 e TRF5 (`cpopg`) compartilham
+  `courts/_trf/` (`TRFConsultaScraper`); o portal fica atrás do Akamai,
+  que bloqueia IP de datacenter (testes de integração com marker
+  `anti_bot`)
+
+### eproc
+- Usado por: TRF6 (`eproc1g.trf6.jus.br`)
+- Captcha de imagem validado no backend, resolvido com `txtcaptcha`
 
 ### Sistemas próprios
 - TJDFT: sistema customizado, API JSON
 - TJRS: sistema customizado, HTML server-rendered
 - TJPR: sistema customizado
-- TJMG: sistema customizado, pode usar captcha
+- TJMG: sistema customizado, captcha numérico de imagem
 - TJRJ: sistema customizado, frequentemente com WAF restritivo
+- STF: API Elasticsearch atrás do AWS WAF (desafio JavaScript)
 
 ## Padrões de URL
 
@@ -66,8 +78,9 @@ response.encoding = "latin-1"  # Comum em eSAJ
 ## Headers comuns necessários
 
 ```python
+# O User-Agent padrão vem do HTTPScraper; troque em _configure_session
+# só quando o site exigir UA de navegador (ex.: TJRJ, STF).
 headers = {
-    "User-Agent": "juscraper/0.1 (...)",
     # eSAJ frequentemente verifica Referer
     "Referer": "{url_do_formulario}",
     # Alguns sites verificam Accept
@@ -86,10 +99,12 @@ headers = {
 | TJRS     | Nenhum              | ✓ Funciona      |
 | TJPR     | Nenhum              | ✓ Funciona      |
 | TJDFT    | Nenhum              | ✓ Funciona      |
-| TJMG     | Imagem (algumas consultas) | ⚠️ Parcial |
-| TJRJ     | reCAPTCHA           | ✗ Bloqueado     |
-| STJ      | Nenhum (API pública)| ✓ Funciona      |
-| STF      | Nenhum (API pública)| ✓ Funciona      |
+| TJMG     | Imagem numérica, validada; `txtcaptcha` | ✓ Funciona (extra `[tjmg]`) |
+| TRF6     | Imagem, validada; `txtcaptcha` | ✓ Funciona |
+| TJRJ     | reCAPTCHA exibido, não validado no backend | ✓ Funciona |
+| TJGO     | Campos de reCAPTCHA/Turnstile enviados vazios | ✓ Funciona |
+| TJAP     | Cloudflare Turnstile, validado | ✗ Bloqueado |
+| STF      | Sem captcha; desafio JavaScript do AWS WAF | ✓ Funciona (token via extra `[stf]`) |
 
 **Nota**: Esta tabela pode estar desatualizada. Sempre verificar
 na prática durante a Etapa 1 do workflow.

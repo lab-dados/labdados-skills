@@ -4,6 +4,35 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] — 2026-09-23
+
+Corrigido:
+
+- `juscraper-builder` e `juscraper-builder-captcha` (plugin 1.1.0) sincronizadas com as
+  convencoes do juscraper v0.4.0: validacao de entrada por `apply_input_pipeline_search`
+  (a funcao `normalize_params` citada antes nao existe), scraper herdando de `HTTPScraper`
+  sem User-Agent fixo, registro no dict `_SCRAPERS`, schemas pydantic em
+  `courts/<xx>/schemas.py` com registro em `tests/schemas/`, nomes canonicos de coluna e
+  docstrings estilo Google em portugues.
+- Politica de testes invertida: o PR exige contratos offline com `responses`, samples
+  capturados por `tests/fixtures/capture/<xx>.py` e testes de filtros e aliases
+  deprecados; integracao e opcional e fica fora do `pytest` padrao (`pytest -m ""` roda
+  tudo). `validate_scraper.py` deixou de exigir marker `integration` em todo teste e de
+  reprovar mocks.
+- `juscraper-builder` deixa de encerrar ao encontrar captcha e encaminha para
+  `juscraper-builder-captcha`. A skill de captcha usa a API real
+  `txtcaptcha.decrypt([caminho], mask=..., length=...)` com import lazy, dependencia pelo
+  extra `[tjmg]` e `txtcaptcha` mockado nos contratos.
+- Retorno de `cpopg` (DataFrame nos scrapers novos; dict de DataFrames so no TJSP legado),
+  tabela de captchas conhecidos e excecao do STF (Playwright opcional so para o token do
+  WAF).
+
+Adicionado:
+
+- `assets/template_tribunal/` com `client.py`, `download.py` (`build_cjsg_payload`
+  publico), `parse.py`, `schemas.py` e `__init__.py`, no lugar do antigo
+  `template_tribunal.py`.
+
 ## [1.7.0] — 2026-06-05
 
 Removido:

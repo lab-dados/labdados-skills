@@ -24,27 +24,33 @@ um novo tribunal. Marque cada item conforme for completando.
 ## Código gerado
 - [ ] `src/juscraper/courts/{tribunal}/__init__.py`
 - [ ] `src/juscraper/courts/{tribunal}/client.py`
-- [ ] Classe `{SIGLA}Scraper` com métodos adequados
-- [ ] Registrado na factory function `scraper()`
-- [ ] Parâmetros seguem convenções (pesquisa, data_*, paginas)
+- [ ] `src/juscraper/courts/{tribunal}/download.py` com `build_<endpoint>_payload` público e constantes de URL
+- [ ] `src/juscraper/courts/{tribunal}/parse.py`
+- [ ] `src/juscraper/courts/{tribunal}/schemas.py` com `Input<Endpoint><SIGLA>` e `Output<Endpoint><SIGLA>`
+- [ ] Classe `{SIGLA}Scraper` herdando de `HTTPScraper` (ou da família: `EsajSearchScraper`, `TRFConsultaScraper`)
+- [ ] Registrado em `_SCRAPERS` de `src/juscraper/__init__.py`
+- [ ] Parâmetros seguem convenções (pesquisa, data_*, paginas, nomes canônicos)
+- [ ] Entrada validada por `apply_input_pipeline_search` (ou o equivalente da família)
 - [ ] Paginação 1-based
-- [ ] `requests.Session()` com User-Agent identificável
-- [ ] `time.sleep()` entre requisições (mínimo 1s)
+- [ ] Sem User-Agent fixo (o `HTTPScraper` monta com a versão)
+- [ ] Requisições via `self._request_with_retry` (retry com backoff)
+- [ ] `time.sleep(self.sleep_time)` entre páginas
 - [ ] `tqdm` para barra de progresso
-- [ ] Retry com backoff (máx 3 tentativas)
-- [ ] Retorna `pd.DataFrame`
+- [ ] Retorna `pd.DataFrame` com colunas canônicas (`processo`, `classe`, `assunto`, `relator`)
+- [ ] Docstrings Google em português, com `See also:` para o schema
 - [ ] Logging ao invés de print
 
 ## Testes
 - [ ] `tests/{tribunal}/__init__.py` existe
-- [ ] `tests/{tribunal}/test_{tribunal}_cjsg.py` criado
-- [ ] Testes marcados com `@pytest.mark.integration`
-- [ ] test_busca_simples passa
-- [ ] test_colunas_esperadas passa
-- [ ] test_paginacao passa
-- [ ] test_filtro_data passa
-- [ ] test_download_e_parse passa
-- [ ] test_paginas_int passa
+- [ ] `tests/fixtures/capture/{tribunal}.py` importa o payload builder e grava os samples
+- [ ] Samples em `tests/{tribunal}/samples/<endpoint>/` (typical, página única, sem resultados)
+- [ ] `test_<endpoint>_contract.py` com `responses`, matcher de payload e schema por subset
+- [ ] `test_<endpoint>_filters_contract.py` com todos os filtros e um teste por alias deprecado
+- [ ] Teste de schema (params aceitos, kwarg desconhecido, defaults)
+- [ ] Contratos sem `@pytest.mark.integration` e sem rede
+- [ ] Input e Output registrados em `tests/schemas/test_schema_coverage.py` e `test_output_parity.py`
+- [ ] `pytest tests/{tribunal}/ tests/schemas/` passa
+- [ ] (Opcional) `test_<endpoint>_integration.py` com `@pytest.mark.integration`
 
 ## Qualidade
 - [ ] pylint sem erros críticos
@@ -55,6 +61,7 @@ um novo tribunal. Marque cada item conforme for completando.
 ## Documentação e release
 - [ ] `docs/notebooks/{tribunal}.ipynb` criado com exemplo
 - [ ] README.md atualizado (tabela de tribunais)
+- [ ] `docs/_quarto.yml` e `docs/index.qmd` atualizados
 - [ ] CHANGELOG.md atualizado ([Unreleased] → Added)
 - [ ] Branch de feature criada
 - [ ] PR aberto (nunca push direto na main)

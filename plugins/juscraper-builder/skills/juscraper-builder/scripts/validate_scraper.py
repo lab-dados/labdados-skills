@@ -11,9 +11,19 @@ Roda a partir do diretório raiz do juscraper.
 """
 
 import ast
-import importlib
+import re
 import sys
 from pathlib import Path
+
+
+FAMILY_BASES = {"EsajSearchScraper", "TRFConsultaScraper"}
+ALLOWED_BASES = {"HTTPScraper"} | FAMILY_BASES
+
+
+def _package_sources(tribunal: str) -> dict[Path, str]:
+    """Lê todos os módulos .py do pacote do tribunal."""
+    base = Path(f"src/juscraper/courts/{tribunal}")
+    return {f: f.read_text() for f in sorted(base.glob("*.py"))}
 
 
 def check_file_structure(tribunal: str) -> list[str]:
@@ -41,15 +51,14 @@ def check_file_structure(tribunal: str) -> list[str]:
 
 
 def check_class_conventions(tribunal: str) -> list[str]:
-    """Verifica convenções da classe scraper."""
+    """Verifica convenções da classe scraper e do pacote do tribunal."""
     errors = []
     client_path = Path(f"src/juscraper/courts/{tribunal}/client.py")
 
     if not client_path.exists():
         return [f"Arquivo não encontrado: {client_path}"]
 
-    source = client_path.read_text()
-    tree = ast.parse(source)
+    tree = ast.parse(client_path.read_text())
 
     # Encontrar a classe Scraper
     classes = [
@@ -77,78 +86,76 @@ def check_class_conventions(tribunal: str) -> list[str]:
         )
         return errors
 
-    # Verificar métodos
-    methods = {
-        node.name
-        for node in ast.walk(scraper_class)
-        if isinstance(node, ast.FunctionDef)
+    # Verificar a classe base: HTTPScraper cria a Session, monta o
+    # User-Agent e oferece _request_with_retry; as famílias herdam dele.
+    bases = {
+        b.id if isinstance(b, ast.Name) else getattr(b, "attr", "")
+        for b in scraper_class.bases
     }
-
-    if "__init__" not in methods:
-        errors.append("Falta método __init__")
-
-    # Verificar imports
-    imports = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                imports.add(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imports.add(node.module)
-
-    if "requests" not in imports and "httpx" not in imports:
+    if not bases & ALLOWED_BASES:
         errors.append(
-            "Nem 'requests' nem 'httpx' importado. "
-            "O código final deve usar requests, não Playwright/Selenium."
+            f"{expected_name} herda de {sorted(bases) or 'object'}. "
+            "Herde de juscraper.core.http.HTTPScraper (ou de "
+            "EsajSearchScraper/TRFConsultaScraper, se for da família)."
         )
+    familia = bool(bases & FAMILY_BASES)
 
-    # Verificar se NÃO importa selenium/playwright
-    bad_imports = {"selenium", "playwright"}
-    found_bad = bad_imports & imports
-    if found_bad:
-        errors.append(
-            f"Imports proibidos encontrados: {found_bad}. "
-            f"Use requests ao invés de browser automation."
-        )
+    sources = _package_sources(tribunal)
 
-    # Verificar se usa Session
-    source_lower = source.lower()
-    if "requests.session" not in source_lower:
-        errors.append(
-            "Não encontrei requests.Session(). "
-            "Use Session para manter cookies."
-        )
+    for path, source in sources.items():
+        module = ast.parse(source)
+        # Imports de módulo proibidos; import lazy dentro de função (ex.:
+        # Playwright opcional só para token de WAF) não entra aqui.
+        top_imports = set()
+        for node in module.body:
+            if isinstance(node, ast.Import):
+                top_imports.update(a.name.split(".")[0] for a in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                top_imports.add(node.module.split(".")[0])
+        found_bad = {"selenium", "playwright"} & top_imports
+        if found_bad:
+            errors.append(
+                f"{path.name}: imports proibidos no topo do módulo: {found_bad}. "
+                "Use requests ao invés de browser automation."
+            )
 
-    # Verificar User-Agent
-    if "user-agent" not in source_lower and "user_agent" not in source_lower:
-        errors.append("Não encontrei User-Agent nos headers.")
+        # User-Agent fixo do juscraper: o HTTPScraper já monta com a versão.
+        if "juscraper/0." in source:
+            errors.append(
+                f"{path.name}: User-Agent do juscraper fixado no código. "
+                "Remova; o HTTPScraper monta o header com __version__."
+            )
 
-    # Verificar sleep
-    if "time.sleep" not in source:
-        errors.append(
-            "Não encontrei time.sleep(). "
-            "Inclua delay entre requisições."
-        )
+        # Verificar linhas longas
+        for i, line in enumerate(source.split("\n"), 1):
+            if len(line) > 120:
+                errors.append(f"{path.name}: linha {i} tem {len(line)} chars (max 120)")
+                break  # Só reportar a primeira
 
-    # Verificar tqdm
-    if "tqdm" not in source:
-        errors.append(
-            "Não encontrei tqdm. "
-            "Inclua barra de progresso no download."
-        )
-
-    # Verificar linhas longas
-    for i, line in enumerate(source.split("\n"), 1):
-        if len(line) > 120:
-            errors.append(f"Linha {i} tem {len(line)} chars (max 120)")
-            break  # Só reportar a primeira
+    # Subclasse de família herda download, pausa e barra de progresso.
+    if not familia:
+        todo_codigo = "\n".join(sources.values())
+        if "time.sleep" not in todo_codigo:
+            errors.append(
+                "Não encontrei time.sleep() no pacote. "
+                "Inclua a pausa entre páginas (sleep_time)."
+            )
+        if "tqdm" not in todo_codigo:
+            errors.append(
+                "Não encontrei tqdm no pacote. "
+                "Inclua barra de progresso no download."
+            )
+        if "_request_with_retry" not in todo_codigo:
+            errors.append(
+                "Não encontrei self._request_with_retry. "
+                "Faça as requisições por ele (retry com backoff)."
+            )
 
     return errors
 
 
 def check_factory_registration(tribunal: str) -> list[str]:
-    """Verifica se o tribunal está registrado na factory."""
+    """Verifica se o tribunal está registrado em _SCRAPERS."""
     errors = []
 
     init_path = Path("src/juscraper/__init__.py")
@@ -157,42 +164,66 @@ def check_factory_registration(tribunal: str) -> list[str]:
         return errors
 
     source = init_path.read_text()
-    if tribunal not in source.lower():
+    if not re.search(rf'["\']{re.escape(tribunal)}["\']\s*:', source):
         errors.append(
-            f"Tribunal '{tribunal}' não encontrado em "
-            f"src/juscraper/__init__.py. "
-            f"Registre na factory function scraper()."
+            f"Tribunal '{tribunal}' não encontrado em _SCRAPERS de "
+            f"src/juscraper/__init__.py. Acrescente "
+            f'"{tribunal}": "juscraper.courts.{tribunal}.client:{tribunal.upper()}Scraper".'
         )
 
     return errors
 
 
 def check_tests(tribunal: str) -> list[str]:
-    """Verifica convenções dos testes."""
+    """Verifica contratos offline, samples, captura e registro de schemas."""
     errors = []
     tests_dir = Path(f"tests/{tribunal}")
 
     if not tests_dir.exists():
         return [f"Diretório de testes não existe: {tests_dir}"]
 
-    test_files = list(tests_dir.glob("test_*.py"))
-    if not test_files:
-        errors.append(f"Nenhum arquivo test_*.py em {tests_dir}")
-        return errors
+    contratos = sorted(tests_dir.glob("test_*_contract.py"))
+    if not contratos:
+        errors.append(
+            f"Nenhum test_*_contract.py em {tests_dir}. "
+            "Contrato offline por método público é obrigatório."
+        )
 
-    for tf in test_files:
+    for tf in contratos:
         source = tf.read_text()
-
-        if "pytest.mark.integration" not in source:
+        if "pytest.mark.integration" in source:
             errors.append(
-                f"{tf.name}: Falta @pytest.mark.integration. "
-                f"Testes que acessam servidores reais devem ser marcados."
+                f"{tf.name}: contrato marcado como integration. "
+                "Contratos rodam offline, sem esse marker."
             )
 
-        if "mock" in source.lower() or "Mock" in source:
+    if contratos and not any("responses" in tf.read_text() for tf in contratos):
+        errors.append(
+            "Nenhum contrato usa responses. "
+            "Contratos servem os samples capturados via responses."
+        )
+
+    for tf in sorted(tests_dir.glob("test_*_integration.py")):
+        if "pytest.mark.integration" not in tf.read_text():
             errors.append(
-                f"{tf.name}: Encontrei 'mock' no código de testes. "
-                f"Testes devem ser reais, sem mock."
+                f"{tf.name}: falta @pytest.mark.integration. "
+                "Testes que acessam servidores reais devem ser marcados."
+            )
+
+    if not (tests_dir / "samples").exists():
+        errors.append(f"Falta: {tests_dir / 'samples'} (samples capturados)")
+
+    capture = Path(f"tests/fixtures/capture/{tribunal}.py")
+    if not capture.exists():
+        errors.append(f"Falta: {capture} (script de captura dos samples)")
+
+    for registro in (
+        Path("tests/schemas/test_schema_coverage.py"),
+        Path("tests/schemas/test_output_parity.py"),
+    ):
+        if registro.exists() and f'("{tribunal}",' not in registro.read_text():
+            errors.append(
+                f"Tribunal '{tribunal}' não registrado em {registro}."
             )
 
     return errors
@@ -232,7 +263,7 @@ def main():
     for e in errs:
         print(f"   - {e}")
 
-    print("\n4. Testes de integração...")
+    print("\n4. Testes e schemas...")
     errs = check_tests(tribunal)
     all_errors.extend(errs)
     print(f"   {'✓ OK' if not errs else f'✗ {len(errs)} problema(s)'}")
