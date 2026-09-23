@@ -4,7 +4,10 @@
 
 ```bash
 pip install -U juscraper                                           # PyPI (recomendado)
-pip install -U 'juscraper[tjmg]'                                   # para usar TJMG (captcha automatico)
+pip install -U 'juscraper[tjmg]'                                   # para usar TJMG ou TRF6 (captcha automatico via txtcaptcha)
+pip install -U 'juscraper[stf]' && playwright install chromium     # STF [v0.4.0+]: cookie do AWS WAF via Playwright
+pip install pyarrow                                                # so para df.to_parquet(); fora das dependencias base desde a 0.4.0
+pip install "git+https://github.com/jtrecenti/juscraper.git"       # recursos [unreleased], so na main
 uv add -U juscraper                                                # com uv
 ```
 
@@ -18,15 +21,16 @@ import juscraper as jus
 scraper = jus.scraper(sigla, **kwargs)
 ```
 
-**Siglas validas (29 tribunais + 4 agregadores):**
+**Siglas validas (30 tribunais: 25 estaduais + 4 TRFs + STF; e 4 agregadores):**
 
 | Categoria | Siglas |
 |---|---|
 | Estaduais (22 estaveis) | `tjac`, `tjal`, `tjam`, `tjap`, `tjba`, `tjce`, `tjdft`, `tjes`, `tjms`, `tjmt`, `tjpa`, `tjpb`, `tjpe`, `tjpi`, `tjpr`, `tjrn`, `tjro`, `tjrr`, `tjrs`, `tjsc`, `tjsp`, `tjto` |
 | Estaduais (3 novos `[v0.3.0+]`) | `tjgo`, `tjmg` (requer `pip install 'juscraper[tjmg]'`), `tjrj` |
-| Federais | `trf1`, `trf3`, `trf5`, `trf6` |
+| Federais `[v0.4.0+]` | `trf1`, `trf3`, `trf5`, `trf6` (TRF6 requer `txtcaptcha`) |
+| Superior `[v0.4.0+]` | `stf` (busca de jurisprudencia; requer extra `stf` ou `waf_token`) |
 | Agregadores estaveis | `datajud`, `jusbr`, `comunica_cnj` (`[v0.3.0+]`) |
-| Agregador | `pdpj` |
+| Agregador `[v0.4.0+]` | `pdpj` |
 
 A factory retorna a instancia do scraper correspondente. Qualquer `**kwargs` e passado ao construtor.
 
@@ -68,7 +72,7 @@ tjrj = jus.scraper('tjrj')   # sleep_time=1.0
 scraper = jus.scraper('tjrs')   # sem parametros extras no construtor
 ```
 
-### TRFs (TRF1, TRF3, TRF5, TRF6)
+### TRFs (TRF1, TRF3, TRF5, TRF6) `[v0.4.0+]`
 ```python
 trf1 = jus.scraper('trf1',
     verbose=0,
@@ -84,7 +88,21 @@ trf6 = jus.scraper('trf6',
     max_captcha_attempts=3
 )
 # TRF6 usa eproc/SJMG com captcha textual via txtcaptcha; nao tem download_pecas.
+# txtcaptcha nao vem nas dependencias base: pip install 'juscraper[tjmg]' ou pip install txtcaptcha.
+# Sem ele, cpopg levanta ImportError.
 ```
+
+### STF `[v0.4.0+]`
+
+```python
+stf = jus.scraper('stf',
+    waf_token=None,      # cookie aws-waf-token ja obtido; None = obtem via Playwright na 1a busca
+    verbose=0,
+    sleep_time=1.0
+)
+```
+
+Instanciar nao faz requisicao nem exige Playwright. Sem `waf_token` e sem o extra `stf` instalado, a primeira chamada de `listar_decisoes`/`contar_decisoes` levanta `ImportError`. Metodos e gotchas em `references/tribunais.md` §STF.
 
 ### Agregadores
 
@@ -111,7 +129,7 @@ cnj = jus.scraper('comunica_cnj',   # [v0.3.0+]
 )
 # Nao aceita download_path.
 
-pdpj = jus.scraper('pdpj',
+pdpj = jus.scraper('pdpj',   # [v0.4.0+]
     verbose=0,
     download_path=None,
     sleep_time=0.5,
@@ -125,7 +143,7 @@ pdpj = jus.scraper('pdpj',
 
 ### cpopg — Consulta de processo (1o grau)
 
-**Disponivel em:** TJSP (eSAJ); TRF1, TRF3, TRF5 (PJe ConsultaPublica); TRF6 (eproc/SJMG com captcha textual); JusBR (qualquer tribunal); PDPJ (qualquer tribunal).
+**Disponivel em:** TJSP (eSAJ); TRF1, TRF3, TRF5 (PJe ConsultaPublica) `[v0.4.0+]`; TRF6 (eproc/SJMG com captcha textual) `[v0.4.0+]`; JusBR (qualquer tribunal); PDPJ (qualquer tribunal) `[v0.4.0+]`.
 
 #### TJSP
 
@@ -158,7 +176,7 @@ trf6 = jus.scraper('trf6')
 df = trf6.cpopg(id_cnj='1000149-71.2024.4.06.3800')  # str ou list[str]
 ```
 
-**Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. O portal e eproc da Seção Judiciaria de Minas Gerais (`eproc1g.trf6.jus.br/eproc/`) e exige captcha textual validado server-side; o scraper resolve via `txtcaptcha`, com `max_captcha_attempts=3` por default.
+**Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. O portal e eproc da Seção Judiciaria de Minas Gerais (`eproc1g.trf6.jus.br/eproc/`) e exige captcha textual validado server-side; o scraper resolve via `txtcaptcha`, com `max_captcha_attempts=3` por default. `txtcaptcha` e dependencia opcional: instale com `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`.
 
 **Sem `download_pecas`:** o `download_pecas=True` documentado acima e apenas para TRF1/TRF3/TRF5. Nao prometa download de pecas no TRF6.
 
@@ -185,10 +203,10 @@ Mesmo padrao de retorno e variantes do `cpopg` do TJSP.
 
 ```python
 df = tjsp.cjsg(
-    pesquisa='dano moral',                  # str — aceita "" para buscar so por filtros
+    pesquisa='dano moral',                  # str — aceita "" para buscar so por filtros [v0.4.0+]
     ementa=None,
-    classe=None,                            # int | str | list[int|str]
-    assunto=None,                           # int | str | list[int|str]
+    classe=None,                            # int | str | list[int|str] [v0.4.0+]
+    assunto=None,                           # int | str | list[int|str] [v0.4.0+]
     comarca=None,                           # int | str (exclusivo TJSP na familia eSAJ)
     orgao_julgador=None,
     data_julgamento_inicio=None,            # multiplos formatos aceitos [v0.3.0]
@@ -200,9 +218,9 @@ df = tjsp.cjsg(
 )
 ```
 
-Aceita `pesquisa=""` para buscar so por filtros.
+Aceita `pesquisa=""` para buscar so por filtros `[v0.4.0+]`.
 
-`count_only=True` retorna `int` com o total de resultados sem baixar todas as paginas. `paginas` e ignorado com `UserWarning`; com `auto_chunk=True`, janelas longas sao somadas sem dedup, entao o valor pode divergir de `len(tjsp.cjsg(...))`.
+`count_only=True` `[v0.4.0+]` retorna `int` com o total de resultados sem baixar todas as paginas. `paginas` e ignorado com `UserWarning`; com `auto_chunk=True`, janelas longas sao somadas sem dedup, entao o valor pode divergir de `len(tjsp.cjsg(...))`.
 
 ```python
 n = tjsp.cjsg(pesquisa='dano moral', classe=417, count_only=True)
@@ -216,8 +234,8 @@ n = tjsp.cjsg(pesquisa='dano moral', classe=417, count_only=True)
 df = tjrs.cjsg(
     pesquisa='dano moral',
     paginas=range(1, 4),
-    classe=None,                            # singular canonico [v0.3.0]
-    assunto=None,                           # singular canonico [v0.3.0]
+    classe=None,
+    assunto=None,
     orgao_julgador=None,
     relator=None,
     data_julgamento_inicio=None,
@@ -273,9 +291,9 @@ df = scraper.cjsg_parse(raw)
 ```python
 df = tjsp.cjpg(
     pesquisa='golpe do pix',
-    classe=None,                            # singular canonico (era 'classes')
-    assunto=None,                           # singular canonico (era 'assuntos')
-    vara=None,                              # singular canonico (era 'varas')
+    classe=None,                            # singular canonico [v0.4.0+] (era 'classes')
+    assunto=None,                           # singular canonico [v0.4.0+] (era 'assuntos')
+    vara=None,                              # singular canonico [v0.4.0+] (era 'varas')
     id_processo=None,                       # CNJ do processo, com ou sem mascara; normalizado via clean_cnj()
     data_julgamento_inicio=None,
     data_julgamento_fim=None,
@@ -284,7 +302,7 @@ df = tjsp.cjpg(
 )
 ```
 
-Plurais (`classes`/`assuntos`/`varas`) aceitos com `DeprecationWarning`. Plural + singular juntos -> `ValueError`. `[v0.3.0]` Guard `QueryTooLongError` para `pesquisa` >120 caracteres.
+`[v0.4.0+]` Plurais (`classes`/`assuntos`/`varas`) aceitos com `DeprecationWarning`; na 0.3.0 eles eram os unicos nomes aceitos. Plural + singular juntos -> `ValueError`. `[v0.3.0]` Guard `QueryTooLongError` para `pesquisa` >120 caracteres.
 
 ```python
 cnj = '1011654-78.2024.8.26.0566'
@@ -293,7 +311,7 @@ df = tjsp.cjpg(id_processo=cnj, paginas=range(1, 2))
 
 `id_processo` em `cjpg` e o numero CNJ do processo, com ou sem mascara, normalizado internamente por `clean_cnj()`. Nao e o `cd_processo` nem outro identificador interno do eSAJ. Use `cjpg(id_processo=cnj)` quando a pergunta for por jurisprudencia ou decisoes de 1o grau de um processo especifico; use `cpopg(id_cnj=cnj)` quando a pergunta for por dados cadastrais ou andamentos do processo.
 
-`count_only=True` tambem funciona em `tjsp.cjpg` e retorna `int`:
+`count_only=True` `[v0.4.0+]` tambem funciona em `tjsp.cjpg` e retorna `int`:
 
 ```python
 n = tjsp.cjpg(pesquisa='fornecimento medicamento', assunto=10070, count_only=True)
@@ -322,7 +340,7 @@ df = tjsp.cjpg_parse(path)
 
 **Gotchas praticos do cjpg do TJSP** (`auto_chunk` substitui workaround manual, `QueryTooLongError`, hierarquia de assuntos, dedup) — ver `references/tjsp.md` §"Gotchas praticos do cjpg".
 
-### Descoberta de filtros eSAJ
+### Descoberta de filtros eSAJ `[v0.4.0+]`
 Use estes metodos antes de adivinhar IDs de `classe`, `assunto`, `orgao_julgador` ou `vara` na familia eSAJ:
 
 ```python
@@ -346,7 +364,7 @@ Movidos para `references/agregadores.md`. Sumario dos endpoints publicos:
 | **Datajud** | `listar_processos`, `contar_processos` (`[v0.3.0]`) |
 | **JusBR** | `auth`, `auth_firefox`, `cpopg`, `download_documents` |
 | **ComunicaCNJ** `[v0.3.0+]` | `listar_comunicacoes` |
-| **PDPJ** | `auth`, `existe`, `cpopg`, `documentos`, `movimentos`, `partes`, `pesquisa`, `contar`, `download_documents` |
+| **PDPJ** `[v0.4.0+]` | `auth`, `existe`, `cpopg`, `documentos`, `movimentos`, `partes`, `pesquisa`, `contar`, `download_documents` |
 
 ---
 
@@ -397,10 +415,12 @@ tjsp = jus.scraper('tjsp', download_path='./dados_brutos')
 |-------|---------------|
 | `range(1, 4)` | Baixa paginas 1, 2, 3 |
 | `3` | Equivale a `range(1, 4)` |
-| `[1, 3, 5]` | Baixa paginas 1, 3 e 5 (excecao PDPJ — o cursor `searchAfter` em `pesquisa` e forwards-only e forca o range contiguo `range(1, 6)`, ver agregadores.md) |
+| `[1, 3, 5]` | Baixa paginas 1, 3 e 5. Excecoes: Datajud (cursor `search_after`) e PDPJ (cursor `searchAfter` em `pesquisa`) sao forwards-only e convertem a lista no intervalo contiguo entre minimo e maximo, `range(1, 6)`; ver agregadores.md |
 | `None` | Baixa TODAS as paginas (usar com cautela) |
 
-A paginacao e **1-based** em todos os scrapers. `range(0, 3)` NAO e valido.
+A paginacao e **1-based** em todos os scrapers. `[v0.4.0+]` `paginas=[]`, `0`, inteiro ou pagina negativa, `range(0, 3)` e `range` descendente levantam `ValueError` (um `ValidationError` do pydantic) antes de qualquer requisicao, no `cjsg` dos 25 tribunais estaduais, no `cjpg` de TJSP/TJES/TJTO, no Datajud e no ComunicaCNJ. Antes, no Datajud, `paginas=[]` virava `None` e baixava tudo.
+
+`[v0.4.0+]` No Datajud, `paginas=range(3, 6)` devolve as paginas 3 a 5: o scraper percorre o prefixo pelo cursor e descarta as paginas nao pedidas. Antes da 0.4.0, a mesma chamada devolvia na pratica as paginas 1 a 3, rotuladas como 3 a 5.
 
 ---
 
@@ -450,9 +470,9 @@ O juscraper aceita nomes antigos de parametros com `DeprecationWarning`. Prefira
 | `data_publicacao_fim` | `data_publicacao_ate` | v0.1.6 |
 | `paginas` (1-based) | `paginas` (0-based) | v0.1.6 |
 | `tamanho_pagina` | `items_per_page` (TJBA), `quantidade_por_pagina` (TJDFT/TJMT), `per_page` (TJES), `qtde_itens_pagina` (TJGO), `linhas_por_pagina` (TJMG) | `[v0.3.0]` |
-| `classe` | `classes` (TJSP `cjpg`, TJBA), `classe_cnj` (TJPE), `classe_judicial` (TJES, TJRO) | `[v0.3.0]` / |
-| `assunto` | `assuntos` (TJSP `cjpg`, Datajud), `assunto_cnj` (TJPE) | `[v0.3.0]` / |
-| `vara` | `varas` (TJSP `cjpg`) | |
+| `classe` | `classes` (TJSP `cjpg`, TJBA), `classe_cnj` (TJPE), `classe_judicial` (TJES, TJRO) | `[v0.4.0+]` para `classes` (TJSP `cjpg`, TJBA); `[v0.3.0]` para os demais |
+| `assunto` | `assuntos` (TJSP `cjpg`, Datajud), `assunto_cnj` (TJPE) | `[v0.4.0+]` para `assuntos` (TJSP `cjpg`, Datajud); `[v0.3.0]` para `assunto_cnj` |
+| `vara` | `varas` (TJSP `cjpg`) | `[v0.4.0+]` |
 | `numero_processo` | `nr_processo` (TJPB, TJRN, TJRO), `numero_cnj` (TJAP) | `[v0.3.0]` |
 | `relator` | `magistrado` (TJES, TJRO) | `[v0.3.0]` |
 | `id_classe` | `id_classe_judicial` (TJRN, TJPB) | `[v0.3.0]` |

@@ -1,10 +1,10 @@
 # Tribunais — Matriz de Capacidades e Parametros
 
-Esta reference cobre os **29 tribunais com scraper direto** (25 estaduais + 4 federais). Para Datajud, JusBR, ComunicaCNJ e PDPJ, veja `references/agregadores.md`.
+Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TRFs + STF). Para Datajud, JusBR, ComunicaCNJ e PDPJ, veja `references/agregadores.md`.
 
 ## Matriz de capacidades
 
-### Tribunais com scraper direto (29)
+### Tribunais com scraper direto (30)
 
 | Tribunal | cjsg | cjpg | cpopg | cposg | Plataforma | Tag |
 |----------|:----:|:----:|:-----:|:-----:|------------|---|
@@ -33,12 +33,13 @@ Esta reference cobre os **29 tribunais com scraper direto** (25 estaduais + 4 fe
 | **TJRR** | sim | - | - | - | JSF/PrimeFaces | |
 | **TJRS** | sim | - | - | - | Google Search (GSA) | |
 | **TJSC** | sim | - | - | - | eproc HTML | |
-| **TRF1** | - | - | sim | - | PJe ConsultaPublica | |
-| **TRF3** | - | - | sim | - | PJe ConsultaPublica | |
-| **TRF5** | - | - | sim | - | PJe ConsultaPublica | |
-| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | |
+| **TRF1** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
+| **TRF3** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
+| **TRF5** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
+| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | `[v0.4.0+]`, requer `txtcaptcha` |
+| **STF** | `listar_decisoes` | - | - | - | API do portal + AWS WAF | `[v0.4.0+]`, requer extra `stf` ou `waf_token` |
 
-**Legenda:** `sim` = implementado | `-` = nao implementado
+**Legenda:** `sim` = implementado | `-` = nao implementado. O STF nao tem `cjsg`: a busca de jurisprudencia e `listar_decisoes`, e a contagem, `contar_decisoes`.
 
 Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 
@@ -56,16 +57,16 @@ Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 | Canonico | Substitui | Onde |
 |---|---|---|
 | `tamanho_pagina` | `items_per_page`, `quantidade_por_pagina`, `per_page`, `qtde_itens_pagina`, `linhas_por_pagina` | TJBA, TJDFT, TJMT, TJES, TJGO, TJMG |
-| `classe` | `classes`, `classe_cnj`, `classe_judicial` | TJSP `cjpg`, TJBA, TJPE, TJES, TJRO |
-| `assunto` | `assuntos`, `assunto_cnj` | TJSP `cjpg`, TJPE, TJES |
-| `vara` | `varas` | TJSP `cjpg` |
+| `classe` | `classes`, `classe_cnj`, `classe_judicial` | TJSP `cjpg` e TJBA `[v0.4.0+]`; TJPE, TJES, TJRO `[v0.3.0]` |
+| `assunto` | `assuntos`, `assunto_cnj` | TJSP `cjpg` e Datajud `[v0.4.0+]`; TJPE `[v0.3.0]` |
+| `vara` | `varas` | TJSP `cjpg` `[v0.4.0+]` |
 | `numero_processo` | `nr_processo`, `numero_cnj` | TJPB, TJRN, TJRO, TJAP |
 | `relator` | `magistrado` | TJES, TJRO |
 | `id_classe` | `id_classe_judicial` | TJRN, TJPB |
 
 Os antigos continuam funcionando com `DeprecationWarning` por pelo menos um minor release. Passar canonico + alias simultaneamente -> `ValueError`.
 
-**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`. Para descobrir IDs reais, use `listar_classes`, `listar_assuntos`, `listar_orgaos` e, no TJSP `cjpg`, `listar_varas`; todos retornam `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
+**Filtros de classe/assunto/orgao em eSAJ aceitam `int | str | list[int|str]` `[v0.4.0+]`:** `tjsp.cjsg(classe=[417], assunto=[3607, 5885])` funciona. Antes so aceitava `str`. Para descobrir IDs reais `[v0.4.0+]`, use `listar_classes`, `listar_assuntos`, `listar_orgaos` e, no TJSP `cjpg`, `listar_varas`; todos retornam `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
 **BREAKING — colunas renomeadas em DataFrames `[v0.3.0]`:**
 
@@ -90,7 +91,7 @@ Em endpoints com schema pydantic wired (familia eSAJ, agregadores, maioria dos t
 
 O helper `coerce_brazilian_date` coage para o `BACKEND_DATE_FORMAT` declarado no schema antes da validacao pydantic.
 
-**Auto-completar datas parciais:** quando o usuario informa apenas `data_*_inicio`, `data_*_fim` vira a data atual. Quando informa apenas `data_*_fim`, `data_*_inicio` vira `01/01/1990`. Um `UserWarning` e emitido sugerindo passar a data explicitamente.
+**Auto-completar datas parciais `[v0.4.0+]`:** quando o usuario informa apenas `data_*_inicio`, `data_*_fim` vira a data atual. Quando informa apenas `data_*_fim`, `data_*_inicio` vira `01/01/1990`. Um `UserWarning` e emitido sugerindo passar a data explicitamente.
 
 **Validacao `extra="forbid"` em todos os endpoints wired `[v0.3.0]`:** kwargs desconhecidos viram `TypeError` com mensagem amigavel e sugestao de typo via difflib (ex: `data_juglamento` -> "voce quis dizer 'data_julgamento'?"). Antes, kwargs nao reconhecidos eram silenciosamente ignorados.
 
@@ -481,7 +482,7 @@ tjrj.cjsg(
 
 **Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o backend usa o ano corrente, nao "todos os anos". `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
 
-### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe
+### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[v0.4.0+]`
 
 Acessam a `ConsultaPublica/listView.seam` em:
 
@@ -512,7 +513,7 @@ df = trf1.cpopg(
 
 **Gotcha:** cada tribunal tem implementacao independente em `courts/{trf1,trf3,trf5}/`, mas compartilha a base `_trf` para o contrato atual de `cpopg`/download de pecas. Bloqueios Akamai sao ambientais/anti-bot; reduza ritmo, tente outro horario/IP, ou use Datajud quando bastarem metadados.
 
-### TRF6 — `cpopg` via eproc/SJMG
+### TRF6 — `cpopg` via eproc/SJMG `[v0.4.0+]`
 
 O TRF6 acessa o eproc de 1º grau da Seção Judiciaria de Minas Gerais (`https://eproc1g.trf6.jus.br/eproc/`). O formulario exige captcha textual em imagem PNG embutida no HTML e validada server-side; o scraper resolve via `txtcaptcha` e refaz o GET do form a cada tentativa porque o captcha e vinculado ao cookie `PHPSESSID`.
 
@@ -525,7 +526,62 @@ df = trf6.cpopg(id_cnj='1000149-71.2024.4.06.3800')
 
 **Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. Processos nao encontrados devolvem linha so com `id_cnj`. **Nao documentar `download_pecas` para TRF6** — esse parametro e dos TRFs PJe acima.
 
-**Instalacao:** disponivel na release do `juscraper` que inclui o commit `0bc0de5`; use `pip install -U juscraper` ou `uv add -U juscraper`.
+**Instalacao:** `[v0.4.0+]`. `txtcaptcha` nao faz parte das dependencias base: use `pip install -U 'juscraper[tjmg]'` (o extra declara `txtcaptcha`) ou `pip install txtcaptcha`. Sem ele, `cpopg` levanta `ImportError` pedindo o pacote.
+
+### STF (busca de jurisprudencia) `[v0.4.0+]`
+
+Raspa a busca de jurisprudencia do portal `jurisprudencia.stf.jus.br` (acordaos e decisoes monocraticas), com o mesmo corpo de requisicao que o site envia (jtrecenti/juscraper#345).
+
+**Instalacao e cookie do WAF:** o portal fica atras de um desafio JavaScript do AWS WAF. O scraper obtem o cookie `aws-waf-token` com Playwright na primeira busca e o renova quando o WAF volta a desafiar; as buscas seguem em `requests`.
+
+```bash
+pip install -U 'juscraper[stf]'
+playwright install chromium
+```
+
+Alternativa sem Playwright: passar um cookie ja obtido no navegador em `jus.scraper('stf', waf_token='...')`. Instanciar o scraper nao exige nenhum dos dois; sem ambos, a primeira chamada de `listar_decisoes`/`contar_decisoes` levanta `ImportError`.
+
+```python
+stf = jus.scraper('stf', waf_token=None, verbose=0, sleep_time=1.0)
+
+df = stf.listar_decisoes(
+    pesquisa='pejotização',           # None = tudo o que os filtros selecionam
+    paginas=range(1, 3),              # 1-based; None = todas (ver teto abaixo)
+    base='acordaos',                  # 'decisoes' (monocraticas, default) ou 'acordaos'
+    classe='Rcl',                     # sigla da classe; str ou list[str]
+    inteiro_teor=False,               # True pesquisa tambem no inteiro teor
+    data_julgamento_inicio=None, data_julgamento_fim=None,
+    data_publicacao_inicio=None,
+    data_publicacao_fim='20/08/2023',
+    tamanho_pagina=250                # 1 a 250; default 250
+)
+
+contagem = stf.contar_decisoes(pesquisa='pejotização', base='acordaos')
+```
+
+**`listar_decisoes` retorna** `pd.DataFrame` com uma linha por documento: `processo`, `classe`, `relator`, `data_julgamento`, `data_publicacao`, `ementa` (acordaos), `decisao_texto` (monocraticas), `inteiro_teor_url` e o restante do `_source` da API. No `dataframeit`, o texto das monocraticas esta em `decisao_texto`, que a inferencia de `text_column` nao encontra: passe `text_column=` explicito.
+
+**`contar_decisoes` retorna** `pd.DataFrame` com colunas `faceta`, `valor` e `n`, sem baixar documentos. A primeira linha e `faceta='total'`; as demais sao facetas do portal (base, ministro, classe, UF de procedencia, orgao julgador e indicadores). Uma decisao pode ter mais de um ministro, entao a soma da faceta de ministro pode passar do total. Aceita os mesmos filtros de `listar_decisoes`, exceto `tamanho_pagina` (que vira `TypeError`).
+
+**Sintaxe de `pesquisa`:** a do portal. `$` e curinga (`terceiriz$` vira `terceiriz*`); `e`, `ou` e `nao`/`não` como palavras soltas viram `AND`, `OR` e `NOT`; `AND`/`OR`/`NOT`, `?`, `~` e parenteses passam como sintaxe do Elasticsearch. Trechos entre aspas ficam intactos, sem funcao de operador.
+
+**Teto de 10.000 registros na 0.4.0:** a API so entrega os 10.000 primeiros registros de uma busca, com no maximo 250 por pagina. Pagina que comeca depois do registro 10.000 levanta `ValueError` antes de qualquer requisicao. Com `paginas=None` e mais de 10.000 resultados, `listar_decisoes` emite `UserWarning` e devolve so os 10.000 primeiros; divida a busca por intervalo de datas para obter o resto. `tamanho_pagina` fora de 1-250 vira `ValidationError`. Rode `contar_decisoes` antes para saber se a busca passa do teto.
+
+**Na `main`, ainda sem release `[unreleased]`** (jtrecenti/juscraper#347, #348, #349; instalar com `pip install "juscraper[stf] @ git+https://github.com/jtrecenti/juscraper.git"`):
+
+- `paginas=None` deixa de truncar: divide buscas acima do teto em janelas de datas disjuntas (datas de publicacao quando ha filtro de publicacao; senao, de julgamento) e devolve todas as linhas ou levanta erro. Um unico dia acima do teto, residual sem data acima do teto, IDs faltando ou duplicados e contagens divergentes levantam `ValueError`. Paginas explicitas mantem os offsets e a ordem do portal e nao disparam a divisao.
+- Coleta integral (`paginas=None`) ordena so por `id`, sem o score de relevancia, que varia entre replicas do indice e fazia a paginacao repetir ou pular documentos.
+- Datas abertas deixam de receber limites artificiais (01/01/1990 ou hoje); na 0.4.0, o STF ainda autopreenche datas parciais como os demais tribunais.
+- `listar_decisoes` aceita `checkpoint_dir=` (diretorio de paginas e manifesto) e `resume=True` para retomar coleta interrompida. Sem `checkpoint_dir`, nada e gravado. Diretorio ocupado so aceita retomada compativel (mesma pesquisa, filtros, paginas, `tamanho_pagina` e ordenacao); checkpoint incompativel ou corrompido levanta `ValueError`, e checkpoints gravados com a ordenacao anterior sao recusados. A trava de concorrencia usa `fcntl`, entao o checkpoint exige sistema POSIX (nao roda no Windows); use diretorio local, nao montagem de rede, cuja semantica de trava e de durabilidade difere. `contar_decisoes` nao aceita `checkpoint_dir` nem `resume`.
+- Resposta parcial da API (timeout da busca ou shards falhos) levanta `RuntimeError` em vez de devolver resultado incompleto.
+- O filtro `classe` passa a valer tambem nas facetas de base e de indicadores de `contar_decisoes` (a faceta de classe continua ignorando o proprio filtro, como no portal).
+- A obtencao e a renovacao do cookie funcionam com loop asyncio ativo, inclusive em notebooks Jupyter.
+
+**Gotchas:**
+
+- Se o WAF desafiar de novo logo apos a renovacao do cookie, o scraper levanta `RuntimeError`; espere alguns minutos antes de tentar outra vez.
+- `classe` recebe a **sigla** da classe processual (`'Rcl'`, `'ADI'`), nao codigo numerico da TPU.
+- Para metadados processuais do STF (sem texto), o Datajud continua servindo; para ementas e decisoes, use este scraper.
 
 ---
 
@@ -553,7 +609,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 6. **Formatos de data `[v0.3.0]`:** em endpoints com schema pydantic wired, aceita `DD/MM/AAAA`, `DD-MM-AAAA`, `AAAA-MM-DD`, `AAAA/MM/DD` e objetos `datetime.date`/`datetime.datetime`. Antes era estritamente o formato declarado pelo backend de cada tribunal.
 
-7. **Filtros parciais auto-completam:** informar apenas `data_*_inicio` ou apenas `data_*_fim` faz o outro lado virar respectivamente "hoje" ou `01/01/1990`. Emite `UserWarning`.
+7. **Filtros parciais auto-completam `[v0.4.0+]`:** informar apenas `data_*_inicio` ou apenas `data_*_fim` faz o outro lado virar respectivamente "hoje" ou `01/01/1990`. Emite `UserWarning`.
 
 8. **cposg do TJSP com `method='api'`** — o parse JSON nao esta implementado. Use `'html'`.
 
@@ -563,7 +619,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 11. **Aliases depreciados emitem `DeprecationWarning`** — sempre use o nome canonico (`pesquisa`, `data_julgamento_inicio`, `tamanho_pagina`, `classe`, `assunto`, `vara`, `numero_processo`, `relator`, `id_classe`). Tabela completa em `references/api.md`.
 
-12. **`RetryExhaustedError` em `HTTPScraper`:** familia eSAJ (TJAC/TJAL/TJAM/TJCE/TJMS/TJSP `cjsg`) e familia 1C-a (TJRN/TJRO/TJRR `cjsg`) — alem dos agregadores ComunicaCNJ, JusBR e Datajud — migraram para `HTTPScraper`. Quando esgota `max_retries` em 429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
+12. **`RetryExhaustedError` em `HTTPScraper` `[v0.4.0+]`:** na 0.4.0, o `cjsg` dos 25 tribunais estaduais (familia eSAJ e todos os demais), o `cjpg` de TJES/TJTO, o `cpopg` de TRF1/TRF3/TRF5, o STF e os agregadores ComunicaCNJ, JusBR e Datajud migraram para `HTTPScraper`. TRF6 e PDPJ ficaram fora. Quando esgota `max_retries` em 403/429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
 
 13. **`auto_chunk=True` substitui workaround manual de iteracao por ano `[v0.3.0]`:** na familia eSAJ (TJSP/TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`, TJSP `cjpg`), janelas `data_julgamento_*` maiores que 366 dias agora sao automaticamente divididas em chunks e concatenadas com dedup. O `pd.concat([cjpg(...) for ano in range(...)])` antigo ja nao e necessario para esse caso. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`.
 

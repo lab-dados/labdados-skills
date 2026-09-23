@@ -4,18 +4,23 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
-## [1.8.0] — 2026-07-06
+## [1.9.0] — 2026-09-23
 
 Adicionado:
 
-- `juscraper`: sincroniza a skill com o snapshot upstream `0bc0de5` de 2026-07-03, incluindo TRF6 (`cpopg` via eproc/txtcaptcha), `download_pecas` em TRF1/TRF3/TRF5, `count_only=True` em `cjsg`/`cjpg` quando suportado e metodos eSAJ de descoberta de filtros (`listar_classes`, `listar_assuntos`, `listar_orgaos`, `listar_varas`).
+- `juscraper` 1.3.0: alinha a skill ao juscraper v0.4.0 (PyPI, 2026-09-15). Entram o scraper do STF (`listar_decisoes` e `contar_decisoes`, com o extra `stf` para o cookie do AWS WAF e o teto de 10.000 registros por busca), TRF6 (`cpopg` via eproc/txtcaptcha), `download_pecas` em TRF1/TRF3/TRF5, `count_only=True` em `cjsg`/`cjpg` quando suportado e os metodos eSAJ de descoberta de filtros (`listar_classes`, `listar_assuntos`, `listar_orgaos`, `listar_varas`).
+- `juscraper`: tag `[unreleased]` para o que so existe na `main` do juscraper (snapshot `5ebde28`), com instalacao via `git+https://github.com/jtrecenti/juscraper.git`: checkpoint e retomada (`checkpoint_dir`, `resume=True`) e coleta integral do STF acima de 10.000 registros.
 
 Alterado:
 
-- `juscraper`: atualiza a matriz de tribunais para 25 estaduais + 4 TRFs e revisa Datajud, JusBR, ComunicaCNJ e PDPJ com os filtros, validacoes e retornos atuais do upstream.
+- `juscraper`: atualiza a matriz para 25 estaduais + 4 TRFs + STF e revisa Datajud, JusBR, ComunicaCNJ e PDPJ com os filtros, validacoes e retornos da v0.4.0. As mencoes a "release com `0bc0de5`" viram `[v0.4.0+]`, e recursos da v0.4.0 sem tag (TRFs, PDPJ, `count_only`, `listar_*`, escopo de `RetryExhaustedError`, `pesquisa=""` no TJSP, autopreenchimento de datas parciais) ganham a tag.
+- `juscraper`: registra que TRF6 exige `txtcaptcha` fora das dependencias base e que `df.to_parquet` passa a exigir `pyarrow` instalado a parte.
 
 Corrigido:
 
+- `juscraper`: os nomes singulares `classe`/`assunto`/`vara` (TJSP `cjpg`), `classe` (TJBA) e `assunto` (Datajud) passam a constar como da v0.4.0, nao da v0.3.0; a linha 1.1.0 de `versao.md` separa o que veio da 0.3.0 do que veio da `main`.
+- `juscraper`: documenta o contrato de `paginas` da v0.4.0 (selecao vazia, zero, negativo e `range` descendente levantam `ValueError`; no Datajud, `range(3, 6)` devolve as paginas 3 a 5) e a validacao de entrada do `download_documents` do JusBR.
+- `juscraper`: remove a coluna `_total_tokens` e a regra da "primeira coluna" da integracao com o dataframeit, que nao valem desde o dataframeit 0.6.0.
 - `juscraper`: esclarece que `tjsp.cjpg(id_processo=...)` recebe o numero CNJ do processo, com ou sem mascara, e cobre busca de jurisprudencia de 1o grau por CNJ alem da busca textual. Isso evita confundir `id_processo` com ID interno do eSAJ ou sugerir `cpopg` quando a tarefa pede jurisprudencia ou decisoes.
 
 ## [1.7.0] — 2026-06-05
