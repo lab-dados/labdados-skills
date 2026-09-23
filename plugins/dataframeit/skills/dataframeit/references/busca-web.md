@@ -22,7 +22,9 @@ campo, `search_depth` por campo), veja tambem
 ## Instalacao e API keys
 
 ```bash
-pip install dataframeit[google,search]
+pip install dataframeit[google,search]      # Tavily
+pip install dataframeit[google,search-exa]  # Exa
+pip install dataframeit[google,search-all]  # os dois
 ```
 
 - **Tavily** (padrao): `TAVILY_API_KEY` — https://tavily.com (1000 buscas/mes gratis)

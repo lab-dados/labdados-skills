@@ -35,6 +35,7 @@ Siga esta ordem — cada item rende mais que trocar de modelo:
    prompt proprio, busca web dedicada, campos condicionais.
 5. **Campos condicionais (`depends_on`)** — extrair `valor_multa` so
    se `tem_multa` for `True`. Economiza tokens e melhora coerencia.
+   So funciona com busca por campo, ver Padrao 4.
 6. **Campo de dificuldade (self-reflection)** — pedir ao LLM que
    sinalize ambiguidade; ver ultima secao deste arquivo.
 
@@ -140,8 +141,24 @@ class AnaliseMulta(BaseModel):
     )
 ```
 
-O campo-pai (`tem_multa`) deve ser definido **antes** dos campos-filhos
-no modelo — se invertido, a condicao nao funciona.
+**Quando a condicao e avaliada.** So com `use_search=True,
+search_per_field=True` e sem `search_groups`, o unico modo em que a
+biblioteca extrai um campo por vez. Fora dele a condicao e ignorada e
+todos os campos sao extraidos; com `search_groups`, nem os campos
+agrupados nem os isolados passam pela condicao. Alem disso, qualquer
+chave de configuracao por campo (`prompt`, `prompt_append`,
+`search_depth`, `max_results`) sem `search_per_field=True` levanta
+`ValueError`.
+
+**Ordem.** A ordem de declaracao no modelo nao importa: a biblioteca
+ordena os campos pelas dependencias de `depends_on` e acusa dependencia
+circular ou campo inexistente com `ValueError`.
+
+**`[unreleased]` (main do dataframeit, 0.7.x, ainda nao no PyPI):**
+`depends_on` passa a ser derivado de `condition` quando ela e um dict,
+e so precisa ser declarado para `condition` callable. `depends_on` sem
+`condition` deixa de afetar a ordem e so emite aviso. Na 0.6.0 do PyPI,
+declare os dois, como no exemplo acima.
 
 ---
 
@@ -152,10 +169,11 @@ Chaves suportadas dentro de `json_schema_extra={}` no `Field()`:
 | Chave | Tipo | Descricao |
 |---|---|---|
 | `prompt` | str | Substitui o prompt principal para este campo. Usa `{texto}` como placeholder |
+| `prompt_replace` | str | Sinonimo de `prompt` (se os dois vierem, vale `prompt`) |
 | `prompt_append` | str | Adiciona texto ao final do prompt principal para este campo |
 | `search_depth` | `"basic"` \| `"advanced"` | Profundidade de busca web para este campo |
 | `max_results` | int (1-20) | Max resultados de busca para este campo |
-| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste |
+| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste. So vale com busca por campo (ver Padrao 4) |
 | `condition` | dict | Condicao para extrair este campo (ver operadores abaixo) |
 
 ### Formato da `condition`

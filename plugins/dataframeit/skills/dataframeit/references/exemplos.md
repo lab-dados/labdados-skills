@@ -42,11 +42,8 @@ resultado = dataframeit(df, Sentimento, "Analise o sentimento do texto: {texto}"
 
 # 4. Verificar
 print(resultado[['texto', 'sentimento', 'confianca']])
-total_tokens = (
-    resultado['_input_tokens']
-    + resultado['_output_tokens']
-    + resultado.get('_reasoning_tokens', 0)
-).sum()
+# _reasoning_tokens ja esta contido em _output_tokens
+total_tokens = (resultado['_input_tokens'] + resultado['_output_tokens']).sum()
 print(f"Tokens totais: {total_tokens:,}")
 ```
 
@@ -54,8 +51,10 @@ print(f"Tokens totais: {total_tokens:,}")
 
 ## Exemplo 2 — Extracao com busca web e campos condicionais
 
-Pydantic mais rico: `json_schema_extra` com `depends_on`/`condition`,
-busca web com `search_groups` para economizar chamadas.
+Pydantic mais rico: `json_schema_extra` com `depends_on`/`condition` e
+busca web por campo. Campos com `json_schema_extra` exigem
+`use_search=True, search_per_field=True` (sem isso, `ValueError`), e a
+condicao so e avaliada nesse modo sem `search_groups`.
 
 ```python
 import pandas as pd
@@ -95,23 +94,17 @@ df = pd.DataFrame({
     ]
 })
 
-# 3. Executar com busca web e search groups
+# 3. Executar com busca por campo (uma busca por campo e linha)
 resultado = dataframeit(
     df, EmpresaInfo,
     "Analise a empresa mencionada: {texto}",
     use_search=True,
-    search_groups={
-        "financeiro": {
-            "fields": ["receita_anual"],
-            "search_depth": "advanced",
-            "max_results": 5
-        },
-        "localizacao": {
-            "fields": ["sede"],
-            "search_depth": "basic"
-        }
-    }
+    search_per_field=True,
 )
+
+# Para economizar buscas, search_groups junta campos numa busca so.
+# O custo e perder a condicao: com grupos, receita_anual seria extraida
+# em toda linha, mesmo com tem_dado_financeiro=False.
 
 # 4. Verificar
 print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede']])
@@ -165,11 +158,8 @@ resultado = dataframeit(
 status = resultado.get('_dataframeit_status', pd.Series(dtype=str))
 erros = resultado[status == 'error']
 print(f"Processados: {len(resultado) - len(erros):,} | Erros: {len(erros):,}")
-total_tokens = (
-    resultado['_input_tokens']
-    + resultado['_output_tokens']
-    + resultado.get('_reasoning_tokens', 0)
-).sum()
+# _reasoning_tokens ja esta contido em _output_tokens
+total_tokens = (resultado['_input_tokens'] + resultado['_output_tokens']).sum()
 print(f"Tokens totais: {total_tokens:,}")
 
 # 6. Reprocessar erros se necessario

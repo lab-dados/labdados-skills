@@ -86,12 +86,13 @@ resultado = dataframeit(df, Modelo, prompt)  # track_tokens=True por padrao
 total_input = resultado['_input_tokens'].sum()
 total_output = resultado['_output_tokens'].sum()
 total_reasoning = resultado.get('_reasoning_tokens', pd.Series([0])).sum()
-total = total_input + total_output + total_reasoning
+total = total_input + total_output  # reasoning ja esta dentro de output
 print(f"Tokens: {total:,} "
       f"(entrada: {total_input:,}, saida: {total_output:,}, raciocinio: {total_reasoning:,})")
 ```
 
-Nao existe coluna `_total_tokens` agregada — some as tres. Use
+Nao existe coluna `_total_tokens` agregada. Some entrada e saida:
+`_reasoning_tokens` ja esta contido em `_output_tokens` (o resumo impresso pelo dataframeit mostra "incluido no Output"), e somar as tres conta o raciocinio duas vezes. Use
 `df.get(...)` para nao quebrar quando `_reasoning_tokens` estiver
 ausente (ex: `track_tokens=False` ou versoes antigas).
 
@@ -105,14 +106,14 @@ raciocinio, Claude adaptive thinking).
 Precos aproximados em USD por 1M tokens — verifique no site do provedor
 antes de estimar, eles mudam frequentemente.
 
-| Provedor | Modelo default | Entrada | Saida |
+| Provedor | Modelo de exemplo | Entrada | Saida |
 |---|---|---|---|
 | Google Gemini | gemini-3-flash-preview | ~$0.10 | ~$0.40 |
 | OpenAI | gpt-4o-mini | ~$0.15 | ~$0.60 |
 | Anthropic | claude-haiku-4-5 | ~$1.00 | ~$5.00 |
 | Mistral | mistral-small-latest | ~$0.20 | ~$0.60 |
-| Cohere | command-r | ~$0.15 | ~$0.60 |
-| Groq | llama-3.3-70b-versatile | ~$0.59 | ~$0.79 |
+| Cohere | command-a-03-2025 | ver site | ver site |
+| Groq | openai/gpt-oss-120b | ver site | ver site |
 
 ```python
 # Google Gemini (gemini-3-flash-preview)
@@ -124,15 +125,14 @@ custo = (total_input * 0.15 + total_output * 0.60) / 1_000_000
 # Anthropic (claude-haiku-4-5)
 custo = (total_input * 1.00 + total_output * 5.00) / 1_000_000
 
-# Groq (llama-3.3-70b-versatile)
-custo = (total_input * 0.59 + total_output * 0.79) / 1_000_000
+# Groq, Cohere, Mistral: preencher com o preco atual do site do provedor
 
 print(f"Custo estimado: ${custo:.4f}")
 ```
 
-Para reasoning models, `total_reasoning` e cobrado como saida pela
-maioria dos provedores — ajuste a formula somando `total_reasoning` ao
-multiplicador de saida.
+Para reasoning models, os tokens de raciocinio sao cobrados como saida
+e ja estao contidos em `total_output`. Nao some `total_reasoning` de
+novo.
 
 **Estimativa previa** (antes de rodar): `len(df) × ~500 tokens/linha ×
 preco` e uma aproximacao conservadora. Para datasets > 1000 linhas,
