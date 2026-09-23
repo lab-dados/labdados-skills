@@ -37,7 +37,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (22 tribunais estaduais + Datajud + JusBR) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
-| [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, CNJ, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
+| [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, IPEA, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
 | [raspe-builder](plugins/raspe-builder/skills/raspe-builder/SKILL.md) | Gera scraper Python para a biblioteca raspe (HTTP/HTML, HTTP/JSON, Playwright) — scraper + factory + testes offline + sync com a skill `raspe` | Adicionar fonte ao raspe, novo scraper para site governamental brasileiro, extender BaseScraper/PlaywrightScraper |
@@ -66,7 +66,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 ### raspe
 
-- Python >= 3.11
+- Python >= 3.10
 - `pip install git+https://github.com/bdcdo/raspe.git`
 - Para ANS/ANVISA/SaudeLegis (Playwright): `pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"` + `python -m playwright install chromium`
 - Para NYT: API key gratuita em <https://developer.nytimes.com/get-started> (variavel `NYT_API_KEY`)

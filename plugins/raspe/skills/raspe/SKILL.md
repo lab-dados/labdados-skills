@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: Raspar dados de fontes oficiais brasileiras, bases acadêmicas e imprensa com a biblioteca raspe. Cobre legislação federal (Presidência, Câmara, Senado), agências reguladoras (ANS, ANVISA, SaudeLegis, CFM), órgãos de pesquisa e controle (IPEA, CNJ), base bibliográfica acadêmica (CAPES Periódicos), e imprensa (Folha de São Paulo, New York Times). Use esta skill sempre que o usuário mencionar coleta/raspagem de leis, decretos, portarias, resoluções, projetos de lei, atos normativos, comunicados, diário oficial, agenda regulatória, normas sanitárias, normas médicas, publicações do IPEA, artigos acadêmicos, revisão de literatura via CAPES, periódicos científicos, notícias de jornal, "coletar dados do governo federal", "baixar legislação", "atos da ANVISA", "resoluções da ANS", "portarias do Ministério da Saúde", "buscador da CAPES", "Portal de Periódicos", "matérias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que não mencione explicitamente "raspe".
+description: Raspar dados de fontes oficiais brasileiras, bases acadêmicas e imprensa com a biblioteca raspe. Cobre legislação federal (Presidência, Câmara, Senado), agências reguladoras (ANS, ANVISA, SaudeLegis, CFM), órgão de pesquisa (IPEA), base bibliográfica acadêmica (CAPES Periódicos), e imprensa (Folha de São Paulo, New York Times). Use esta skill sempre que o usuário mencionar coleta/raspagem de leis, decretos, portarias, resoluções, projetos de lei, atos normativos, comunicados, diário oficial, agenda regulatória, normas sanitárias, normas médicas, publicações do IPEA, artigos acadêmicos, revisão de literatura via CAPES, periódicos científicos, notícias de jornal, "coletar dados do governo federal", "baixar legislação", "atos da ANVISA", "resoluções da ANS", "portarias do Ministério da Saúde", "buscador da CAPES", "Portal de Periódicos", "matérias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que não mencione explicitamente "raspe".
 ---
 
 # Raspe Skill
@@ -19,15 +19,15 @@ Esta skill cobre **uso** da biblioteca — escolher a fonte certa, chamar o scra
 
 Complete este checklist antes de qualquer chamada. Fonte a fonte, a instalação muda.
 
-### 1. Instalação básica (9 fontes HTTP)
+### 1. Instalação básica (8 fontes HTTP)
 
 ```bash
 pip install git+https://github.com/bdcdo/raspe.git
 ```
 
-Python >= 3.11. Verifique com `python -c "import raspe; print(raspe.__version__)"`.
+Python >= 3.10. Verifique com `python -c "import raspe; print(raspe.__version__)"`.
 
-Cobre: `presidencia`, `camara`, `senado`, `cnj`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
+Cobre: `presidencia`, `camara`, `senado`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
 
 ### 2. Instalação com navegador (3 fontes Playwright)
 
@@ -48,7 +48,7 @@ Apenas o scraper do NYT pede credencial:
 - Passe via parâmetro (`raspe.nyt(api_key="...")`) ou exporte `NYT_API_KEY` no ambiente. A biblioteca tenta a variável automaticamente se o argumento for omitido.
 - Sem chave, o construtor levanta `APIKeyError` com o passo a passo no texto da mensagem.
 
-As demais 11 fontes são totalmente públicas e não exigem cadastro.
+As demais 10 fontes são totalmente públicas e não exigem cadastro.
 
 ## Roteamento de decisão — qual fonte usar?
 
@@ -59,7 +59,6 @@ Comece identificando a **natureza do dado** que o usuário quer, depois confirme
 | Leis, decretos, MPs publicadas pela Presidência | `raspe.presidencia()` | HTTP | `pesquisa` | nenhuma |
 | Projetos de lei, proposições da Câmara | `raspe.camara()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
 | Projetos e legislação federal indexada pelo Senado | `raspe.senado()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
-| Comunicados e intimações processuais do CNJ | `raspe.cnj()` | HTTP (JSON) | `pesquisa`, `data_inicio`, `data_fim` | nenhuma |
 | Estudos e publicações do IPEA | `raspe.ipea()` | HTTP | `pesquisa` | nenhuma |
 | Artigos acadêmicos no buscador do Portal de Periódicos da CAPES | `raspe.capes()` | HTTP | `pesquisa` | nenhuma |
 | Normas do CFM e conselhos regionais de medicina | `raspe.cfm()` | HTTP | `texto`, `uf`, `ano`, `numero` | nenhuma |
@@ -85,7 +84,7 @@ O usuário raramente diz "presidência" ou "câmara" diretamente. Traduza termos
 | "código de ética médica", "resolução CFM", "parecer CFM" | `cfm` |
 | "estudo do IPEA", "texto para discussão", "publicação do IPEA" | `ipea` |
 | "artigo acadêmico", "paper", "revisão de literatura", "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos científicos" | `capes` |
-| "intimação processual", "comunicado oficial do tribunal" (não jurisprudência) | `cnj` |
+| "intimação processual", "comunicado oficial do tribunal", "comunicações do CNJ" | não é raspe: a fonte CNJ saiu da biblioteca. Use `juscraper-skill` (ComunicaCNJ, `juscraper.scraper("comunica_cnj")`) |
 | "matéria da Folha", "Folha de São Paulo escreveu sobre" | `folha` |
 | "NYT sobre Brasil", "matéria do New York Times" | `nyt` |
 
@@ -102,7 +101,7 @@ df = raspe.presidencia().raspar(pesquisa="meio ambiente", paginas=range(1, 4))
 
 O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
-**Coluna `termo_busca` automática.** Ao buscar com `pesquisa="X"` (ou `termo`/`texto`), a biblioteca adiciona `termo_busca` ao DataFrame para rastreabilidade. Se você passar uma lista (`pesquisa=["a", "b"]`), ela roda cada termo e concatena com a coluna `termo_busca` identificando cada valor — ideal para rodar vários temas de uma vez sem precisar escrever um loop.
+**Coluna `termo_busca`.** Numa busca por string única, a biblioteca só adiciona `termo_busca` quando o parâmetro de busca se chama `pesquisa`, `termo`, `q` ou `query` (nas fontes Playwright, também `assunto`). `cfm` e `nyt`, que usam `texto`, voltam **sem** a coluna. Nas fontes HTTP, se você passar uma lista (`pesquisa=["a", "b"]`, `texto=["a", "b"]`), o scraper roda cada valor, concatena e preenche `termo_busca` com o valor de cada linha, inclusive em `cfm` e `nyt`. As fontes Playwright não aceitam lista.
 
 **Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas.
 
@@ -115,7 +114,7 @@ O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
 A reference por fonte tem a assinatura exata.
 
-**Filtros de data.** `cnj`, `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
+**Filtros de data.** `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
 
 **Filtro por ano.** `camara`, `senado` e `nyt` aceitam `ano=2024`.
 
@@ -176,7 +175,6 @@ Leia a referência apropriada **antes** de gerar código. A tabela abaixo indica
 | `references/presidencia.md` | Antes de chamar `raspe.presidencia()`. |
 | `references/camara.md` | Antes de chamar `raspe.camara()`. |
 | `references/senado.md` | Antes de chamar `raspe.senado()`. |
-| `references/cnj.md` | Antes de chamar `raspe.cnj()`. |
 | `references/ipea.md` | Antes de chamar `raspe.ipea()`. |
 | `references/capes.md` | Antes de chamar `raspe.capes()` — cobre sintaxe `all:contains(...)` e colunas. |
 | `references/cfm.md` | Antes de chamar `raspe.cfm()`. |
@@ -193,8 +191,8 @@ Leia a referência apropriada **antes** de gerar código. A tabela abaixo indica
 | Etapa | Skill | Produto |
 |---|---|---|
 | Coleta em fontes oficiais brasileiras/imprensa | **raspe-skill** (esta) | DataFrame pandas com colunas específicas da fonte |
-| Codificação via LLM (classificar, extrair campos) | **dataframeit-skill** | DataFrame enriquecido com colunas estruturadas + `_total_tokens` |
+| Codificação via LLM (classificar, extrair campos) | **dataframeit-skill** | DataFrame enriquecido com colunas estruturadas + `_input_tokens`, `_output_tokens`, `_reasoning_tokens` (não há `_total_tokens`; para o custo total, some `_input_tokens` e `_output_tokens`) |
 | Revisão de literatura que motiva/dialoga com os dados | **openalex-skill** | Lista de artigos relevantes |
 | Se o pedido for sobre **tribunais, jurisprudência, acórdãos** | **juscraper-skill** | `raspe` não cobre isso — redirecione |
 
-Se o usuário vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (seção "Nomes de coluna em dataframeit / análise textual"), que cobre as 12 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.
+Se o usuário vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (seção "Nomes de coluna em dataframeit / análise textual"), que cobre as 11 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.
