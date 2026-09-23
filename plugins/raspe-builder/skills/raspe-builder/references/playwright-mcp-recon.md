@@ -73,10 +73,12 @@ Use `browser_evaluate` com:
 ```
 
 Salve o retorno em
-`/tmp/raspe-recon/<fonte>/page_01.html` para virar
-`tests/<fonte>/samples/raspar/page_01.html` na Etapa 6.
+`/tmp/raspe-recon/<fonte>/page_01.html`. Na Etapa 6 ele vira
+`tests/<fonte>/samples/raspar/page_01.html` (HTTP) ou
+`tests/<fonte>/samples/parse/typical.html` (Playwright, que também
+precisa de um `no_results.html` e não usa `samples/raspar/`).
 
-Para a página 2, repita após paginar. Mesmo arquivo, sufixo
+Para a página 2 (só HTTP), repita após paginar. Mesmo arquivo, sufixo
 `page_02.html`.
 
 ## Análise de paginação

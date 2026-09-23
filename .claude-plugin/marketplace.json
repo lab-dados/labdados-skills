@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e producao de videos explicativos. As skills institucionais do LabDados (gestao do projeto, atas, relatorios e prestacao de contas) ficam no marketplace interno privado lab-dados/labdados-skills-interno.",
-    "version": "1.11.0"
+    "version": "1.11.1"
   },
   "plugins": [
     {
@@ -68,7 +68,7 @@
       "name": "raspe-builder",
       "source": "./plugins/raspe-builder",
       "description": "Gerar scrapers Python para a biblioteca raspe (HTTP/HTML, HTTP/JSON, Playwright/stealth) via engenharia reversa com Playwright MCP. Produz scraper, factory, testes offline com responses e sync com a skill raspe.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": { "name": "lab-dados" },
       "keywords": ["scraping", "raspe", "builder", "engenharia-reversa", "playwright", "fontes-oficiais", "brasil", "pandas"],
       "category": "data-collection",

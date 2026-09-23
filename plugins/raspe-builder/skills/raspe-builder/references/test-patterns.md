@@ -45,13 +45,17 @@ Durante a Etapa 2 (engenharia reversa), use `browser_evaluate`:
 Os samples capturados na Etapa 2 ficam temporariamente em
 `/tmp/raspe-recon/<fonte>/page_NN.html`. Para usar como teste, **mova**
 (ou copie) cada arquivo para `tests/<fonte>/samples/raspar/page_NN.html`
-no repositório raspe. Se a fonte tem três cenários (paginação típica,
-página única, zero resultados), capture três samples — você pode
-acionar cada um com termos diferentes durante a engenharia reversa.
+no repositório raspe. Capture os três cenários mínimos (paginação
+típica, página única, zero resultados), acionando cada um com termos
+diferentes durante a engenharia reversa.
 
-Para regerar samples a partir do site ao vivo no futuro, crie
-opcionalmente `tests/fixtures/capture/<fonte>.py` no padrão dos
-existentes (`tests/fixtures/capture/ipea.py`).
+O script `tests/fixtures/capture/<fonte>.py` é obrigatório pela
+checklist do `CLAUDE.md` do raspe: ele exercita o scraper real e grava
+as respostas cruas em `tests/<fonte>/samples/<endpoint>/`, e é o que
+permite regerar os samples quando o site mudar. Siga o padrão dos
+existentes (`tests/fixtures/capture/ipea.py`, que usa
+`attach_capture_hook` de `_util.py`) e leia
+`tests/fixtures/capture/README.md`.
 
 ## Template de test_raspar_contract.py
 
@@ -65,7 +69,7 @@ respostas reais do site. Para regerar, ver
 
 import pytest
 import responses
-from responses import matchers
+from responses import matchers, registries
 
 from raspe.scrapers.{fonte} import Scraper{Fonte}
 from tests._helpers import load_sample_bytes
@@ -80,16 +84,22 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    # OrderedRegistry consome os `add` na ordem. Com o registry padrão, um
+    # request com params errados cairia num `add` sem matcher e o matcher
+    # não verificaria nada.
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """N resultados → M páginas: 1 request inicial + M requests de página."""
         mocker.patch("time.sleep")
 
-        # Request inicial (para _find_n_pags)
+        # Request inicial (para _find_n_pags), com matcher dos params
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
             status=200, content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher(
+                {"{param_busca}": "economia"}, strict_match=False,
+            )],
         )
         # Request da página 1 (mesmo conteúdo, segunda chamada)
         responses.add(
@@ -152,10 +162,38 @@ class TestRasparContract:
 | Paginação típica | `page_01.html` + `page_02.html` | Verifica `_set_query_base`, `_find_n_pags`, paginação automática, parsing |
 | Página única | `single_page.html` | Caminho de saída quando só tem 1 página |
 | Zero resultados | `no_results.html` | Caminho do `_find_n_pags = 0`; assertiva `df.empty` |
-| (Opcional) Validação de query params | usar `matchers.query_param_matcher({...})` | Garante que o scraper envia os params esperados pela API |
 
-Para POST, usar `matchers.urlencoded_params_matcher` ou
-`matchers.json_params_matcher` conforme o `Content-Type`.
+Os três cenários são o mínimo por método público exigido pelo
+`CLAUDE.md` do raspe.
+
+## Regras do `CLAUDE.md` do raspe para o contrato
+
+- **Matcher de payload sempre que possível**, não como caso opcional:
+  `matchers.query_param_matcher(...)` para GET,
+  `matchers.urlencoded_params_matcher(..., strict_match=False)` para POST
+  de formulário, `matchers.json_params_matcher(...)` para POST JSON.
+  Matcher só verifica algo sob `OrderedRegistry` ou quando todo `add`
+  daquela URL tem matcher; com o registry padrão, request errado cai no
+  `add` seguinte.
+- **`strict_match` em `urlencoded_params_matcher` exige
+  `responses>=0.26.1`.** O piso do raspe é `responses>=0.25.0`, e em
+  0.25.x ou 0.26.0 o kwarg levanta `TypeError`. Se usar esse matcher,
+  suba o piso no `pyproject.toml` do raspe.
+- **Schema por subconjunto**: `COLUNAS_OBRIGATORIAS <= set(df.columns)`,
+  nunca igualdade.
+- **Sem `@pytest.mark.integration`** no contrato, e sem dependência de
+  rede, relógio ou TLS real. Adapter custom (ex.: SSL desabilitado):
+  testar só a configuração (`isinstance`).
+- **Fluxo multi-etapa com ordem obrigatória** usa
+  `@responses.activate(registry=registries.OrderedRegistry)`
+  (`from responses import registries`). Há exemplos em
+  `tests/test_base_scraper.py`.
+- **Captcha, token dinâmico e import lazy** (ex.: `txtcaptcha`,
+  `browser_cookie3`) são mockados com
+  `mocker.patch.dict(sys.modules, {...})`, nunca invocados de verdade.
+- **Warning vira falha**: o `pyproject.toml` tem
+  `filterwarnings = ["error"]`, então qualquer warning não capturado
+  reprova o teste.
 
 ## Quantos `responses.add` por teste
 
@@ -176,24 +214,67 @@ milissegundos em vez de esperar 2s por página. O `mocker` vem de
 ## Testes para Playwright
 
 Mockar a navegação Playwright via `responses` não funciona — Playwright
-não usa o stack `requests`. Em vez disso:
+não usa o stack `requests`. O padrão do raspe (`tests/saudelegis/`,
+`tests/datalegis/`) é um `test_config.py` que testa configuração e
+parsing síncrono, sem abrir navegador:
 
-1. Capture HTMLs reais durante a engenharia reversa.
-2. Teste apenas o `_parse_page(path)`, que é sync:
+```
+tests/<fonte>/
+├── __init__.py
+├── samples/
+│   └── parse/
+│       ├── typical.html
+│       └── no_results.html
+└── test_config.py
+```
 
 ```python
 import pytest
+
+from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 from raspe.scrapers.{fonte} import Scraper{Fonte}
+from tests._helpers import load_sample_bytes
+
+COLUNAS_OBRIGATORIAS = {"titulo", "link", "data"}  # ajustar
+
+
+@pytest.fixture
+def scraper():
+    return Scraper{Fonte}()
+
+
+class TestConstrutor:
+    def test_url_base(self, scraper):
+        assert "{dominio}" in scraper.url_base
+
+    def test_pagination_strategy(self, scraper):
+        assert scraper.pagination_strategy == PaginationStrategy.NUMBERED_LINKS
+
+    def test_max_pages(self, scraper):
+        assert scraper._max_pages == {N}
+
+    def test_eh_playwright_scraper(self, scraper):
+        assert isinstance(scraper, PlaywrightScraper)
+
 
 class TestParsePage:
-    def test_extrai_dados_pagina_padrao(self):
-        scraper = Scraper{Fonte}()
-        df = scraper._parse_page("tests/{fonte}/samples/raspar/page_01.html")
+    def test_typical(self, scraper, tmp_path):
+        sample = tmp_path / "page.html"
+        sample.write_bytes(load_sample_bytes("{fonte}", "parse/typical.html"))
+        df = scraper._parse_page(str(sample))
         assert not df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+
+    def test_no_results(self, scraper, tmp_path):
+        sample = tmp_path / "page.html"
+        sample.write_bytes(load_sample_bytes("{fonte}", "parse/no_results.html"))
+        assert scraper._parse_page(str(sample)).empty
 ```
 
-Veja `tests/saudelegis/` para o padrão Playwright.
+Os scrapers Playwright concretos ficam no denominador da cobertura; só
+a base `playwright_scraper.py` é excluída (`[tool.coverage.run] omit`).
+Por isso o `test_config.py` precisa exercitar o construtor e o
+`_parse_page` da fonte nova.
 
 ## Não testar
 
@@ -207,9 +288,16 @@ Testes do scraper devem cobrir só o que é específico dele:
 
 ## Rodar
 
+O `addopts` do `pyproject.toml` liga `--cov=src/raspe` e
+`[tool.coverage.report] fail_under = 80`. Rodando só a pasta da fonte, a
+cobertura medida é a do pacote inteiro, e o comando reprova pelo gate
+mesmo com todos os testes verdes. Rode a fonte isolada com `--no-cov` e,
+antes do PR, a suíte completa, que é onde o gate vale:
+
 ```bash
 cd <RASPE_REPO>
-pytest tests/{fonte}/ -v
+pytest tests/{fonte}/ -v --no-cov
+pytest
 ```
 
-Se passa, vá para a Etapa 7 (validação e sync de skill).
+Se as duas passam, vá para a Etapa 7 (validação e sync de skill).
