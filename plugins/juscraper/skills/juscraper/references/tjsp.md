@@ -10,7 +10,7 @@ scrapers, ver `tribunais.md`.
 ## Por que TJSP tem reference propria
 
 Cada tribunal brasileiro tem peculiaridades de plataforma, janela de
-cobertura temporal, parametros exclusivos e gotchas. Esta skill
+cobertura temporal, parametros especificos e gotchas. Esta skill
 convenciona que **cada tribunal pode ter sua propria reference**
 (`references/tjsp.md`, `references/tjrs.md`, etc.) a medida que
 especificidades sejam validadas. O TJSP e o primeiro porque e o unico
@@ -30,7 +30,7 @@ TJSP e o unico tribunal com os quatro endpoints do juscraper:
 
 Construtor com `sleep_time=0.5` como default. Para descobrir IDs de filtros antes de consultar `[v0.4.0+]`, use `listar_classes(grau="2")`, `listar_assuntos(grau="2")`, `listar_orgaos(grau="2")` e `listar_varas(grau="1")`; todos retornam arvore com `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
-## Parametros exclusivos
+## Parametros e endpoints especificos
 
 ### `method` em `cpopg`/`cposg`
 

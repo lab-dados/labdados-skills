@@ -586,7 +586,7 @@ contagem = stf.contar_decisoes(pesquisa='pejotização', base='acordaos')
 
 Unico tribunal com suporte completo (cpopg + cposg + cjsg + cjpg).
 
-Detalhes de endpoints exclusivos (`cjpg`, parametro `method`), diferencas da `cjsg` (`baixar_sg`, `pesquisa=""`), cobertura temporal validada, `QueryTooLongError` e `auto_chunk` movidos para a reference dedicada **`references/tjsp.md`**.
+Detalhes do `cjpg` do TJSP e do parametro `method`, diferencas da `cjsg` (`baixar_sg`, `pesquisa=""`), cobertura temporal validada, `QueryTooLongError` e `auto_chunk` movidos para a reference dedicada **`references/tjsp.md`**.
 
 Convencao da skill: cada tribunal pode ter sua propria reference a medida que especificidades sejam validadas (ex: `tjsp.md`, futuramente `tjrs.md`, `tjpr.md` etc.). Este arquivo (`tribunais.md`) mantem a matriz comparativa e os parametros da `cjsg` por familia de plataforma.
 
