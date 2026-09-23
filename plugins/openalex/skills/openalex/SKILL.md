@@ -61,7 +61,7 @@ Before running any content download (PDF or TEI XML):
 3. **Wait for explicit confirmation** before executing.
 
 Metadata downloads (JSON without `--content`) are not free but cheap: ~$0.10 per 1,000
-list requests (only lookups by ID are free). No warning needed.
+list requests, or $1 per 1,000 with a `*.search*` filter (only lookups by ID are free). No warning needed.
 The free tier gives $1/day (~100 files). Warn if cost exceeds the daily limit.
 
 ## When to use what
@@ -106,7 +106,7 @@ then filter by that ID. Example: search `/authors?search=Einstein` â†’ get ID â†
 - Mnemonic: `cites:X` = "who cites X?"; `cited_by:X` = "what does X cite?"
 
 **Rate limits**: 100 req/sec hard limit (`search.semantic`: 1 req/sec). Free: $1/day (resets midnight UTC).
-Singleton lookups free; list+filter $0.10/1K; search $1/1K; content $0.01/file.
+Singleton lookups free; list+filter $0.10/1K ($1/1K if the filter has a `*.search*` term); search $1/1K; content $0.01/file.
 Check usage: `GET /rate-limit?api_key=KEY`
 
 **Deprecated**: Concepts (use Topics), `/text` endpoint, `.search` filters

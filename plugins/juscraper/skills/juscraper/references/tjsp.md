@@ -10,7 +10,7 @@ scrapers, ver `tribunais.md`.
 ## Por que TJSP tem reference propria
 
 Cada tribunal brasileiro tem peculiaridades de plataforma, janela de
-cobertura temporal, parametros exclusivos e gotchas. Esta skill
+cobertura temporal, parametros especificos e gotchas. Esta skill
 convenciona que **cada tribunal pode ter sua propria reference**
 (`references/tjsp.md`, `references/tjrs.md`, etc.) a medida que
 especificidades sejam validadas. O TJSP e o primeiro porque e o unico
@@ -30,7 +30,7 @@ TJSP e o unico tribunal com os quatro endpoints do juscraper:
 
 Construtor com `sleep_time=0.5` como default. Para descobrir IDs de filtros antes de consultar `[v0.4.0+]`, use `listar_classes(grau="2")`, `listar_assuntos(grau="2")`, `listar_orgaos(grau="2")` e `listar_varas(grau="1")`; todos retornam arvore com `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`.
 
-## Parametros exclusivos
+## Parametros e endpoints especificos
 
 ### `method` em `cpopg`/`cposg`
 
@@ -42,7 +42,7 @@ tjsp.cpopg(id_cnj, method='api')   # via API REST do TJSP
 O metodo `'html'` e mais estavel. O parse JSON do `cposg` **nao esta
 implementado** — use `'html'`.
 
-### `cjpg` (1º grau, exclusivo TJSP)
+### `cjpg` (1º grau; TJES e TJTO tambem tem)
 
 ```python
 tjsp.cjpg(
@@ -73,14 +73,14 @@ n = tjsp.cjpg(pesquisa='fornecimento medicamento', assunto=10070, count_only=Tru
 
 Retorna `int`; `paginas` e ignorado com `UserWarning`. Com `auto_chunk=True`, janelas longas sao somadas sem dedup por `id_processo`, entao a contagem pode divergir de `len(tjsp.cjpg(...))`.
 
-### `cjsg` — extras em relacao ao eSAJ padrao
+### `cjsg` — diferencas em relacao ao eSAJ padrao
 
-Alem dos parametros eSAJ documentados em `tribunais.md`, o TJSP aceita:
-- `comarca=None` — filtro por comarca (exclusivo TJSP na familia eSAJ)
-- `tipo_decisao='acordao'|'monocratica'`
-- `baixar_sg=True`
+Os parametros eSAJ estao em `tribunais.md`. `comarca`, `tipo_decisao` e `count_only` valem para toda a familia eSAJ. No TJSP:
+- `baixar_sg=True` substitui `origem`;
+- `numero_recurso` e `data_publicacao_*` nao existem, e passar qualquer um deles da erro;
 - **`pesquisa=""` aceito** `[v0.4.0+]` — antes era obrigatorio; agora `tjsp.cjsg(classe='...', assunto='...')` sem termo textual funciona, igualando o comportamento de `cjpg`.
-- **`count_only=True` aceito** `[v0.4.0+]` — retorna `int` com o total estimado de resultados em vez de `DataFrame`. Mesmo contrato do `cjpg`: ignora `paginas` com warning e soma janelas longas sem dedup.
+
+`count_only=True` `[v0.4.0+]`, comum a toda a familia eSAJ, retorna `int` com o total estimado de resultados em vez de `DataFrame`. Mesmo contrato do `cjpg`: ignora `paginas` com warning e soma janelas longas sem dedup.
 
 ## Cobertura temporal
 

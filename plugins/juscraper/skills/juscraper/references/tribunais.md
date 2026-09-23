@@ -119,7 +119,7 @@ scraper.cjsg(
     numero_recurso=None,              # nao no TJSP
     classe=None,                      # int | str | list[int|str]
     assunto=None,                     # int | str | list[int|str]
-    comarca=None,                     # int | str (TJSP apenas — exclusivo na familia eSAJ)
+    comarca=None,                     # int | str (ID interno da comarca, valor unico)
     orgao_julgador=None,              # int | str | list[int|str]
     data_julgamento_inicio=None,      # aceita DD/MM/AAAA, AAAA-MM-DD, etc.
     data_julgamento_fim=None,
@@ -134,7 +134,7 @@ scraper.cjsg(
 
 **Auto-chunk para janelas longas `[v0.3.0]`:** janelas `data_julgamento_*` que excedem 366 dias sao automaticamente divididas em chunks e concatenadas (com dedup) por `auto_chunk=True` (default). Falhas em janelas individuais viram `UserWarning` e o DataFrame retorna parcial. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`. Veja `references/tjsp.md` para detalhes.
 
-**Notas TJSP:** extras em relacao aos demais eSAJ — `comarca`, `tipo_decisao`, `baixar_sg`; `cjsg` aceita `pesquisa=""` para buscar so por filtros; `cjsg` e `cjpg` aceitam `count_only=True` para estimar volume antes da coleta. Ver `references/tjsp.md`.
+**Notas TJSP:** no lugar de `origem` o TJSP usa `baixar_sg`, e nao aceita `numero_recurso` nem `data_publicacao_*`; `comarca`, `tipo_decisao` e `count_only=True` (que estima o volume antes da coleta) valem para toda a familia eSAJ, e o `cjpg` do TJSP tambem aceita `count_only`. `cjsg` aceita `pesquisa=""` para buscar so por filtros. Ver `references/tjsp.md`.
 
 **Guard de tamanho de `pesquisa` em TJSP `[v0.3.0]`:** mais de 120 caracteres levanta `QueryTooLongError` (subclasse de `ValueError`) antes do HTTP. Veja `references/tjsp.md`.
 
@@ -586,7 +586,7 @@ contagem = stf.contar_decisoes(pesquisa='pejotização', base='acordaos')
 
 Unico tribunal com suporte completo (cpopg + cposg + cjsg + cjpg).
 
-Detalhes de endpoints exclusivos (`cjpg`, parametro `method`), extras da `cjsg` (`comarca`, `tipo_decisao`, `baixar_sg`, `pesquisa=""`), cobertura temporal validada, `QueryTooLongError` e `auto_chunk` movidos para a reference dedicada **`references/tjsp.md`**.
+Detalhes do `cjpg` do TJSP e do parametro `method`, diferencas da `cjsg` (`baixar_sg`, `pesquisa=""`), cobertura temporal validada, `QueryTooLongError` e `auto_chunk` movidos para a reference dedicada **`references/tjsp.md`**.
 
 Convencao da skill: cada tribunal pode ter sua propria reference a medida que especificidades sejam validadas (ex: `tjsp.md`, futuramente `tjrs.md`, `tjpr.md` etc.). Este arquivo (`tribunais.md`) mantem a matriz comparativa e os parametros da `cjsg` por familia de plataforma.
 

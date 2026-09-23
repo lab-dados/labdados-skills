@@ -125,8 +125,8 @@ validadas — cobertura temporal, parametros exclusivos, gotchas.
 Consulte primeiro se existe reference para o tribunal do estudo.
 
 **Tribunais ja documentados**:
-- `references/tjsp.md` — cobertura temporal, endpoints exclusivos
-  (`cjpg`), parametro `method` de `cpopg`/`cposg`, extras da `cjsg`.
+- `references/tjsp.md` — cobertura temporal, `cjpg` (1o grau; TJES e TJTO
+  tambem tem), parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`.
 
 **Tribunais ainda nao validados**: a maioria dos demais. Nao assuma
 cobertura equivalente a TJSP — cada TJ tem calendario proprio de
@@ -330,8 +330,8 @@ Leia a referencia apropriada antes de gerar codigo:
   metodos, autenticacao, gotchas. Leia quando o caso de uso for cross-tribunal,
   comunicacoes/DJe, contagem antes da coleta, ou download de pecas.
 
-- **`references/tjsp.md`** — Especificidades do TJSP: endpoints exclusivos (`cjpg`),
-  parametro `method` de `cpopg`/`cposg`, extras da `cjsg`, `pesquisa=""`,
+- **`references/tjsp.md`** — Especificidades do TJSP: `cjpg` (1o grau; TJES e TJTO tambem tem),
+  parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`, `pesquisa=""`,
   `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
