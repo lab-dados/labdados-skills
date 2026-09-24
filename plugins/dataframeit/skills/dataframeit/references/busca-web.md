@@ -22,9 +22,9 @@ campo, `search_depth` por campo), veja tambem
 ## Instalacao e API keys
 
 ```bash
-pip install dataframeit[google,search]      # Tavily
-pip install dataframeit[google,search-exa]  # Exa
-pip install dataframeit[google,search-all]  # os dois
+pip install dataframeit[openai,search]      # Tavily
+pip install dataframeit[openai,search-exa]  # Exa
+pip install dataframeit[openai,search-all]  # os dois
 ```
 
 - **Tavily** (padrao): `TAVILY_API_KEY` — https://tavily.com (1000 buscas/mes gratis)
@@ -109,6 +109,11 @@ separadas.
 **Regra pratica**: use `search_groups` sempre que tiver 2+ campos com
 busca — o ganho de custo e imediato.
 
+Campos condicionais (`condition`) continuam valendo com grupos: campo
+com condicao falsa fica `None` e nao e pedido ao agente, e grupos e
+campos isolados rodam na ordem das dependencias. Ver
+`pydantic-patterns.md §Padrao 4`.
+
 ---
 
 ## Custos de busca
@@ -119,6 +124,10 @@ busca — o ganho de custo e imediato.
 | Tavily | advanced | 2 creditos/busca | 1000 buscas/mes |
 | Exa | 1-25 resultados | ~$0.005/busca | — |
 | Exa | 26-100 resultados | ~$0.025/busca | — |
+
+`_search_credits` conta so as chamadas da ferramenta de busca feitas
+pelo agente. A chamada de saida estruturada, que tambem e uma tool call,
+fica de fora.
 
 **Recomendacao**: Tavily para volume baixo/medio (< 2667 buscas/mes);
 Exa para volume alto com busca semantica.

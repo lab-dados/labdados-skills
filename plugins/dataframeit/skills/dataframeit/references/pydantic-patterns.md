@@ -33,9 +33,9 @@ Siga esta ordem — cada item rende mais que trocar de modelo:
    `Optional`, o LLM inventa um valor.
 4. **`json_schema_extra`** para customizacao avancada por campo:
    prompt proprio, busca web dedicada, campos condicionais.
-5. **Campos condicionais (`depends_on`)** — extrair `valor_multa` so
+5. **Campos condicionais (`condition`)** — extrair `valor_multa` so
    se `tem_multa` for `True`. Economiza tokens e melhora coerencia.
-   So funciona com busca por campo, ver Padrao 4.
+   Exige busca por campo, ver Padrao 4.
 6. **Campo de dificuldade (self-reflection)** — pedir ao LLM que
    sinalize ambiguidade; ver ultima secao deste arquivo.
 
@@ -115,7 +115,7 @@ class MedicamentoInfo(BaseModel):
 
 Para as chaves suportadas em `json_schema_extra`, veja a proxima secao.
 
-### Padrao 4 — Campos condicionais (depends_on)
+### Padrao 4 — Campos condicionais (condition)
 
 ```python
 from pydantic import BaseModel, Field
@@ -127,7 +127,6 @@ class AnaliseMulta(BaseModel):
     valor_multa: Optional[float] = Field(
         description="Valor da multa em reais",
         json_schema_extra={
-            "depends_on": ["tem_multa"],
             "condition": {"field": "tem_multa", "equals": True}
         }
     )
@@ -135,30 +134,30 @@ class AnaliseMulta(BaseModel):
     fundamentacao: Optional[str] = Field(
         description="Fundamentacao legal da multa",
         json_schema_extra={
-            "depends_on": ["tem_multa"],
             "condition": {"field": "tem_multa", "equals": True}
         }
     )
 ```
 
 **Quando a condicao e avaliada.** So com `use_search=True,
-search_per_field=True` e sem `search_groups`, o unico modo em que a
-biblioteca extrai um campo por vez. Fora dele a condicao e ignorada e
-todos os campos sao extraidos; com `search_groups`, nem os campos
-agrupados nem os isolados passam pela condicao. Alem disso, qualquer
-chave de configuracao por campo (`prompt`, `prompt_append`,
-`search_depth`, `max_results`) sem `search_per_field=True` levanta
-`ValueError`.
+search_per_field=True`, com ou sem `search_groups`: e o modo em que os
+campos saem em chamadas separadas. Fora dele, `condition` ou
+`depends_on` levanta `ValueError`, em vez de ser ignorado. Campo com
+condicao falsa fica `None` e nao e pedido ao agente. Com
+`search_groups`, um campo agrupado cuja condicao depende de outro campo
+do mesmo grupo e anulado depois da resposta do grupo. Qualquer chave de
+configuracao por campo (`prompt`, `prompt_append`, `search_depth`,
+`max_results`) sem `search_per_field=True` tambem levanta `ValueError`.
 
 **Ordem.** A ordem de declaracao no modelo nao importa: a biblioteca
-ordena os campos pelas dependencias de `depends_on` e acusa dependencia
-circular ou campo inexistente com `ValueError`.
+ordena os campos, e os grupos, pelas dependencias, e acusa dependencia
+circular ou campo inexistente com `ValueError`. Entre campos
+independentes vale a ordem do modelo.
 
-**`[unreleased]` (main do dataframeit, 0.7.x, ainda nao no PyPI):**
-`depends_on` passa a ser derivado de `condition` quando ela e um dict,
-e so precisa ser declarado para `condition` callable. `depends_on` sem
-`condition` deixa de afetar a ordem e so emite aviso. Na 0.6.0 do PyPI,
-declare os dois, como no exemplo acima.
+**`depends_on`.** Com `condition` dict, a dependencia vem do `field` da
+condicao, e `depends_on` e dispensavel. Declare-o so com `condition`
+callable, listando os campos que a funcao le. `depends_on` sem
+`condition` nao afeta a ordem e so emite aviso.
 
 ---
 
@@ -173,7 +172,7 @@ Chaves suportadas dentro de `json_schema_extra={}` no `Field()`:
 | `prompt_append` | str | Adiciona texto ao final do prompt principal para este campo |
 | `search_depth` | `"basic"` \| `"advanced"` | Profundidade de busca web para este campo |
 | `max_results` | int (1-20) | Max resultados de busca para este campo |
-| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste. So vale com busca por campo (ver Padrao 4) |
+| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste. Necessario so com `condition` callable; exige busca por campo (ver Padrao 4) |
 | `condition` | dict | Condicao para extrair este campo (ver operadores abaixo) |
 
 ### Formato da `condition`
