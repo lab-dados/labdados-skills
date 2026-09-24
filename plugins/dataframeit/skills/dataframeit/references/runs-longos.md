@@ -183,7 +183,9 @@ resultado_corrigido = dataframeit(
 ### Reprocessar linhas com erro
 
 Com `resume=True`, linha `"error"` nao e re-tentada sozinha: limpe o
-status dela antes de rodar de novo.
+status dela antes de rodar de novo. Limpe tambem `_error_details`: a
+biblioteca nao apaga a mensagem antiga quando a linha da certo, e a
+mensagem que sobra mantem as colunas de controle no resultado.
 
 ```python
 # `_dataframeit_status` so existe quando ha erros — use .get() antes de filtrar
@@ -192,7 +194,7 @@ erros = resultado[status == 'error']
 print(f"{len(erros)} linhas com erro")
 if len(erros) > 0:
     print(erros['_error_details'].value_counts())
-    resultado.loc[status == 'error', '_dataframeit_status'] = None
+    resultado.loc[status == 'error', ['_dataframeit_status', '_error_details']] = None
     resultado_corrigido = dataframeit(resultado, Modelo, prompt)
 ```
 
@@ -245,7 +247,10 @@ fim de cada batch.
 ## Truncamento de saida — deteccao e retry
 
 Distinto do problema de contexto de **entrada**, o output pode ser
-truncado ao atingir `max_output_tokens`. Sinais: campos finais em
+truncado ao atingir o limite de saida. O nome do parametro varia por
+provedor: `max_completion_tokens` na OpenAI, `max_output_tokens` no
+Gemini, `max_tokens` na Anthropic, Groq e Mistral; o dataframeit nao
+normaliza. Sinais: campos finais em
 branco, strings cortadas, listas aninhadas com contagem suspeita
 (sempre exatamente 5 itens). O Pydantic pode passar na validacao se os
 campos obrigatorios foram preenchidos — o truncamento fica invisivel.
@@ -253,7 +258,7 @@ campos obrigatorios foram preenchidos — o truncamento fica invisivel.
 **Deteccao e retry**:
 
 ```python
-LIMITE_OUTPUT = 2000   # ajustar ao model_kwargs['max_output_tokens']
+LIMITE_OUTPUT = 2000   # ajustar ao limite de saida passado em model_kwargs
 resultado['_trunc_suspeito'] = resultado['_output_tokens'] >= int(LIMITE_OUTPUT * 0.95)
 mascara_erro = resultado['_error_details'].fillna('').str.contains(
     'max_tokens|length_limit|stop_reason.*length', case=False, regex=True
@@ -265,11 +270,12 @@ if len(precisa_retry) > 0:
     resultado_fix = dataframeit(
         precisa_retry, Modelo, "...",
         reprocess_columns=[...],                           # so campos afetados
-        model_kwargs={'max_output_tokens': 4000},          # dobrar limite
+        provider='openai', model='gpt-6-luna',
+        model_kwargs={'max_completion_tokens': 4000},      # dobrar limite (nome da OpenAI)
     )
 ```
 
-**Prevencao**: dimensione `max_output_tokens` com folga de 2× antes da
+**Prevencao**: dimensione o limite de saida com folga de 2× antes da
 rodada. Para Pydantic com ~8 campos + justificativa, ~800 tokens bastam;
 para `List[Pedido]` com ~3 pedidos medios, ~1500 tokens; com folga,
 3000-4000.

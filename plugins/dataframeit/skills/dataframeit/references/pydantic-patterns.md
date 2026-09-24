@@ -12,7 +12,7 @@ Flash supera um Pydantic mal escrito com Opus.
    - [Padrao 1 — Basico](#padrao-1--basico)
    - [Padrao 2 — Com Field(description=)](#padrao-2--com-fielddescription)
    - [Padrao 3 — Com json_schema_extra](#padrao-3--com-json_schema_extra)
-   - [Padrao 4 — Campos condicionais (depends_on)](#padrao-4--campos-condicionais-depends_on)
+   - [Padrao 4 — Campos condicionais (condition)](#padrao-4--campos-condicionais-condition)
 3. [json_schema_extra — referencia completa](#json_schema_extra--referencia-completa)
 4. [Operadores condicionais](#operadores-condicionais)
 5. [Campo de dificuldade (self-reflection)](#campo-de-dificuldade-self-reflection)
@@ -150,14 +150,19 @@ configuracao por campo (`prompt`, `prompt_append`, `search_depth`,
 `max_results`) sem `search_per_field=True` tambem levanta `ValueError`.
 
 **Ordem.** A ordem de declaracao no modelo nao importa: a biblioteca
-ordena os campos, e os grupos, pelas dependencias, e acusa dependencia
-circular ou campo inexistente com `ValueError`. Entre campos
-independentes vale a ordem do modelo.
+ordena os campos, e os grupos, pelas dependencias. Entre campos
+independentes vale a ordem do modelo. Dependencia circular ou campo
+inexistente nao interrompe a chamada: o `ValueError` e capturado por
+linha, e **toda linha** volta com status `'error'` e a causa em
+`_error_details` (ex.: "Dependencias circulares detectadas"). Rode uma
+amostra pequena antes e confira `_error_details`.
 
 **`depends_on`.** Com `condition` dict, a dependencia vem do `field` da
-condicao, e `depends_on` e dispensavel. Declare-o so com `condition`
-callable, listando os campos que a funcao le. `depends_on` sem
-`condition` nao afeta a ordem e so emite aviso.
+condicao, e `depends_on` e dispensavel. `depends_on` sem `condition`
+nao afeta a ordem e so emite aviso. Use `condition` dict: na 0.9.0,
+uma funcao dentro de `json_schema_extra` quebra a geracao do JSON
+Schema da chamada (`PydanticSerializationError`), entao `condition`
+callable nao funciona na pratica, embora a biblioteca a documente.
 
 ---
 
@@ -172,7 +177,7 @@ Chaves suportadas dentro de `json_schema_extra={}` no `Field()`:
 | `prompt_append` | str | Adiciona texto ao final do prompt principal para este campo |
 | `search_depth` | `"basic"` \| `"advanced"` | Profundidade de busca web para este campo |
 | `max_results` | int (1-20) | Max resultados de busca para este campo |
-| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste. Necessario so com `condition` callable; exige busca por campo (ver Padrao 4) |
+| `depends_on` | list[str] \| str | Campo(s) que devem ser extraidos antes deste. Dispensavel com `condition` dict; exige busca por campo (ver Padrao 4) |
 | `condition` | dict | Condicao para extrair este campo (ver operadores abaixo) |
 
 ### Formato da `condition`

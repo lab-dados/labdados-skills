@@ -102,9 +102,10 @@ resultado = dataframeit(
     search_per_field=True,
 )
 
-# Para economizar buscas, search_groups junta campos numa busca so.
-# A condicao continua valendo com grupos: receita_anual fica None nas
-# linhas com tem_dado_financeiro=False.
+# Para economizar buscas, search_groups junta campos numa busca so, e a
+# condicao continua valendo dentro dos grupos. Campo com prompt_append
+# ou search_depth proprios, como receita_anual e sede, nao pode entrar
+# em grupo (ValueError): escolha entre configurar o campo ou o grupo.
 
 # 4. Verificar
 print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede']])
@@ -168,10 +169,15 @@ print(f"Tokens totais: {total_tokens:,}")
 
 # 6. Reprocessar erros se necessario
 if len(erros) > 0:
-    resultado.loc[status == 'error', '_dataframeit_status'] = None
+    # Limpar tambem _error_details: a biblioteca nao apaga a mensagem antiga
+    # quando a linha da certo, e ela impediria a remocao das colunas de controle
+    resultado.loc[status == 'error', ['_dataframeit_status', '_error_details']] = None
     resultado_final = dataframeit(
         resultado, ClassificacaoEmenta,
         "Classifique esta ementa judicial: {texto}",
+        provider='openai',
+        model='gpt-6-luna',                             # mesma configuracao da 1a rodada
+        model_kwargs={'reasoning_effort': 'none', 'temperature': 0},
         parallel_requests=3,
         rate_limit_delay=1.0,  # mais conservador na segunda tentativa
     )

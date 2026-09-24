@@ -353,6 +353,9 @@ usuario quer usar a conta do Codex ou pagar por API.
   `codex --config cli_auth_credentials_store='"file"' login`
 - Nao passe `api_key`: a chamada levanta erro de configuracao
 - Nao suporta `use_search=True` (levanta `ValueError`)
+- O schema do modelo Pydantic precisa caber no Structured Outputs: o
+  preflight rejeita `RootModel`, `Any`, `dict` com chaves dinamicas,
+  tupla de tamanho fixo e `set` antes de processar qualquer linha
 - Enquanto uma execucao usa a credencial, outra execucao do dataframeit
   com o mesmo `auth.json` falha antes de iniciar. `parallel_requests`
   dentro da mesma execucao funciona. Nao use o Codex CLI com a mesma

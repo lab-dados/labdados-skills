@@ -25,7 +25,11 @@ Corrigido:
   - classificacao de erro pelo status HTTP e coluna `_cached_input_tokens`;
   - provider `claude_code` sem ferramentas, com tokens reais e funcionando no Jupyter;
   - erros que ja existiam antes: `save_trace` exige `use_search=True`, o prompt sem `{texto}`
-    recebe o texto ao fim, e o backoff com `max_retries=3` tem duas esperas, nao tres.
+    recebe o texto ao fim, e o backoff com `max_retries=3` tem duas esperas, nao tres;
+  - dependencia circular ou campo inexistente aparece por linha em `_error_details`, nao como
+    excecao; `condition` callable nao funciona na 0.9.0 e deixa de ser recomendada;
+  - reprocessar linha com erro exige limpar `_error_details` junto com o status, e o limite de
+    saida muda de nome por provedor (`max_completion_tokens` na OpenAI).
 
 ## [1.12.1] — 2026-09-23
 

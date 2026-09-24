@@ -167,7 +167,7 @@ houver) e o que vier em `model_kwargs`. Duas consequencias:
 
 - Modelo que nao aceita `temperature` (ex.: Claude Sonnet 5, Opus 4.7
   ou mais novo, OpenAI GPT-6 com raciocinio ligado, OpenAI o1/o3,
-  Gemini 3.6 ou mais novo) funciona sem ajuste. Nao passe `temperature`
+  Gemini 3.5 Flash-Lite e 3.6 ou mais novo) funciona sem ajuste. Nao passe `temperature`
   em `model_kwargs` para esses modelos: no Claude e na GPT-6 com
   raciocinio, a chamada volta com erro 400.
 - Para determinismo, passe `temperature` (e `seed`, quando existir)
@@ -349,6 +349,10 @@ Todo 4xx fora de 408, 409 e 429 falha na hora, sem retry:
 | `PermissionDenied` (403) | Key sem permissao | Verificar permissoes da key no painel do provedor |
 | Modelo inexistente (404) | Nome de modelo errado ou aposentado | Conferir o ID na pagina do provedor |
 | Requisicao invalida (400, 422) | Parametro que o modelo rejeita, como `temperature` num modelo de raciocinio | Corrigir `model_kwargs` |
+
+Erro sem status HTTP e sem padrao conhecido no nome ou na mensagem,
+como uma resposta que nao valida contra o modelo Pydantic, e tratado
+como recuperavel e passa pelos retries.
 
 ### Backoff exponencial
 

@@ -1,6 +1,6 @@
 ---
 name: dataframeit
-description: "Use esta skill para aplicar um LLM linha a linha em um DataFrame (pandas ou polars) usando a biblioteca dataframeit: defina um modelo Pydantic com os campos desejados, escreva um prompt com placeholder {texto} e obtenha saida validada em escala. Cobre classificacao e extracao estruturada, preenchimento de campos faltantes, anotacao automatica para pesquisa empirica, categorizacao de respostas abertas, enriquecimento com busca web (Tavily/Exa), campos condicionais (depends_on), paralelismo com rate limit, checkpointing retomavel em runs longos, e escolha de provedor (OpenAI, Gemini, Anthropic, Groq, Mistral, Cohere, Claude Code, Codex). Acione sempre que o usuario falar em processar cada linha de um DataFrame com IA, enriquecer dados com LLM, extrair informacao estruturada de texto, classificar respostas abertas, codificar decisoes judiciais com LLM, dataframeit — mesmo que nao nomeie a biblioteca. Nao use para raspagem de dados, revisao de literatura academica ou chamadas LLM avulsas fora de um DataFrame."
+description: "Use esta skill para aplicar um LLM linha a linha em um DataFrame (pandas ou polars) usando a biblioteca dataframeit: defina um modelo Pydantic com os campos desejados, escreva um prompt com placeholder {texto} e obtenha saida validada em escala. Cobre classificacao e extracao estruturada, preenchimento de campos faltantes, anotacao automatica para pesquisa empirica, categorizacao de respostas abertas, enriquecimento com busca web (Tavily/Exa), campos condicionais (condition), paralelismo com rate limit, checkpointing retomavel em runs longos, e escolha de provedor (OpenAI, Gemini, Anthropic, Groq, Mistral, Cohere, Claude Code, Codex). Acione sempre que o usuario falar em processar cada linha de um DataFrame com IA, enriquecer dados com LLM, extrair informacao estruturada de texto, classificar respostas abertas, codificar decisoes judiciais com LLM, dataframeit — mesmo que nao nomeie a biblioteca. Nao use para raspagem de dados, revisao de literatura academica ou chamadas LLM avulsas fora de um DataFrame."
 ---
 
 # DataFrameIt Skill
@@ -248,7 +248,7 @@ Antes de executar `dataframeit()` em datasets grandes:
    campos e reduzir chamadas. Ver `references/busca-web.md`.
 
 Para fórmulas detalhadas de custo por provedor, deteccao de truncamento
-de saida (campos finais em branco por `max_output_tokens`), perfis de
+de saida (campos finais em branco pelo limite de tokens de saida), perfis de
 paralelismo e trace logging, consulte **`references/runs-longos.md`**.
 
 ## Projetando bons modelos Pydantic
@@ -288,7 +288,7 @@ operadores condicionais e tecnica de self-reflection com citacao academica
 
 | Coluna | Descricao |
 |---|---|
-| `_dataframeit_status` | `"processed"` ou `"error"` — **removida automaticamente quando nao ha erros**. Use `df.get("_dataframeit_status", pd.Series(dtype=str))` antes de filtrar. |
+| `_dataframeit_status` | `"processed"` ou `"error"` — **removida automaticamente quando nenhuma linha teve erro nem retry** (com retry, `_error_details` guarda "Sucesso apos N retry(s)" e as duas colunas ficam). Use `df.get("_dataframeit_status", pd.Series(dtype=str))` antes de filtrar. |
 | `_error_details` | Mensagem de erro (se houver) |
 | `_input_tokens` | Tokens de entrada, incluindo os lidos de cache (sempre presente com `track_tokens=True`, padrao) |
 | `_cached_input_tokens` | Parcela de `_input_tokens` lida do cache do provedor. `0` ou nulo quando o provedor nao informa |
@@ -313,7 +313,7 @@ agregada. `_reasoning_tokens` detalha `_output_tokens`, e `_cached_input_tokens`
 7. Se o dataset tiver mais de 1000 linhas, estime o custo e confirme com o usuario.
 8. Execute. Os defaults ja incluem `resume=True` e `track_tokens=True`.
 9. Verifique `_dataframeit_status` para erros.
-10. Se houver erros, limpe `_dataframeit_status` dessas linhas e rode de novo: com
+10. Se houver erros, limpe `_dataframeit_status` e `_error_details` dessas linhas e rode de novo: com
     `resume=True`, linha `'error'` fica como esta (ver `references/runs-longos.md
     §Reprocessar linhas com erro`).
 
