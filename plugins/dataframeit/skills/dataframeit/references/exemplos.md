@@ -51,13 +51,11 @@ print(f"Tokens totais: {total_tokens:,}")
 
 ## Exemplo 2 — Extracao com busca web e campos condicionais
 
-Pydantic mais rico: `json_schema_extra` com `depends_on`/`condition` e
-busca web por campo. As chaves de configuracao por campo (`prompt`,
-`prompt_replace`, `prompt_append`, `search_depth`, `max_results`)
-exigem `use_search=True, search_per_field=True` (sem isso, `ValueError`).
-`depends_on`/`condition` sozinhos nao dao erro fora desse modo: a
-condicao e ignorada em silencio. Ela so e avaliada com
-`search_per_field=True` e sem `search_groups`.
+Pydantic mais rico: `json_schema_extra` com `condition` e busca web
+por campo. As chaves de configuracao por campo (`prompt`,
+`prompt_replace`, `prompt_append`, `search_depth`, `max_results`) e as
+condicionais (`condition`, `depends_on`) exigem `use_search=True,
+search_per_field=True`; sem isso, `ValueError`.
 
 ```python
 import pandas as pd
@@ -76,7 +74,6 @@ class EmpresaInfo(BaseModel):
     receita_anual: Optional[str] = Field(
         description="Receita anual (se disponivel)",
         json_schema_extra={
-            "depends_on": ["tem_dado_financeiro"],
             "condition": {"field": "tem_dado_financeiro", "equals": True},
             "prompt_append": "Busque a receita mais recente.",
             "search_depth": "advanced"
@@ -105,9 +102,10 @@ resultado = dataframeit(
     search_per_field=True,
 )
 
-# Para economizar buscas, search_groups junta campos numa busca so.
-# O custo e perder a condicao: com grupos, receita_anual seria extraida
-# em toda linha, mesmo com tem_dado_financeiro=False.
+# Para economizar buscas, search_groups junta campos numa busca so, e a
+# condicao continua valendo dentro dos grupos. Campo com prompt_append
+# ou search_depth proprios, como receita_anual e sede, nao pode entrar
+# em grupo (ValueError): escolha entre configurar o campo ou o grupo.
 
 # 4. Verificar
 print(resultado[['nome_empresa', 'setor', 'receita_anual', 'sede']])
@@ -141,8 +139,9 @@ class ClassificacaoEmenta(BaseModel):
 
 # 3. Estimar custo ANTES de executar
 tokens_estimados = len(df) * 500  # ~500 tokens por ementa (estimativa)
-custo_gemini = tokens_estimados / 1_000_000 * 0.50  # entrada + saida
-print(f"Custo estimado (Gemini): ~${custo_gemini:.2f}")
+# Teto: todos os tokens ao preco de saida do gpt-6-luna (~$0.50 por 1M)
+custo_estimado = tokens_estimados / 1_000_000 * 0.50
+print(f"Custo estimado (gpt-6-luna): ate ~${custo_estimado:.2f}")
 # → Confirmar com o usuario antes de prosseguir
 
 # 4. Executar com resume (retomavel) e paralelismo
@@ -150,6 +149,9 @@ resultado = dataframeit(
     df,
     ClassificacaoEmenta,
     "Classifique esta ementa judicial: {texto}",
+    provider='openai',
+    model='gpt-6-luna',                             # fixar e registrar o modelo
+    model_kwargs={'reasoning_effort': 'none', 'temperature': 0},
     parallel_requests=5,
     rate_limit_delay=0.5,
     batch_size=100,                                 # checkpointing para runs longos
@@ -167,10 +169,15 @@ print(f"Tokens totais: {total_tokens:,}")
 
 # 6. Reprocessar erros se necessario
 if len(erros) > 0:
-    resultado.loc[status == 'error', '_dataframeit_status'] = None
+    # Limpar tambem _error_details: a biblioteca nao apaga a mensagem antiga
+    # quando a linha da certo, e ela impediria a remocao das colunas de controle
+    resultado.loc[status == 'error', ['_dataframeit_status', '_error_details']] = None
     resultado_final = dataframeit(
         resultado, ClassificacaoEmenta,
         "Classifique esta ementa judicial: {texto}",
+        provider='openai',
+        model='gpt-6-luna',                             # mesma configuracao da 1a rodada
+        model_kwargs={'reasoning_effort': 'none', 'temperature': 0},
         parallel_requests=3,
         rate_limit_delay=1.0,  # mais conservador na segunda tentativa
     )

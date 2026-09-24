@@ -4,6 +4,33 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] - 2026-09-23
+
+Adicionado:
+
+- `dataframeit` (plugin 1.2.0): secao do provider experimental `codex` (extra `[codex]`, fora do
+  `[all]`; login pelo Codex CLI, sem `api_key`; so `effort` em `model_kwargs`; sem busca web).
+
+Corrigido:
+
+- `dataframeit` (plugin 1.2.0) sincronizada com o dataframeit 0.9.0 publicado no PyPI:
+  - provider padrao `openai` e modelo padrao por provider (`gpt-6-luna`, `gemini-3.8-flash`,
+    `claude-sonnet-5`, `openai/gpt-oss-120b`); os demais providers exigem `model`, e `claude_code`
+    e `codex` deixam a escolha ao runtime;
+  - a biblioteca deixa de enviar `temperature=0`, e sai o contorno `{'temperature': None}`;
+  - `condition`/`depends_on` sem `search_per_field=True` levantam `ValueError`, valem tambem com
+    `search_groups`, e `depends_on` so e preciso com `condition` callable;
+  - `resume=True` processa so as linhas sem status, e linha `'error'` so volta se o status for
+    limpo; `max_retries` conta as tentativas totais;
+  - classificacao de erro pelo status HTTP e coluna `_cached_input_tokens`;
+  - provider `claude_code` sem ferramentas, com tokens reais e funcionando no Jupyter;
+  - erros que ja existiam antes: `save_trace` exige `use_search=True`, o prompt sem `{texto}`
+    recebe o texto ao fim, e o backoff com `max_retries=3` tem duas esperas, nao tres;
+  - dependencia circular ou campo inexistente aparece por linha em `_error_details`, nao como
+    excecao; `condition` callable nao funciona na 0.9.0 e deixa de ser recomendada;
+  - reprocessar linha com erro exige limpar `_error_details` junto com o status, e o limite de
+    saida muda de nome por provedor (`max_completion_tokens` na OpenAI).
+
 ## [1.12.1] — 2026-09-23
 
 Corrigido:

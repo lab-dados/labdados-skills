@@ -1,6 +1,6 @@
 {
   "name": "dataframeit",
-  "description": "Aplicar LLM linha a linha em DataFrames com Pydantic: classificacao, extracao estruturada, busca web, checkpointing retomavel, multi-provedor (Gemini/OpenAI/Anthropic/Groq).",
+  "description": "Aplicar LLM linha a linha em DataFrames com Pydantic: classificacao, extracao estruturada, busca web, checkpointing retomavel, multi-provedor (OpenAI/Gemini/Anthropic/Groq, Claude Code e Codex).",
   "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
   "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/dataframeit",
   "repository": "https://github.com/lab-dados/labdados-skills",
