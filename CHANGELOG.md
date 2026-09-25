@@ -4,6 +4,45 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.14.0] - 2026-09-25
+
+Adicionado:
+
+- `dataframeit` (plugin 1.3.0): `max_search_calls` (padrao 10, com override por grupo e por
+  campo), as excecoes `Provider*Error` de `dataframeit.errors` e o custo do `claude_code` no
+  resumo da execucao.
+
+Alterado:
+
+- `dataframeit` (plugin 1.3.0): a skill e as references passam a ter acentuacao completa; a lista
+  de modelos padrao sai da skill e fica apontada para `DEFAULT_MODELS` e para a pagina de
+  provedores da documentacao.
+
+Corrigido:
+
+- `dataframeit` (plugin 1.3.0) sincronizada com o dataframeit 0.10.0 e com a documentacao revisada:
+  - `rate_limit_delay` e a pausa de cada worker depois de cada linha bem-sucedida; a taxa maxima e
+    `parallel_requests * 60 / rate_limit_delay`, e a formula antiga ignorava os workers;
+  - busca web: cada linha (ou campo, ou grupo) e um agente com ate `max_search_calls` buscas, e nao
+    uma busca fixa; `search_per_field` cria um agente por campo do modelo; Exa ignora
+    `search_depth`; erro do Tavily ou do Exa entra no retry;
+  - exemplos filtravam `_dataframeit_status` com `df.get(...)`, que quebra quando a coluna foi
+    removida; passam a conferir `'_dataframeit_status' in df.columns`;
+  - rodar de novo sobre uma saida sem erros reprocessa todas as linhas; `resume=False` devolve os
+    dados sem processar quando as colunas do modelo ja existem; retomada de checkpoint por
+    `read_df(caminho, Modelo)`; `batch_size` e `checkpoint_path` sem o outro levantam `ValueError`;
+  - dependencia circular ou campo inexistente em `condition` levanta `ValueError` antes da
+    primeira linha, e `condition` callable com `depends_on` funciona; `condition` em modelo
+    aninhado levanta `ValueError`;
+  - `_error_details` antigo deixa de ficar na linha que passa a `'processed'`; texto ausente vira
+    `'error'` com "Texto ausente"; indice repetido e campo com o nome da coluna de texto levantam
+    `ValueError`;
+  - `claude_code`: autenticacao por login local ou `ANTHROPIC_API_KEY`, `max_budget_usd` por
+    tentativa, estouro de orcamento ou turnos e erro definitivo, execucao sem settings nem MCP do
+    usuario;
+  - backoff com a formula da documentacao, `save_trace="minimal"` guarda consultas e contagens,
+    e sai a referencia a uma skill `jurimetria` que nao existe neste marketplace.
+
 ## [1.13.0] - 2026-09-23
 
 Adicionado:
