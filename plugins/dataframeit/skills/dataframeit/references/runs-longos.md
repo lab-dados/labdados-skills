@@ -50,7 +50,7 @@ delay = 60 × parallel_requests / limite_de_req_por_minuto
 
 A taxa real fica abaixo desse teto, porque cada chamada também leva tempo. O limite depende do modelo e do nível da conta e muda com frequência; confira o valor na página de rate limits do provedor antes de aplicar a fórmula. Com busca web, o limite do provedor de busca costuma ser o mais apertado (ver `busca-web.md`).
 
-**Retry.** Erros transitórios (429, 408, 409, 5xx, timeout, conexão, SSL) e respostas recusadas pela validação Pydantic ganham novas tentativas com backoff exponencial: a espera antes da tentativa `n + 1` é `min(base_delay × 2^(n-1), max_delay)`, com até 10% de variação. `max_retries` conta as tentativas totais, incluindo a primeira: com os defaults (`base_delay=1.0`, `max_delay=30.0`, `max_retries=3`), são três tentativas, com esperas de ~1s e ~2s. Os demais 4xx (400, 401, 403, 404, 422) e o estouro de contexto falham na hora. Detalhes em `api.md §Tratamento de erros e retry`.
+**Retry.** Erros transitórios (429, 408, 409, 5xx, timeout, conexão, SSL) e respostas que não passam na validação Pydantic ganham novas tentativas, com o mesmo prompt, com backoff exponencial: a espera antes da tentativa `n + 1` é `min(base_delay × 2^(n-1), max_delay)`, com até 10% de variação. `max_retries` conta as tentativas totais, incluindo a primeira: com os defaults (`base_delay=1.0`, `max_delay=30.0`, `max_retries=3`), são três tentativas, com esperas de ~1s e ~2s. Os demais 4xx (400, 401, 403, 404, 422) e o estouro de contexto falham na hora. Detalhes em `api.md §Tratamento de erros e retry`.
 
 ---
 
@@ -86,8 +86,6 @@ print(f"Tokens: {total:,} "
 Não existe coluna `_total_tokens`. Somar as três colunas conta o raciocínio duas vezes, e `_cached_input_tokens` também é parcela de `_input_tokens`.
 
 Ao fim da execução, o dataframeit imprime um resumo com modelo, tokens de entrada e saída (e de cache e raciocínio, quando o provider informa), tempo, workers, requisições, RPM e TPM efetivos. Com busca, o resumo ganha buscas e créditos; com `claude_code`, o custo em USD informado pelo SDK, somando as tentativas re-tentadas e as linhas que falharam. Use RPM e TPM para calibrar `parallel_requests` e `rate_limit_delay`.
-
-Quando uma resposta é recusada pela validação e uma tentativa seguinte dá certo, os tokens das recusadas entram nas colunas da linha, porque também são cobrados.
 
 ---
 

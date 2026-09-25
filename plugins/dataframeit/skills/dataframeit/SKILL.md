@@ -196,7 +196,7 @@ A qualidade da extração depende mais do modelo Pydantic do que do provedor LLM
 
 Os 4 padrões de modelo, a referência de `json_schema_extra`, os operadores condicionais e a técnica de self-reflection (Reflexion, Shinn et al. 2023) estão em **`references/pydantic-patterns.md`**.
 
-Uma resposta que não passa na validação do modelo Pydantic, inclusive em validadores próprios, ganha nova tentativa, e nos providers do LangChain essa tentativa leva ao modelo a resposta recusada e os erros por campo, pedindo correção.
+Uma resposta que não passa na validação do modelo Pydantic, inclusive em validadores próprios, ganha nova tentativa com o mesmo prompt, dentro de `max_retries`.
 
 ## Recursos avançados (quando usar)
 
@@ -249,7 +249,7 @@ Cada reference é independente. Leia apenas quando a tarefa pedir.
 
 | Arquivo | Consulte quando precisar de... |
 |---|---|
-| **`references/api.md`** | Assinatura completa de `dataframeit()`, tipos de entrada, estrutura de retorno, `read_df`/`normalize_value`/`get_complex_fields`, exceções exportadas, tratamento de erros e retry, gotchas críticos |
+| **`references/api.md`** | Assinatura completa de `dataframeit()`, tipos de entrada, estrutura de retorno, `read_df`/`normalize_value`/`get_complex_fields`, exceções, tratamento de erros e retry, gotchas críticos |
 | **`references/pydantic-patterns.md`** | Os 4 padrões de modelo, referência de `json_schema_extra`, operadores condicionais, campo de dificuldade e política de escalação de precisão |
 | **`references/busca-web.md`** | Tavily e Exa, `search_per_field`, `search_groups`, `max_search_calls`, custos, rate limit da busca |
 | **`references/runs-longos.md`** | `parallel_requests`, `rate_limit_delay`, perfis, custo por provedor, resume, `batch_size`/`checkpoint_path`, truncamento de saída, trace |

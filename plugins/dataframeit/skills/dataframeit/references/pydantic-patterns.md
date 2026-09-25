@@ -203,9 +203,9 @@ Nos overrides, só a ausência (`None`) cai no valor global; `max_results=0` ou 
 
 ## Validação e nova tentativa
 
-Validadores próprios (`field_validator`, `model_validator`) valem na extração. Uma resposta que não passa na validação, ou que não é JSON válido, ganha nova tentativa dentro de `max_retries`. Nos providers do LangChain, essa tentativa leva ao modelo a resposta recusada e a lista de erros, cada um com o caminho do campo e o valor recusado, e pede correção. Os tokens das tentativas recusadas entram nas colunas da linha quando uma seguinte dá certo. Se todas falham, a linha fica `'error'` e `_error_details` diz o campo e a regra de cada erro.
+Validadores próprios (`field_validator`, `model_validator`) valem na extração. Uma resposta que não passa na validação, ou que não é JSON válido, ganha nova tentativa com o mesmo prompt, dentro de `max_retries`. Se todas falham, a linha fica `'error'` e a mensagem da validação vai para `_error_details`.
 
-Isso torna validadores um jeito barato de impor regras que `Literal` não expressa (soma de percentuais, datas coerentes), desde que a regra seja clara o bastante para o modelo corrigir.
+Isso torna validadores um jeito barato de impor regras que `Literal` não expressa (soma de percentuais, datas coerentes), desde que a regra esteja clara também na `description` do campo: a nova tentativa repete o mesmo prompt, então o modelo só acerta se a instrução já disser o que a regra exige.
 
 ---
 

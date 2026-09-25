@@ -9,9 +9,8 @@ segue [Semantic Versioning](https://semver.org/).
 Adicionado:
 
 - `dataframeit` (plugin 1.3.0): `max_search_calls` (padrao 10, com override por grupo e por
-  campo), as excecoes `Provider*Error` importaveis de `dataframeit`, o custo do `claude_code` no
-  resumo da execucao e a nova tentativa que leva ao modelo a resposta recusada pela validacao
-  Pydantic e os erros por campo.
+  campo), as excecoes `Provider*Error` de `dataframeit.errors` e o custo do `claude_code` no
+  resumo da execucao.
 
 Alterado:
 

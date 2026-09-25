@@ -293,12 +293,12 @@ Referência oficial: https://brunodcdo.com.br/dataframeit/reference/exceptions/.
 
 **Durante o processamento**, a falha de uma linha não interrompe a execução: a linha recebe status `'error'`, e `_error_details` guarda `[Falhou após N tentativa(s)] Classe: mensagem` ou `[Erro não-recuperável] Classe: mensagem`, o que permite filtrar por classe.
 
-As classes abaixo são importáveis de `dataframeit` (e de `dataframeit.errors`):
+As classes abaixo ficam em `dataframeit.errors`:
 
 ```python
-from dataframeit import (
+from dataframeit.errors import (
     ProviderError, ProviderTransientError, ProviderOverloadedError,
-    ProviderRejectedOutputError, ProviderConfigurationError, ProviderOutputError,
+    ProviderConfigurationError, ProviderOutputError,
 )
 ```
 
@@ -307,7 +307,6 @@ from dataframeit import (
 | `ProviderError` | `RuntimeError` | Não | Erro definitivo do provider, como autenticação recusada ou orçamento do `claude_code` esgotado |
 | `ProviderTransientError` | `ProviderError` | Sim | Falha de rede ou do serviço que costuma passar sozinha |
 | `ProviderOverloadedError` | `ProviderTransientError` | Sim | Sobrecarga ou HTTP 429 |
-| `ProviderRejectedOutputError` | `ProviderTransientError` e `ValueError` | Sim | Resposta recusada pela validação do modelo Pydantic |
 | `ProviderConfigurationError` | `ValueError` | Não (levantada antes) | Configuração local incompatível com o provider |
 | `ProviderOutputError` | `ValueError` | Não | Provider terminou sem resposta utilizável, como um turno do `codex` sem conteúdo |
 
@@ -328,10 +327,8 @@ A classificação usa primeiro o tipo declarado pela LangChain (`is_retryable` d
 | Rate limit (429) | Nova tentativa; no modo paralelo, reduz os workers pela metade a cada 429 (nunca aumenta) |
 | Timeout (408), conflito (409), erro de servidor (5xx) | Nova tentativa |
 | Timeout, conexão ou SSL sem status HTTP | Nova tentativa |
-| Resposta recusada pela validação Pydantic ou JSON inválido | Nova tentativa que leva ao modelo a resposta recusada e os erros por campo (caminho e valor), pedindo correção; nos providers do LangChain |
+| Resposta que não passa na validação Pydantic ou JSON inválido | Nova tentativa com o mesmo prompt |
 | Erro do Tavily ou do Exa (quota, chave, rede) | Interrompe o agente e a linha volta ao ciclo de tentativas |
-
-Na resposta recusada, os tokens das tentativas recusadas entram em `_input_tokens` e `_output_tokens` quando uma tentativa seguinte dá certo, porque também são cobrados. Se todas falham, a linha fica `'error'` e `_error_details` diz o campo e a regra de cada erro.
 
 ### Não recuperáveis (falha imediata)
 
