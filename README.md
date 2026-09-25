@@ -60,9 +60,10 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 ### dataframeit
 
 - Python >= 3.10
-- `pip install dataframeit[openai]`, o provedor padrao (ou outro extra: `[google]`, `[anthropic]`, `[groq]`, `[claude-code]`, `[codex]`)
-- API key do provedor LLM escolhido (OpenAI, Google, Anthropic, Groq, Cohere, Mistral), ou sessao do Claude Code (`provider='claude_code'`), ou login do Codex CLI (`provider='codex'`, experimental)
-- Para busca web: `pip install dataframeit[openai,search]` (Tavily) + `TAVILY_API_KEY`, ou `dataframeit[search-exa]` (Exa) + `EXA_API_KEY`
+- `pip install dataframeit[openai]`, o provedor padrao (ou outro extra: `[google]`, `[anthropic]`, `[groq]`, `[claude-code]`, `[codex]`; `[polars]` e `[excel]` para polars e `.xlsx`)
+- Cohere e Mistral nao tem extra: `pip install dataframeit langchain-cohere` ou `langchain-mistralai`
+- API key do provedor LLM escolhido (OpenAI, Google, Anthropic, Groq, Cohere, Mistral), ou login local do Claude Code (`provider='claude_code'`), ou login do Codex CLI (`provider='codex'`, experimental)
+- Para busca web: `pip install dataframeit[openai,search]` (Tavily) + `TAVILY_API_KEY`, ou `dataframeit[openai,search-exa]` (Exa) + `EXA_API_KEY`
 
 ### openalex
 

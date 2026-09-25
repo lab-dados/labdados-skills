@@ -1,181 +1,158 @@
-# DataFrameIt — Referencia core da API
+# DataFrameIt: referência core da API
 
-Este arquivo cobre apenas o **core da API**: instalacao, assinatura da
-`dataframeit()`, entrada/retorno, funcoes utilitarias, tratamento de
-erros e gotchas criticos.
+Este arquivo cobre só o **core da API**: instalação, assinatura da `dataframeit()`, entrada e retorno, funções utilitárias, exceções, tratamento de erros e gotchas críticos. A referência oficial fica em https://brunodcdo.com.br/dataframeit/reference/api/, e a página de perguntas frequentes em https://brunodcdo.com.br/dataframeit/guides/faq/.
 
-Para topicos especializados, consulte as demais references:
+Para tópicos especializados, consulte as demais references:
 
-| Topico | Arquivo |
+| Tópico | Arquivo |
 |---|---|
 | Desenho do modelo Pydantic, `json_schema_extra`, campos condicionais, self-reflection | `pydantic-patterns.md` |
-| Busca web (Tavily/Exa), `search_per_field`, `search_groups`, custos de busca | `busca-web.md` |
+| Busca web (Tavily/Exa), `search_per_field`, `search_groups`, `max_search_calls`, custos de busca | `busca-web.md` |
 | Paralelismo, `rate_limit_delay`, tokens/custo, resume, `batch_size`/`checkpoint_path`, truncamento, trace | `runs-longos.md` |
 | Workflows de ponta a ponta | `exemplos.md` |
-| Hiperparametros por modelo, modos Claude Code e Codex, §Groq | `modelos-parametros.md` |
+| Hiperparâmetros por modelo, Claude Code e Codex | `modelos-parametros.md` |
 
-## Indice
+## Índice
 
-1. [Instalacao](#instalacao)
-2. [Funcao principal — dataframeit()](#funcao-principal--dataframeit)
-3. [Parametros em detalhe](#parametros-em-detalhe)
+1. [Instalação](#instalação)
+2. [Função principal: dataframeit()](#função-principal-dataframeit)
+3. [Parâmetros em detalhe](#parâmetros-em-detalhe)
 4. [Modelo e temperature](#modelo-e-temperature)
 5. [Tipos de entrada aceitos](#tipos-de-entrada-aceitos)
-6. [Retorno — estrutura do DataFrame](#retorno--estrutura-do-dataframe)
-7. [Funcoes utilitarias](#funcoes-utilitarias)
-8. [Tratamento de erros](#tratamento-de-erros)
-9. [Gotchas criticos](#gotchas-criticos)
+6. [Retorno: estrutura do DataFrame](#retorno-estrutura-do-dataframe)
+7. [Funções utilitárias](#funções-utilitárias)
+8. [Exceções](#exceções)
+9. [Tratamento de erros e retry](#tratamento-de-erros-e-retry)
+10. [Gotchas críticos](#gotchas-críticos)
 
 ---
 
-## Instalacao
+## Instalação
 
 ```bash
-pip install dataframeit[openai]         # OpenAI (provider padrao)
+pip install dataframeit[openai]         # OpenAI (provider padrão)
 pip install dataframeit[google]         # Google Gemini
 pip install dataframeit[anthropic]      # Anthropic
 pip install dataframeit[groq]           # Groq
 pip install dataframeit[claude-code]    # provider='claude_code' (claude-agent-sdk)
 pip install dataframeit[codex]          # provider='codex' (experimental, fora do [all])
-pip install dataframeit[all]            # openai, google, anthropic, groq, claude-code + Tavily, Exa, polars e excel
+pip install dataframeit[all]            # openai, google, anthropic, groq, claude-code, Tavily, Exa, polars e excel
 pip install dataframeit[openai,search]      # OpenAI + busca web com Tavily
 pip install dataframeit[openai,search-exa]  # OpenAI + busca web com Exa
 pip install dataframeit[openai,search-all]  # OpenAI + Tavily e Exa
-pip install dataframeit[openai,polars]  # OpenAI + suporte Polars
-pip install dataframeit[openai,excel]   # OpenAI + leitura/escrita .xlsx via openpyxl
+pip install dataframeit[openai,polars]  # OpenAI + polars (traz pyarrow, para .parquet)
+pip install dataframeit[openai,excel]   # OpenAI + leitura e checkpoint em .xlsx via openpyxl
 
-# Outros provedores do LangChain: instalar o pacote de integracao a parte
+# Outros provedores do LangChain: instalar o pacote de integração à parte
 pip install dataframeit langchain-mistralai   # provider='mistralai'
 pip install dataframeit langchain-cohere      # provider='cohere'
 ```
 
-Nao existem extras `[mistral]` nem `[cohere]`. O pip ignora extra
-inexistente com um aviso e instala o dataframeit sem o pacote de
-integracao, e a falha so aparece na primeira chamada.
+Não existem extras `[mistral]` nem `[cohere]`. O pip ignora extra inexistente com um aviso e instala o dataframeit sem o pacote de integração. Quando falta o extra de um provider que tem extra, a chamada levanta `ImportError` antes de processar, e a mensagem diz o que instalar.
 
-Python >= 3.10 obrigatorio.
+Python >= 3.10 obrigatório.
 
 ---
 
-## Funcao principal — `dataframeit()`
+## Função principal: `dataframeit()`
 
 ```python
 from dataframeit import dataframeit
 
 resultado = dataframeit(
     data,                                # DataFrame | Series | list | dict
-    questions,                           # type[BaseModel] — classe Pydantic (nao instancia)
-    prompt,                              # str — instrucao com placeholder {texto}
-    perguntas=None,                      # deprecated: alias portugues para questions
-    resume=True,                         # bool — processar so linhas sem status
-    reprocess_columns=None,              # list[str] | None — reprocessar apenas colunas especificas
-    model=None,                          # str | None — None usa o modelo padrao do provider
-    provider='openai',                   # str — provedor LLM
-    status_column=None,                  # str | None — nome customizado da coluna de status
-    text_column=None,                    # str | None — coluna de texto (inferida se None)
-    api_key=None,                        # str | None — None=le da variavel de ambiente
-    max_retries=3,                       # int >= 1 — tentativas totais por linha, contando a primeira
-    base_delay=1.0,                      # float — delay inicial (segundos) para backoff exponencial
-    max_delay=30.0,                      # float — delay maximo (segundos) para backoff
-    rate_limit_delay=0.0,                # float — delay entre requisicoes (controle de rate limit)
-    track_tokens=True,                   # bool — adicionar as quatro colunas de tokens
-    model_kwargs=None,                   # dict | None — kwargs extras repassados ao LLM
-    parallel_requests=1,                 # int — workers paralelos (1=sequencial)
-    use_search=False,                    # bool — habilitar busca web
-    search_provider="tavily",            # str — "tavily" | "exa"
-    search_per_field=False,              # bool — busca separada por campo
-    max_results=5,                       # int — max resultados de busca (1-20)
-    search_depth="basic",                # str — "basic" | "advanced"
-    search_groups=None,                  # dict[str, dict] | None — agrupar campos para busca
-    save_trace=None,                     # bool | "full" | "minimal" | None — capturar raciocinio
-    batch_size=None,                     # int | None — tamanho do lote para checkpointing
-    checkpoint_path=None,                # str | Path | None — .csv, .xlsx ou .parquet persistido a cada batch
+    questions,                           # type[BaseModel]: classe Pydantic (não instância)
+    prompt,                              # str: instrução com placeholder {texto}
+    perguntas=None,                      # obsoleto: nome antigo de questions (DeprecationWarning)
+    resume=True,                         # bool: processar só linhas sem status
+    reprocess_columns=None,              # list[str] | None: refazer só essas colunas
+    model=None,                          # str | None: None usa o modelo padrão do provider
+    provider='openai',                   # str: provedor LLM
+    status_column=None,                  # str | None: nome da coluna de status
+    text_column=None,                    # str | None: coluna de texto (inferida se None)
+    api_key=None,                        # str | None: None lê da variável de ambiente
+    max_retries=3,                       # int >= 1: tentativas totais por linha, contando a primeira
+    base_delay=1.0,                      # float: espera antes da primeira nova tentativa (s)
+    max_delay=30.0,                      # float: teto da espera entre tentativas (s)
+    rate_limit_delay=0.0,                # float: pausa de cada worker depois de cada linha bem-sucedida (s)
+    track_tokens=True,                   # bool: colunas de tokens
+    model_kwargs=None,                   # dict | None: kwargs repassados ao cliente do LLM
+    parallel_requests=1,                 # int: workers paralelos (1 = sequencial)
+    use_search=False,                    # bool: habilitar busca web
+    search_provider="tavily",            # str: "tavily" | "exa"
+    search_per_field=False,              # bool: um agente por campo
+    max_results=5,                       # int: resultados por busca (1-20)
+    search_depth="basic",                # str: "basic" | "advanced" (só Tavily)
+    max_search_calls=10,                 # int >= 1: máximo de buscas por execução do agente
+    search_groups=None,                  # dict[str, dict] | None: campos que compartilham um agente
+    save_trace=None,                     # bool | "full" | "minimal" | None: trace do agente (exige busca)
+    batch_size=None,                     # int | None: checkpoint a cada N linhas
+    checkpoint_path=None,                # str | Path | None: .csv, .xlsx ou .parquet
 )
 ```
 
 ---
 
-## Parametros em detalhe
+## Parâmetros em detalhe
 
-| Parametro | Tipo | Default | Descricao |
+| Parâmetro | Tipo | Default | Descrição |
 |---|---|---|---|
-| `data` | DataFrame, Series, list, dict | — | Dados de entrada contendo texto |
-| `questions` | type[BaseModel] | — | Classe Pydantic definindo os campos de saida |
-| `prompt` | str | — | Instrucao para o LLM. Use `{texto}` para referenciar o conteudo da linha |
-| `perguntas` | type[BaseModel] | None | Deprecated. Alias portugues para `questions` |
-| `resume` | bool | **True** | Processa so as linhas sem `_dataframeit_status`. Linhas `"processed"` e `"error"` ficam como estao |
-| `reprocess_columns` | list[str] | None | Reprocessa apenas as colunas listadas |
-| `model` | str | None | Identificador do modelo LLM. Se None, usa o padrao do provider (ver §Modelo e temperature) |
-| `provider` | str | `'openai'` | Nome de provedor do `init_chat_model` do LangChain (`'openai'`, `'google_genai'`, `'anthropic'`, `'groq'`, `'mistralai'`, `'cohere'`, ...), `'claude_code'` ou `'codex'` |
-| `status_column` | str | None | Nome customizado para a coluna de status (padrao: `_dataframeit_status`) |
-| `text_column` | str | None | Coluna do DataFrame a usar como texto. Se None, a biblioteca tenta inferir entre `texto`, `text`, `decisao`, `content`, `content_text`; DataFrames de uma unica coluna usam-na direto; se nao bater, levanta `ValueError` |
-| `api_key` | str | None | API key. Se None, le da variavel de ambiente do provedor |
-| `max_retries` | int | 3 | Tentativas totais por linha, contando a primeira, com backoff exponencial entre elas. Fora de `int >= 1`, `ValueError` |
-| `base_delay` | float | 1.0 | Delay inicial em segundos (dobra a cada tentativa) |
-| `max_delay` | float | 30.0 | Delay maximo em segundos (teto do backoff) |
-| `rate_limit_delay` | float | 0.0 | Delay adicional entre requisicoes em segundos |
-| `track_tokens` | bool | **True** | Adiciona `_input_tokens`, `_cached_input_tokens`, `_output_tokens` e `_reasoning_tokens` ao resultado |
-| `model_kwargs` | dict | None | Kwargs extras repassados ao cliente LangChain do provedor, que so recebe o que vier aqui (ver §Modelo e temperature). Com `'claude_code'`, valem so `effort`, `max_turns` e `max_budget_usd`; com `'codex'`, so `effort` |
-| `parallel_requests` | int | 1 | Numero de workers paralelos |
-| `use_search` | bool | False | Habilita busca web (Tavily ou Exa) |
-| `search_provider` | str | `"tavily"` | `"tavily"` ou `"exa"` |
-| `search_per_field` | bool | False | Executa uma busca separada para cada campo habilitado |
-| `max_results` | int | 5 | Maximo de resultados de busca por consulta (1-20) |
-| `search_depth` | str | `"basic"` | `"basic"` (1 credito) ou `"advanced"` (2 creditos) |
-| `search_groups` | dict[str, dict] | None | Agrupa campos para compartilhar busca (ver `busca-web.md`) |
-| `save_trace` | bool, str, None | None | `None`=desligado, `True` ou `"full"`=completo, `"minimal"`=resumido |
-| `batch_size` | int | None | Tamanho do lote processado antes de cada checkpoint. Requer `checkpoint_path` |
-| `checkpoint_path` | str \| Path | None | Arquivo onde o progresso parcial e persistido a cada `batch_size` linhas. Formato pela extensao: `.csv`, `.xlsx` (requer `[excel]`) ou `.parquet` (requer `pyarrow`). Usar junto com `batch_size`, senao `ValueError` |
+| `data` | DataFrame, Series, list, dict | obrigatório | Dados de entrada com o texto |
+| `questions` | type[BaseModel] | obrigatório | Classe Pydantic que define os campos de saída |
+| `prompt` | str | obrigatório | Instrução para o LLM. Use `{texto}` para posicionar o conteúdo da linha |
+| `perguntas` | type[BaseModel] | None | Nome obsoleto de `questions`; emite `DeprecationWarning` |
+| `resume` | bool | **True** | Com `True`, processa só as linhas sem status e preserva as `'processed'` e as `'error'`. Com `False`, processa toda linha que não esteja `'processed'`; se as colunas do modelo já existirem e `reprocess_columns` não vier, emite aviso e devolve os dados sem processar |
+| `reprocess_columns` | list[str] | None | Refaz só as colunas listadas, inclusive em linhas já processadas; ao retomar com modelo alterado, deve cobrir os campos incompatíveis |
+| `model` | str | None | Modelo LLM. Se None, usa o padrão do provider (ver §Modelo e temperature) |
+| `provider` | str | `'openai'` | Nome de provedor do `init_chat_model` do LangChain (`'openai'`, `'google_genai'`, `'anthropic'`, `'groq'`, `'mistralai'`, `'cohere'` ...), `'claude_code'` ou `'codex'` |
+| `status_column` | str | None | Nome da coluna de status (padrão `_dataframeit_status`) |
+| `text_column` | str | None | Coluna de texto. Se None, infere entre `texto`, `text`, `decisao`, `content`, `content_text`; DataFrame de uma coluna usa-a direto; sem candidato, `ValueError` |
+| `api_key` | str | None | API key. Se None, lê da variável de ambiente do provedor. Recusada com `'codex'`, ignorada com `'claude_code'` |
+| `max_retries` | int | 3 | Tentativas totais por linha, contando a primeira. Fora de `int >= 1`, `ValueError` |
+| `base_delay` | float | 1.0 | Espera antes da primeira nova tentativa, em segundos; dobra a cada tentativa |
+| `max_delay` | float | 30.0 | Teto da espera entre tentativas, em segundos |
+| `rate_limit_delay` | float | 0.0 | Pausa de cada worker depois de cada linha bem-sucedida, em segundos. Taxa máxima: `parallel_requests × 60 / rate_limit_delay` por minuto |
+| `track_tokens` | bool | **True** | Adiciona `_input_tokens`, `_cached_input_tokens`, `_output_tokens` e `_reasoning_tokens` |
+| `model_kwargs` | dict | None | Repassado ao cliente LangChain do provedor, que só recebe o que vier aqui. Com `'claude_code'`, só `effort`, `max_turns` e `max_budget_usd` são lidos, e o resto é ignorado; com `'codex'`, só `effort` é aceito, e outra chave levanta erro |
+| `parallel_requests` | int | 1 | Número de workers paralelos |
+| `use_search` | bool | False | Habilita busca web. Não suportado com `'claude_code'` nem `'codex'` |
+| `search_provider` | str | `"tavily"` | `"tavily"` (`TAVILY_API_KEY`) ou `"exa"` (`EXA_API_KEY`) |
+| `search_per_field` | bool | False | Um agente por campo; exigido por `condition`, `search_groups` e configuração por campo |
+| `max_results` | int | 5 | Resultados por busca (1-20) |
+| `search_depth` | str | `"basic"` | `"basic"` (1 crédito) ou `"advanced"` (2 créditos); só Tavily |
+| `max_search_calls` | int | 10 | Máximo de buscas por execução do agente; as seguintes são bloqueadas e o agente responde com o que encontrou. Aceita override por grupo e por campo |
+| `search_groups` | dict[str, dict] | None | Campos que compartilham um agente (ver `busca-web.md`) |
+| `save_trace` | bool, str, None | None | `None` desligado, `True` ou `"full"` completo, `"minimal"` resumido. Exige `use_search=True` |
+| `batch_size` | int | None | Grava o checkpoint a cada N linhas. Exige `checkpoint_path` |
+| `checkpoint_path` | str \| Path | None | Arquivo do checkpoint; o formato vem da extensão: `.csv`, `.xlsx` (extra `[excel]`) ou `.parquet` (`pyarrow`). `batch_size` e `checkpoint_path` vão juntos, senão `ValueError` |
 
-Para orientacoes de `model_kwargs` por modelo (quais parametros aceita,
-quais nao), veja `modelos-parametros.md`.
+Para `model_kwargs` por modelo (o que cada um aceita), veja `modelos-parametros.md`.
 
 ---
 
 ## Modelo e temperature
 
-Sem `model`, cada provider usa o proprio modelo padrao, definido em
-`DEFAULT_MODELS` (`dataframeit.core`):
-
-| `provider` | Modelo padrao |
-|---|---|
-| `'openai'` (padrao) | `gpt-6-luna` |
-| `'google_genai'` | `gemini-3.8-flash` |
-| `'anthropic'` | `claude-sonnet-5` |
-| `'groq'` | `openai/gpt-oss-120b` |
-
-Provider fora dessa tabela (`'mistralai'`, `'cohere'`, `'google_vertexai'`,
-`'bedrock_converse'`, `'azure_openai'` etc.) exige `model=`; sem ele, a
-chamada levanta `ValueError` antes de processar qualquer linha. Com
-`'claude_code'` e `'codex'`, `model=None` deixa o runtime de cada um
-escolher o modelo.
+Sem `model`, cada provider usa o próprio modelo padrão, definido em `DEFAULT_MODELS`. Para ver os valores da versão instalada:
 
 ```python
-resultado = dataframeit(df, Modelo, prompt)                          # openai, gpt-6-luna
-resultado = dataframeit(df, Modelo, prompt, provider='anthropic')     # claude-sonnet-5
+from dataframeit.core import DEFAULT_MODELS
+print(DEFAULT_MODELS)   # ex.: {'openai': 'gpt-6-luna', 'anthropic': 'claude-sonnet-5', ...}
+```
+
+A tabela com o padrão e os modelos atuais de cada provider está em https://brunodcdo.com.br/dataframeit/guides/providers/. Provider fora de `DEFAULT_MODELS` (`'mistralai'`, `'cohere'`, `'google_vertexai'`, `'bedrock_converse'`, `'azure_openai'` etc.) exige `model=`; sem ele, a chamada levanta `ValueError` antes de processar qualquer linha. Com `'claude_code'` e `'codex'`, `model=None` deixa o runtime de cada um escolher.
+
+```python
+resultado = dataframeit(df, Modelo, prompt)                          # openai, modelo padrão
 resultado = dataframeit(df, Modelo, prompt, provider='anthropic', model='claude-haiku-4-5')
 resultado = dataframeit(df, Modelo, prompt, provider='mistralai', model='mistral-small-latest')
 ```
 
-O modelo padrao nem sempre e o indicado para extracao: o `claude-sonnet-5`
-nao e modelo pequeno, e o `gpt-6-luna` vem com raciocinio ligado. Em
-pipeline de pesquisa, passe `model=` explicitamente e registre-o.
+O modelo padrão nem sempre é o indicado para extração: o da Anthropic não é modelo pequeno, e o da OpenAI vem com raciocínio ligado. Em pipeline de pesquisa, passe `model=` explicitamente e registre-o.
 
-Nos provedores via LangChain, o dataframeit nao envia parametro de
-amostragem: o cliente recebe so `model_provider`, a `api_key` (quando
-houver) e o que vier em `model_kwargs`. Duas consequencias:
+Nos provedores via LangChain, o dataframeit não envia parâmetro de amostragem: o cliente recebe só `model_provider`, a `api_key` (quando houver) e o que vier em `model_kwargs`. Duas consequências:
 
-- Modelo que nao aceita `temperature` (ex.: Claude Sonnet 5, Opus 4.7
-  ou mais novo, OpenAI GPT-6 com raciocinio ligado, OpenAI o1/o3,
-  Gemini 3.5 Flash-Lite e 3.6 ou mais novo) funciona sem ajuste. Nao passe `temperature`
-  em `model_kwargs` para esses modelos: no Claude e na GPT-6 com
-  raciocinio, a chamada volta com erro 400.
-- Para determinismo, passe `temperature` (e `seed`, quando existir)
-  explicitamente nos modelos que aceitam. Sem isso, vale o default do
-  provedor, em geral maior que 0.
-
-Nomes de modelo e parametros aceitos por familia estao em
-`modelos-parametros.md`.
+- Modelo que não aceita `temperature` (ex.: Claude Sonnet 5 e Opus mais novos, GPT-6 com raciocínio ligado, série o, Gemini 3.5 Flash-Lite e 3.6 Flash ou mais novo) funciona sem ajuste. Não passe `temperature` a esses modelos: no Claude e na GPT-6 com raciocínio, a chamada volta com erro 400, que não ganha nova tentativa.
+- Para determinismo, passe `temperature` (e `seed`, quando existir) explicitamente nos modelos que aceitam. Sem isso, vale o default do provedor, em geral maior que 0.
 
 ---
 
@@ -189,252 +166,225 @@ from dataframeit import dataframeit
 df = pd.DataFrame({"texto": ["texto 1", "texto 2"]})
 resultado = dataframeit(df, Modelo, "Analise: {texto}")
 
-# Series
-s = pd.Series(["texto 1", "texto 2"], name="texto")
+# Series (preserva o índice)
+s = pd.Series(["texto 1", "texto 2"], index=["x", "y"])
 resultado = dataframeit(s, Modelo, "Analise: {texto}")
 
-# Lista de strings
+# Lista de strings (DataFrame com índice numérico)
 resultado = dataframeit(["texto 1", "texto 2"], Modelo, "Analise: {texto}")
 
-# Lista de dicts
-resultado = dataframeit(
-    [{"texto": "t1", "autor": "a1"}],
-    Modelo,
-    "Analise: {texto}"
-)
-
-# Dict unico
-resultado = dataframeit({"texto": "meu texto"}, Modelo, "Analise: {texto}")
+# Dict (as chaves viram índice)
+resultado = dataframeit({"id1": "texto 1", "id2": "texto 2"}, Modelo, "Analise: {texto}")
 ```
 
-**`text_column`**: Se `text_column=None` (padrao), o `dataframeit`
-infere automaticamente:
+| Entrada | Saída |
+|---|---|
+| `pd.DataFrame` | `pd.DataFrame` |
+| `pl.DataFrame` | `pl.DataFrame` (extra `[polars]`) |
+| `pd.Series` | `pd.DataFrame` preservando o índice |
+| `pl.Series` | `pl.DataFrame` |
+| `list` | `pd.DataFrame` com índice numérico |
+| `dict` | `pd.DataFrame` com as chaves como índice |
 
-1. DataFrames de uma unica coluna usam-na direto.
-2. DataFrames com multiplas colunas procuram, nessa ordem: `texto`,
-   `text`, `decisao`, `content`, `content_text`.
-3. Se nenhum candidato bater, a chamada levanta `ValueError` — nao
-   ha risco de a biblioteca usar silenciosamente uma coluna arbitraria.
+**`text_column`**: com `text_column=None` (padrão), a inferência segue esta ordem:
 
-Mesmo com inferencia, passe `text_column='nome_da_coluna'` em pipelines
-de producao sempre que a coluna nao estiver entre os candidatos default
-(ex: `ementa`, `acordao`, `mensagem`) — torna o contrato do pipeline
-explicito.
+1. DataFrame de uma única coluna usa-a direto.
+2. DataFrame com várias colunas procura, nessa ordem: `texto`, `text`, `decisao`, `content`, `content_text`.
+3. Sem candidato, a chamada levanta `ValueError`.
+
+Mesmo com inferência, passe `text_column='nome_da_coluna'` em pipelines de produção sempre que a coluna não estiver entre os candidatos (ex.: `ementa`, `acordao`, `mensagem`).
+
+Validações antes do processamento, todas com `ValueError`: índice com rótulos repetidos (o resultado de uma linha seria gravado em outra) e campo do modelo com o mesmo nome da coluna de texto (a resposta sobrescreveria o texto).
 
 ---
 
-## Retorno — estrutura do DataFrame
+## Retorno: estrutura do DataFrame
 
-A funcao retorna os dados no mesmo formato da entrada (DataFrame,
-Series, list ou dict) com as colunas originais + campos extraidos +
-colunas de controle:
+A função devolve os dados no formato da tabela acima, com as colunas originais, os campos extraídos e as colunas de controle:
 
-| Coluna | Tipo | Quando aparece | Descricao |
+| Coluna | Tipo | Quando aparece | Descrição |
 |---|---|---|---|
-| `<campos do modelo>` | conforme Pydantic | sempre | Valores extraidos pelo LLM |
-| `_dataframeit_status` | str | **apenas se houver erros** | `"processed"` ou `"error"`. **IMPORTANTE**: quando todas as linhas processam com sucesso, a biblioteca remove essa coluna (e `_error_details`) do DataFrame retornado. Use `df.get("_dataframeit_status", pd.Series(dtype=str))` para checar com seguranca. |
-| `_error_details` | str \| None | **apenas se houver erros** | Mensagem de erro — removida junto com `_dataframeit_status` quando nao ha erros. |
-| `_input_tokens` | int | `track_tokens=True` (padrao) | Tokens de entrada consumidos, incluindo os lidos de cache |
-| `_cached_input_tokens` | int | `track_tokens=True` (padrao) | Parcela de `_input_tokens` lida do cache do provedor. Ja contida em `_input_tokens`. `0` ou nulo quando o provedor nao informa |
-| `_output_tokens` | int | `track_tokens=True` (padrao) | Tokens de saida consumidos |
-| `_reasoning_tokens` | int | `track_tokens=True` (padrao) | Tokens de raciocinio "invisiveis" consumidos por reasoning models (o1/o3, GPT-5 raciocinio, Claude adaptive thinking). Ja contidos em `_output_tokens`. Vale `0` para modelos nao-raciocinio. |
-| `_search_credits` | int | `use_search=True` | Creditos do provedor de busca consumidos na linha (ver `busca-web.md`) |
+| `<campos do modelo>` | conforme Pydantic | sempre | Valores extraídos pelo LLM |
+| `_dataframeit_status` (ou o nome em `status_column`) | str | ver nota | `'processed'`, `'error'` ou `None` (linha ainda não processada) |
+| `_error_details` | str \| None | ver nota | Mensagem do erro; numa linha que deu certo depois de novas tentativas, `"Sucesso após N retry(s)"`; numa linha com texto vazio, `"Texto ausente"` |
+| `_input_tokens` | int | `track_tokens=True` (padrão) | Tokens de entrada, incluindo os lidos de cache |
+| `_cached_input_tokens` | int | `track_tokens=True` (padrão) | Parcela de `_input_tokens` lida do cache |
+| `_output_tokens` | int | `track_tokens=True` (padrão) | Tokens de saída |
+| `_reasoning_tokens` | int | `track_tokens=True` (padrão) | Parcela de `_output_tokens` usada em raciocínio; `0` em modelos sem raciocínio |
+| `_search_credits` | int | `use_search=True` | Créditos de busca gastos na linha (ver `busca-web.md`) |
+| `_trace`, `_trace_{campo}`, `_trace_{grupo}` | str (JSON) | `save_trace` definido | Trace do agente |
 
-Nao existe uma coluna `_total_tokens` agregada. Para o total, some
-`_input_tokens + _output_tokens`; `_reasoning_tokens` ja esta contido em `_output_tokens` (o resumo impresso pelo dataframeit mostra "incluido no Output"), e `_cached_input_tokens`, em `_input_tokens`.
-O contador interno de buscas (`_search_count`) tambem nao aparece no
-DataFrame; roda por tras para alimentar os warnings de rate limit do
-provedor de busca.
+**Nota sobre as colunas de status**: quando nenhuma linha termina com erro e nenhuma registra detalhe, `_dataframeit_status` e `_error_details` são removidas da saída. Antes de filtrar, confira se a coluna existe:
 
-Para calculo de custo por provedor a partir dessas colunas, veja
-`runs-longos.md`.
+```python
+if '_dataframeit_status' in resultado.columns:
+    erros = resultado[resultado['_dataframeit_status'] == 'error']
+```
+
+Linhas com texto ausente (`None`, `NaN` ou só espaços) não vão ao LLM: ficam com status `'error'` e detalhe `"Texto ausente"`, e um aviso diz quantas são.
+
+As colunas de token existem em todos os providers. Ficam nulas quando o provider não informa uso; quando ele informa o total mas não cache ou raciocínio, a parcela fica em zero. Não existe coluna `_total_tokens`: some `_input_tokens + _output_tokens`, sem somar de novo `_reasoning_tokens` nem `_cached_input_tokens`, que são parcelas. Cálculo de custo em `runs-longos.md`.
 
 ---
 
-## Funcoes utilitarias
+## Funções utilitárias
 
 ### read_df
 
-Carrega DataFrames de diversos formatos com normalizacao automatica de
-JSON:
+Lê `.csv`, `.xlsx`/`.xls`, `.json` e `.parquet` e devolve às estruturas originais as listas, dicts e modelos aninhados gravados como JSON (ou como repr Python, em arquivos antigos). É a forma de recarregar um checkpoint ou uma saída salva para retomar com `resume=True`.
 
 ```python
 from dataframeit import read_df
 
 df = read_df('dados.csv')
-df = read_df('dados.xlsx')         # requer pip install dataframeit[excel]
-df = read_df('dados.parquet')
-df = read_df('dados.json')
-
-# Com modelo Pydantic para guiar normalizacao de campos complexos
-df = read_df('dados.json', model=MeuModelo)
-
-# Sem normalizacao automatica
-df = read_df('dados.csv', normalize=False)
-
-# Kwargs extras sao repassados ao pandas
-df = read_df('dados.csv', encoding='latin1', sep=';')
+df = read_df('dados.xlsx')              # requer o extra [excel]
+df = read_df('parcial.parquet', MeuModelo)   # com o modelo: forma recomendada para retomar
+df = read_df('dados.csv', normalize=False)   # sem converter nenhuma coluna
+df = read_df('dados.csv', encoding='latin1', sep=';')   # kwargs vão ao pandas
 ```
 
-**Assinatura**:
 ```python
 def read_df(path: str, model=None, normalize: bool = True, **kwargs) -> pd.DataFrame
 ```
 
+Com `model`, só os campos de estrutura são normalizados, e em `.csv`/`.xlsx` os campos de texto são lidos como texto cru: `"2023"` não vira número e `"N/A"` não vira ausência. Passar `dtype`, `converters`, `na_values`, `keep_default_na`, `na_filter` ou `usecols` desliga essa leitura. CSV e XLSX gravam `""` e ausência do mesmo jeito; para guardar a diferença, use checkpoint `.parquet`.
+
 ### normalize_value
 
-Converte strings JSON de volta para objetos Python:
+Converte em estrutura Python um valor gravado como texto:
 
 ```python
 from dataframeit import normalize_value
 
-normalize_value('["a", "b"]')       # → ['a', 'b']
-normalize_value('{"k": "v"}')       # → {'k': 'v'}
-normalize_value('texto simples')    # → 'texto simples' (sem alteracao)
+normalize_value('["a", "b"]')       # ['a', 'b']
+normalize_value("['a', 'b']")       # ['a', 'b'] (literal Python, sem executar código)
+normalize_value('{"k": "v"}')       # {'k': 'v'}
+normalize_value('texto simples')    # 'texto simples' (inalterado)
 ```
 
-### normalize_complex_columns
+### normalize_complex_columns e get_complex_fields
 
-Normaliza colunas com tipos complexos (listas, dicts) em um DataFrame
-inteiro:
+`get_complex_fields(Modelo)` devolve o conjunto de campos cujo tipo é `list`, `dict`, `tuple` ou modelo aninhado, inclusive dentro de `Optional` e `Union`. `normalize_complex_columns(df, campos)` aplica `normalize_value` a essas colunas, no lugar, e ignora as ausentes.
 
 ```python
-from dataframeit import normalize_complex_columns, get_complex_fields
+from dataframeit import get_complex_fields, normalize_complex_columns, read_df
 
-campos_complexos = get_complex_fields(MeuModelo)
-normalize_complex_columns(df, campos_complexos)  # modifica in-place
+df = read_df('saida.csv')
+normalize_complex_columns(df, get_complex_fields(MeuModelo))
 ```
 
-### get_complex_fields
+`read_df(path, model=MeuModelo)` faz essa normalização sozinho.
 
-Identifica campos com tipos complexos em um modelo Pydantic:
-
-```python
-from dataframeit import get_complex_fields
-
-class MeuModelo(BaseModel):
-    nome: str
-    tags: list[str]
-    endereco: dict
-
-campos = get_complex_fields(MeuModelo)
-# → {'tags', 'endereco'}
-```
+A versão instalada fica em `dataframeit.__version__`.
 
 ---
 
-## Tratamento de erros
+## Exceções
 
-A classificacao usa primeiro o status HTTP que a excecao (ou a causa
-dela) declara em `status_code`, `code`, `http_status` ou
-`response.status_code`. So quando nao ha status, ela olha o nome e a
-mensagem do erro.
+Referência oficial: https://brunodcdo.com.br/dataframeit/reference/exceptions/.
 
-### Erros recuperaveis (retentados automaticamente)
+**Antes do processamento**, a configuração é validada e um problema interrompe a execução sem processar nenhuma linha:
 
-| Erro | Causa | Acao do dataframeit |
-|---|---|---|
-| Rate limit (429) | Muitas requisicoes | Retry com backoff exponencial; no modo paralelo, reduz os workers |
-| Timeout (408) e conflito (409) | Provedor lento ou requisicao concorrente | Retry com backoff |
-| Erro de servidor (5xx) | Instabilidade do provedor | Retry com backoff |
-| Timeout, erro de conexao ou SSL sem status HTTP | Rede instavel | Retry com backoff |
+| Exceção | Quando ocorre |
+|---|---|
+| `ImportError` | Falta o extra do provider ou do provedor de busca; a mensagem diz qual instalar |
+| `ValueError` | Parâmetro inválido: `questions` ou `prompt` ausentes, `max_retries < 1`, `batch_size` sem `checkpoint_path`, `search_groups` sem `search_per_field=True`, `condition` fora do modo por campo, dependência circular ou campo inexistente em `condition`, chave de API de busca ausente, linhas já processadas incompatíveis com o modelo atual |
+| `ProviderConfigurationError` | Configuração incompatível com o provider, como `model_kwargs` que o `codex` não aceita ou schema Pydantic que ele não representa. Subclasse de `ValueError` |
 
-### Erros nao recuperaveis (falha imediata)
+**Durante o processamento**, a falha de uma linha não interrompe a execução: a linha recebe status `'error'`, e `_error_details` guarda `[Falhou após N tentativa(s)] Classe: mensagem` ou `[Erro não-recuperável] Classe: mensagem`, o que permite filtrar por classe.
 
-Todo 4xx fora de 408, 409 e 429 falha na hora, sem retry:
+As classes abaixo são importáveis de `dataframeit` (e de `dataframeit.errors`):
 
-| Erro | Causa | Remedio |
-|---|---|---|
-| `AuthenticationError` (401) | API key incorreta ou ausente | Verificar variavel de ambiente |
-| `PermissionDenied` (403) | Key sem permissao | Verificar permissoes da key no painel do provedor |
-| Modelo inexistente (404) | Nome de modelo errado ou aposentado | Conferir o ID na pagina do provedor |
-| Requisicao invalida (400, 422) | Parametro que o modelo rejeita, como `temperature` num modelo de raciocinio | Corrigir `model_kwargs` |
+```python
+from dataframeit import (
+    ProviderError, ProviderTransientError, ProviderOverloadedError,
+    ProviderRejectedOutputError, ProviderConfigurationError, ProviderOutputError,
+)
+```
 
-Erro sem status HTTP e sem padrao conhecido no nome ou na mensagem,
-como uma resposta que nao valida contra o modelo Pydantic, e tratado
-como recuperavel e passa pelos retries.
+| Exceção | Base | Nova tentativa | Situação típica |
+|---|---|---|---|
+| `ProviderError` | `RuntimeError` | Não | Erro definitivo do provider, como autenticação recusada ou orçamento do `claude_code` esgotado |
+| `ProviderTransientError` | `ProviderError` | Sim | Falha de rede ou do serviço que costuma passar sozinha |
+| `ProviderOverloadedError` | `ProviderTransientError` | Sim | Sobrecarga ou HTTP 429 |
+| `ProviderRejectedOutputError` | `ProviderTransientError` e `ValueError` | Sim | Resposta recusada pela validação do modelo Pydantic |
+| `ProviderConfigurationError` | `ValueError` | Não (levantada antes) | Configuração local incompatível com o provider |
+| `ProviderOutputError` | `ValueError` | Não | Provider terminou sem resposta utilizável, como um turno do `codex` sem conteúdo |
+
+Erros dos providers via LangChain, em geral, não usam essas classes: são classificados pelo tipo que a LangChain declara, pelo status HTTP e pela mensagem (próxima seção).
+
+---
+
+## Tratamento de erros e retry
+
+Referência oficial: https://brunodcdo.com.br/dataframeit/guides/error-handling/.
+
+A classificação usa primeiro o tipo declarado pela LangChain (`is_retryable` do `ModelError`, com `langchain-core` recente) e o status HTTP que a exceção ou a causa dela declara (`status_code`, `code`, `http_status`, `response.status_code`). Sem status, olha o nome e a mensagem, e um código só conta como número isolado ("4015 tokens" não é 401).
+
+### Recuperáveis (novas tentativas com backoff)
+
+| Erro | Ação do dataframeit |
+|---|---|
+| Rate limit (429) | Nova tentativa; no modo paralelo, reduz os workers pela metade a cada 429 (nunca aumenta) |
+| Timeout (408), conflito (409), erro de servidor (5xx) | Nova tentativa |
+| Timeout, conexão ou SSL sem status HTTP | Nova tentativa |
+| Resposta recusada pela validação Pydantic ou JSON inválido | Nova tentativa que leva ao modelo a resposta recusada e os erros por campo (caminho e valor), pedindo correção; nos providers do LangChain |
+| Erro do Tavily ou do Exa (quota, chave, rede) | Interrompe o agente e a linha volta ao ciclo de tentativas |
+
+Na resposta recusada, os tokens das tentativas recusadas entram em `_input_tokens` e `_output_tokens` quando uma tentativa seguinte dá certo, porque também são cobrados. Se todas falham, a linha fica `'error'` e `_error_details` diz o campo e a regra de cada erro.
+
+### Não recuperáveis (falha imediata)
+
+| Erro | Remédio |
+|---|---|
+| Autenticação (401) ou permissão (403) | Conferir a variável de ambiente no mesmo processo; todas as linhas terminam `'error'` |
+| Modelo inexistente (404) | Conferir o ID na página do provedor |
+| Requisição inválida (400, 422, `BadRequestError`, `InvalidArgument`) | Corrigir `model_kwargs`, ex.: `temperature` num modelo de raciocínio |
+| Prompt maior que a janela de contexto (`ContextOverflowError`) | Encurtar o texto ou trocar de modelo |
+| Orçamento (`max_budget_usd`) ou turnos (`max_turns`) do `claude_code` esgotados | Aumentar o teto em `model_kwargs` |
 
 ### Backoff exponencial
 
-A sequencia de retries segue: `base_delay * (2 ^ tentativa)` com jitter
-aleatorio, limitada por `max_delay`.
+A espera antes da tentativa `n + 1` é `min(base_delay × 2^(n-1), max_delay)`, com até 10% de variação aleatória para que workers paralelos não repitam a chamada no mesmo instante. Com os defaults (`base_delay=1.0`, `max_delay=30.0`, `max_retries=3`), são três tentativas e duas esperas:
 
-Com defaults (`base_delay=1.0`, `max_delay=30.0`, `max_retries=3`), sao
-tres tentativas e duas esperas:
-- Depois da 1a falha: ~1s
-- Depois da 2a falha: ~2s
-- A 3a falha encerra a linha com status `"error"`
+- depois da 1ª falha: ~1s;
+- depois da 2ª falha: ~2s;
+- a 3ª falha encerra a linha com status `'error'`.
 
-Para ajustar o comportamento em runs longos, veja `runs-longos.md §Rate
-limiting`.
+Para runs longos, veja `runs-longos.md §Rate limiting`.
 
 ---
 
-## Gotchas criticos
+## Gotchas críticos
 
-1. **Passe a classe Pydantic, nao uma instancia** — `dataframeit(df, Modelo, ...)`
-   nao `dataframeit(df, Modelo(), ...)`. Passar instancia levanta erro.
+1. **Passe a classe Pydantic, não uma instância**: `dataframeit(df, Modelo, ...)`, não `dataframeit(df, Modelo(), ...)`.
 
-2. **`Optional[str]` vs `str`** — Use `Optional` para campos que podem
-   nao existir no texto. Campos obrigatorios (`str`) forcam o LLM a
-   inventar um valor se nao encontrar.
+2. **`Optional[str]` vs `str`**: use `Optional` para campos que podem não existir no texto. Campo obrigatório força o LLM a inventar um valor.
 
-3. **`Field(description=...)` e o investimento mais barato** — Uma boa
-   descricao reduz erros de extracao mais do que trocar de provedor ou
-   aumentar o modelo. Ver `pydantic-patterns.md`.
+3. **`Field(description=...)` é o investimento mais barato**: uma boa descrição reduz mais erros que trocar de provedor. Ver `pydantic-patterns.md`.
 
-4. **`resume=True` e o padrao** — Na primeira execucao funciona
-   normalmente (nao ha `_dataframeit_status` para pular). Em execucoes
-   subsequentes, processa so as linhas sem status: as `"processed"` e
-   as `"error"` ficam como estao. Para re-tentar um erro, limpe o
-   status dessa linha (ver `runs-longos.md §Reprocessar linhas com erro`).
+4. **`resume=True` é o padrão**: processa só as linhas sem status; `'processed'` e `'error'` ficam como estão. Para refazer um erro, limpe o status da linha (ver `runs-longos.md §Reprocessar linhas com erro`). Rodar de novo sobre uma saída sem erros, que não tem coluna de status, reprocessa todas as linhas e emite aviso.
 
-5. **`reprocess_columns` nao reprocessa a linha inteira** — Apenas os
-   campos especificados. Os demais campos extraidos anteriormente sao
-   mantidos.
+5. **`reprocess_columns` não refaz a linha inteira**: só os campos pedidos, e os demais são mantidos.
 
-6. **`search_groups` reduz chamadas de busca** — Sem grupos, cada campo
-   `search_enabled` dispara uma busca separada por linha. Com grupos,
-   campos do mesmo grupo compartilham uma unica busca. Configure sempre
-   que tiver 2+ campos com busca. Ver `busca-web.md`.
+6. **Colunas de status podem não existir**: sem erro nem detalhe, a saída não tem `_dataframeit_status` nem `_error_details`. Filtrar direto dá `KeyError`; confira `'_dataframeit_status' in resultado.columns`.
 
-7. **`save_trace=True` gera dados volumosos** — Para datasets grandes,
-   use primeiro com uma amostra pequena (`df.head(5)`) para validar a
-   extracao.
+7. **`search_groups` reduz agentes de busca**: sem grupos, `search_per_field=True` cria um agente por campo e por linha, cada um com até `max_search_calls` buscas. Ver `busca-web.md`.
 
-8. **`parallel_requests` nao escala ilimitado** — Acima de ~10 workers,
-   a maioria dos provedores retorna 429. Comece com `parallel_requests=1`
-   (padrao) e aumente conforme necessario. Ver `runs-longos.md`.
+8. **`save_trace` exige busca e gera dados volumosos**: sem `use_search=True`, `ValueError`. Valide primeiro numa amostra (`df.head(5)`).
 
-9. **Campos condicionais exigem busca por campo** — `condition` e
-   `depends_on` so funcionam com `use_search=True,
-   search_per_field=True`, com ou sem `search_groups`. Fora desse
-   modo, a chamada levanta `ValueError`. Nele, a ordem de declaracao no
-   modelo nao importa: a biblioteca ordena os campos (e os grupos)
-   pelas dependencias. Ver `pydantic-patterns.md §Padrao 4`.
+9. **`parallel_requests` não escala sem limite**: acima de ~10 workers, a maioria dos provedores devolve 429. Comece baixo. Ver `runs-longos.md`.
 
-10. **`provider=` e case-sensitive** — `'Google'` falha. Use minusculas:
-    `'openai'`, `'google_genai'`, `'anthropic'`, `'groq'`, `'mistralai'`
-    (nao `'mistral'`), `'cohere'`, `'claude_code'`, `'codex'`.
+10. **Campos condicionais exigem busca por campo**: `condition` e `depends_on` só funcionam com `use_search=True, search_per_field=True`, com ou sem `search_groups`; fora desse modo, `ValueError`. Em campo de modelo aninhado ou item de lista, `ValueError` em qualquer modo. Ver `pydantic-patterns.md §Padrão 4`.
 
-11. **`model=` e o LLM, nao o Pydantic** — O parametro `model` define
-    qual modelo de linguagem usar (ex: `'gpt-6-luna'`). O
-    modelo Pydantic e passado como `questions` (segundo argumento
-    posicional).
+11. **`provider=` diferencia maiúsculas**: `'Google'` falha. Use `'openai'`, `'google_genai'`, `'anthropic'`, `'groq'`, `'mistralai'` (não `'mistral'`), `'cohere'`, `'claude_code'`, `'codex'`.
 
-12. **`{texto}` marca onde entra o texto** — O placeholder `{texto}` no
-    prompt e substituido pelo conteudo da linha. Sem ele, a biblioteca
-    acrescenta `"Texto a analisar:\n{texto}"` ao fim do prompt. Use o
-    placeholder quando o texto precisa ficar no meio da instrucao.
+12. **`model=` é o LLM, não o Pydantic**: o modelo Pydantic é o segundo argumento posicional (`questions`).
 
-13. **Polars requer extra** — `pip install dataframeit[polars]`. Sem o
-    extra, passar um Polars DataFrame levanta `ImportError`.
+13. **`{texto}` marca onde entra o texto**: sem o placeholder, a biblioteca acrescenta `"Texto a analisar:\n{texto}"` ao fim do prompt. O mesmo vale para `prompt` por campo.
 
-14. **`perguntas` e alias deprecated de `questions`** — Ambos aceitam a
-    classe Pydantic, mas prefira `questions`. Se os dois vierem, vale
-    `questions` e `perguntas` e ignorado.
+14. **Polars requer extra**: `pip install dataframeit[polars]`; sem ele, passar um DataFrame polars levanta `ImportError`.
 
-15. **`track_tokens=True` e o padrao** — As colunas `_input_tokens`,
-    `_cached_input_tokens`, `_output_tokens` e `_reasoning_tokens` ja aparecem sem configuracao
-    adicional. Para desabilitar, passe
-    `track_tokens=False` explicitamente.
+15. **`perguntas` é nome obsoleto de `questions`**: emite `DeprecationWarning`; se os dois vierem, vale `questions`.
+
+16. **`track_tokens=True` é o padrão**: as quatro colunas de tokens já aparecem; para desligar, `track_tokens=False`.
