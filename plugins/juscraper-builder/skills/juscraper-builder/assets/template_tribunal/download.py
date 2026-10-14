@@ -51,7 +51,8 @@ def build_cjsg_payload(inp: InputCJSGTJXX, pagina: int = 1) -> dict:
     payload: dict = {"texto": inp.pesquisa, "pagina": pagina, "tamanho": RESULTS_PER_PAGE}
     for campo, chave in CAMPOS_BACKEND.items():
         valor = getattr(inp, campo)
-        if valor:
+        # ``is not None``, e não verdade: filtro com valor 0 ou False é filtro.
+        if valor is not None:
             payload[chave] = valor
     return payload
 
@@ -80,8 +81,9 @@ def cjsg_download_manager(
         list: Uma resposta JSON por página baixada.
     """
     def _baixar(pagina: int) -> dict:
-        # TODO: GET com ``params=`` ou POST com ``data=`` conforme o site.
-        resp = request_fn("POST", BASE_URL, json=build_cjsg_payload(inp, pagina), timeout=30)
+        # TODO: GET com ``params=`` ou POST com ``data=`` conforme o site. Sem
+        # ``timeout=`` literal: ele venceria o perfil e o ``politica=`` do usuário.
+        resp = request_fn("POST", BASE_URL, json=build_cjsg_payload(inp, pagina), perfil="cjsg")
         dados: dict = resp.json()
         return dados
 

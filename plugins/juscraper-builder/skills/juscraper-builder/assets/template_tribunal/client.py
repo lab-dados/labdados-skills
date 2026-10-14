@@ -11,11 +11,12 @@ Divisão dos módulos:
 * ``parse.py``: respostas brutas para DataFrame com colunas canônicas.
 * ``schemas.py``: ``InputCJSGTJXX``/``OutputCJSGTJXX``, fonte única dos filtros.
 """
-from typing import Any, cast
+from collections.abc import Mapping
+from typing import Any, ClassVar, cast
 
 import pandas as pd
 
-from juscraper.core.http import HTTPScraper
+from juscraper.core.http import HTTPScraper, RequestPolicy
 from juscraper.utils.params import apply_input_pipeline_search
 
 from .download import cjsg_download_manager
@@ -32,6 +33,13 @@ class TJXXScraper(HTTPScraper):
     """
 
     BASE_URL = "https://www.tjxx.jus.br"  # TODO
+
+    #: Timeout e tentativas da busca. O download passa ``perfil="cjsg"`` e o
+    #: usuário ajusta com ``politica={"cjsg": {...}}`` no construtor. TODO:
+    #: ``retry_on_timeout=True`` se o portal pendurar conexões.
+    perfis_http: ClassVar[Mapping[str, RequestPolicy]] = {
+        "cjsg": RequestPolicy(timeout=30),
+    }
 
     def __init__(
         self,

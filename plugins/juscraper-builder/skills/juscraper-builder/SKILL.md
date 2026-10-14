@@ -42,7 +42,7 @@ O navegador serve só para entender o site. O raspador final faz requisições H
 
 **1.2 Família.** Antes de criar um raspador do zero, veja se o site pertence a uma família já implementada: eSAJ vira subclasse de `EsajSearchScraper` (`courts/_esaj/`) e PJe consulta pública vira subclasse de `TRFConsultaScraper` (`courts/_trf/`). A regra de quando generalizar está no `CLAUDE.md` do juscraper, seção "Arquitetura".
 
-**1.3 Ferramenta.** Use o que a sessão oferecer. Qualquer navegador automatizado com acesso ao tráfego de rede serve (Playwright MCP, Claude in Chrome, navegador embutido do app): abra o formulário, submeta uma busca e leia as requisições `fetch`, `xhr` e `document`. Sem navegador, baixe a página com `curl` ou `requests` e leia o `<form>`, os campos ocultos e o JavaScript que monta a requisição; em SPA, procure no bundle JS a URL da API e o formato do corpo. As duas vias podem ser combinadas, e o JavaScript costuma ser lido de qualquer jeito (ver 1.4).
+**1.3 Ferramenta.** Use o que a sessão oferecer. Qualquer navegador automatizado com acesso ao tráfego de rede serve (Playwright MCP, Claude in Chrome, navegador embutido do app): abra o formulário, submeta uma busca de reconhecimento e leia as requisições `fetch`, `xhr` e `document`, o bastante para saber o nome de cada campo no corpo. Sem navegador, baixe a página com `curl` ou `requests` e leia o `<form>`, os campos ocultos e o JavaScript que monta a requisição; em SPA, procure no bundle JS a URL da API e o formato do corpo. As duas vias podem ser combinadas, e o JavaScript costuma ser lido de qualquer jeito (ver 1.4).
 
 **1.4 Mapear TODOS os campos do formulário.** Liste cada campo de busca, não só os óbvios. Para cada um, registre:
 
@@ -53,7 +53,7 @@ O navegador serve só para entender o site. O raspador final faz requisições H
 - campos que só existem em uma aba ou base, e combinações que o formulário recusa;
 - o nome canônico que o campo vai ter no juscraper, conforme `docs/api-conventions.qmd` e as bases em `src/juscraper/schemas/`.
 
-**1.5 Confirmação do usuário (obrigatória).** Apresente a lista completa ao usuário e espere a confirmação antes de capturar requisições e antes de escrever código. Diga também quais campos você propõe deixar de fora e por quê. Exemplo de formato:
+**1.5 Confirmação do usuário (obrigatória).** Apresente a lista completa ao usuário e espere a confirmação antes da captura da Etapa 2 (filtros testados um a um, paginação, samples) e antes de escrever código. Diga também quais campos você propõe deixar de fora e por quê. Exemplo de formato:
 
 ```
 Campos de busca do {TRIBUNAL} ({URL}):
@@ -99,12 +99,12 @@ Pontos do fluxo que costumam escapar:
 
 - **Retorno de `cjsg_download`.** Fora da família eSAJ, `cjsg_download` devolve a lista de respostas brutas (uma por página) e `cjsg_parse` recebe essa lista; o eSAJ ainda grava em disco e devolve o caminho. Confira num raspador recente antes de escrever, porque isso pode mudar.
 - **Aliases.** `query`/`termo` e `data_inicio`/`data_fim` são aliases **deprecados**: o pipeline os resolve e emite `DeprecationWarning`. Nome antigo específico do tribunal também entra como alias deprecado (`resolve_deprecated_alias`/`pop_deprecated_alias`), resolvido antes do pydantic. Raspador novo não cria alias novo sem motivo.
-- **User-Agent.** Não fixe UA no código. O `HTTPScraper` monta o identificável `juscraper/<versão>`, que é o default. Quando a medição da Etapa 2 mostrar que o portal só responde a cabeçalhos de navegador (bot manager, gating por UA), sobrescreva em `_configure_session` (ou na sessão própria do endpoint) e escreva na docstring ou no comentário o que foi medido. É o que fazem TRF1/TRF3/TRF5 (Akamai), TJPR, TJMG, TJRJ, TJGO e o STF.
+- **User-Agent.** Não fixe UA no código. O `HTTPScraper` monta o identificável `juscraper/<versão>`, que é o default. Quando a medição da Etapa 2 mostrar que o portal só responde a cabeçalhos de navegador (bot manager, gating por UA), sobrescreva em `_configure_session` (ou na sessão própria do endpoint) e escreva na docstring ou no comentário o que foi medido. Quem faz isso hoje e como se acha com o comando em `references/juscraper-conventions.md`; a família eSAJ ainda fixa um UA antigo por requisição, legado que não serve de modelo.
 - **Timeout e retry por endpoint.** Portal que pendura conexão ganha um perfil em `perfis_http` com `RequestPolicy` (timeout, tentativas, retry em timeout) e o download passa `perfil=` ao `request_fn`, em vez de retry manual.
 - **Filtros em `**kwargs`, schema como lista única.** O template passa o `Input*` validado ao builder e ao manager, em vez de repetir os filtros em cada assinatura, e documenta cada campo do schema como bullet em `**kwargs` (a paridade de docstring confere). Raspador novo não cria alias específico: alias só existe para nome que já foi público.
 - **Lint sem dispensa.** Arquivo novo entra sem dispensa em `ruff.toml` (`CONTRIBUTING.md` > "Política de lint e adoção gradual" > "Alcance das dispensas"). Raspadores antigos passam no gate graças a dispensas herdadas; copie deles a estrutura, não as assinaturas. Script de captura novo registra com `logging`, porque `print` cai na regra T201.
 - **Combinações que o formulário recusa** (dois tipos de data juntos, filtro que uma base não tem) são validadas depois do pydantic e antes da primeira requisição, com `ValueError` claro.
-- Paginação 1-based, pausa `sleep_time` entre páginas, `tqdm` no download, `logging` em vez de `print`.
+- Paginação, pausa entre páginas e barra de progresso: siga o template e o raspador de referência; a semântica de `paginas` está no `CLAUDE.md` do juscraper, seção "API pública".
 
 ## Etapa 4. Testes
 
@@ -114,7 +114,7 @@ A política de testes é a do `CONTRIBUTING.md` do juscraper, seções "Tests" e
 2. **Contrato offline** por método público (`test_<endpoint>_contract.py`) com `responses` servindo os samples e matcher de payload.
 3. **Propagação de filtros** (`test_<endpoint>_filters_contract.py`): todos os filtros mapeados na Etapa 1 numa só chamada, conferidos contra um corpo literal com os nomes de campo do backend. Esperado montado pelo mesmo payload builder da produção não pega filtro que o builder deixou de mapear.
 4. **Aliases deprecados**: um teste por alias aceito, com `pytest.warns(DeprecationWarning)` e o valor chegando ao backend como o canônico.
-5. **Schema**: teste do `Input*` e registro nos arquivos de `tests/schemas/` que o `CONTRIBUTING.md` lista ("Schemas pydantic" > "Registro, paridade e wiring" e "Docstrings" > "Cobertura de paridade").
+5. **Schema**: teste do `Input*` e registro do `Input*` e do `Output*` conforme `CONTRIBUTING.md` > "Schemas pydantic" > "Checklist ao adicionar um tribunal novo", mais os casos de `CONTRIBUTING.md` > "Docstrings de métodos públicos com kwargs" > "Cobertura de paridade".
 6. **Integração**, se fizer, é camada extra em `test_<endpoint>_integration.py` com marker `integration` (e `anti_bot` se o portal bloqueia por IP), fora do `pytest` padrão. Nunca é o teste principal.
 
 Templates e o conjunto de testes de referência estão em `references/test-patterns.md`.
@@ -123,11 +123,11 @@ Templates e o conjunto de testes de referência estão em `references/test-patte
 
 ```bash
 uv run pytest tests/<xx> tests/schemas
-uv run pre-commit run --files <arquivos alterados>
+uv run pre-commit run --files <arquivos alterados>   # o hook lint-policy exige origin/main local
 uv run python <caminho-da-skill>/scripts/validate_scraper.py <xx>   # da raiz do juscraper
 ```
 
-`validate_scraper.py` confere a parte mecânica (estrutura, base da classe, imports proibidos, UA fixo, `_request_with_retry`, registro em `_SCRAPERS`, contratos, samples, captura, registro dos schemas). Ele não substitui a suíte nem a leitura do `CONTRIBUTING.md`.
+`validate_scraper.py` confere a parte mecânica (estrutura, base da classe, imports proibidos, UA fixo, `_request_with_retry`, registro em `_SCRAPERS`, contratos, samples, captura, registro dos schemas). Ele não substitui a suíte nem a leitura do `CONTRIBUTING.md`, e só cobre `src/juscraper/courts/`; agregador se confere pela suíte e pelo `CONTRIBUTING.md`. Antes do pre-commit, veja `CONTRIBUTING.md` > "Comandos locais e pre-commit" (`git fetch origin`).
 
 Checagens manuais:
 

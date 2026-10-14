@@ -6,7 +6,7 @@ A política de testes do juscraper é a do `CONTRIBUTING.md` dele: seção "Test
 
 1. **Payload builder antes do teste.** `build_<endpoint>_payload` e as constantes de URL ficam públicos em `download.py` (ou `<endpoint>_download.py`), porque o script de captura e os contratos os importam. No template, o builder recebe o `Input*` validado; os testes montam o modelo direto para obter o corpo esperado.
 2. **Captura.** Escreva `tests/fixtures/capture/<xx>.py` e rode contra o backend real (`uv run python -m tests.fixtures.capture.<xx>`). Ele grava os cenários que o `CONTRIBUTING.md` exige em `tests/<xx>/samples/<endpoint>/`. Se o raspador configura cabeçalhos de navegador ou cookie de WAF, capture com a sessão do próprio raspador, senão o sample vem de uma resposta que a produção nunca recebe. Saneamento (truncar campos grandes, redigir dados pessoais) fica dentro do script.
-3. **Contrato** (`test_<endpoint>_contract.py`): API pública com `responses`, sample servido, matcher de payload, colunas por subset.
+3. **Contrato** (`test_<endpoint>_contract.py`): API pública com `responses`, sample servido, matcher de payload (os matchers por tipo de requisição estão no item do contrato em "Adding a new tribunal"), colunas derivadas do `Output*`, valores da primeira linha e o caminho default `paginas=None`.
 4. **Filtros e aliases** (`test_<endpoint>_filters_contract.py`): todos os filtros mapeados na Etapa 1 da skill numa só chamada, conferidos contra um corpo literal com os nomes de campo do backend, e um teste por alias deprecado aceito, este sim comparado ao corpo que o builder monta para o nome canônico.
 5. **Schema**: teste do `Input*` e registro nos arquivos de `tests/schemas/` listados no `CONTRIBUTING.md`.
 6. **Integração**, opcional: `test_<endpoint>_integration.py` com marker `integration`.
@@ -18,7 +18,6 @@ Conjunto de referência para copiar a forma: `tests/tjro/` (contrato, filtros, a
 
 - `filterwarnings = ["error"]` no `pyproject.toml`: warning não esperado quebra o teste. Alias deprecado se testa com `pytest.warns(DeprecationWarning)`, e o `match=` precisa casar com todos os avisos do bloco: o pytest reemite os que não casam, e o `error` os transforma em falha (caso de `data_inicio` e `data_fim` na mesma chamada).
 - Em teste de filtro de data, passe `*_inicio` e `*_fim` juntos: com uma ponta só, `fill_open_ended_dates` completa a outra e emite `UserWarning`.
-- `query_param_matcher` em GET: filtre os `None` antes, porque o `requests` os tira da URL.
 - `responses` levanta `ConnectionError` quando o corpo enviado não bate com o matcher. Compare com o payload builder, não afrouxe o matcher.
 - Não teste contagem exata nem ordem de resultados contra o site real.
 
@@ -70,17 +69,20 @@ if __name__ == "__main__":
 
 ```python
 """Contratos offline de cjsg do {SIGLA}."""
+import datetime
+
 import pandas as pd
 import responses
 from responses.matchers import json_params_matcher
 
 import juscraper as jus
 from juscraper.courts.{tribunal}.download import BASE_URL, build_cjsg_payload
-from juscraper.courts.{tribunal}.schemas import InputCJSG{SIGLA}
+from juscraper.courts.{tribunal}.schemas import InputCJSG{SIGLA}, OutputCJSG{SIGLA}
 from tests._helpers import load_sample
 
-# Colunas do OutputCJSG{SIGLA}; conferidas por subset, nunca por igualdade.
-CJSG_MIN_COLUMNS = {"processo", "classe", "relator", "data_julgamento", "ementa"}
+# Colunas derivadas do Output, não listadas à mão: campo novo no schema que o
+# parser não entrega reprova aqui. Conferidas por subset, nunca por igualdade.
+CJSG_COLUNAS = set(OutputCJSG{SIGLA}.model_fields)
 
 
 def _add_page(pesquisa: str, pagina: int, sample: str) -> None:
@@ -103,7 +105,27 @@ def test_cjsg_typical_com_paginacao(mocker):
     df = jus.scraper("{tribunal}").cjsg("dano moral", paginas=range(1, 3))
 
     assert isinstance(df, pd.DataFrame)
-    assert set(df.columns) >= CJSG_MIN_COLUMNS
+    assert set(df.columns) >= CJSG_COLUNAS
+    primeira = df.iloc[0]
+    # ADAPTAR: valores da primeira decisão do sample, um por coluna que o
+    # parser monta; pega chave trocada e data com dia e mês invertidos.
+    assert primeira["processo"] == "0000"
+    assert primeira["relator"] == "FULANO"
+    assert primeira["orgao_julgador"] == "1ª Câmara"
+    assert primeira["data_julgamento"] == datetime.date(2024, 1, 10)
+
+
+@responses.activate
+def test_cjsg_paginas_none_baixa_todas(mocker):
+    # Default público: lê o total na página 1 e baixa as demais. ADAPTAR o
+    # número de páginas ao total do sample.
+    mocker.patch("time.sleep")
+    _add_page("dano moral", 1, "cjsg/results_normal_page_01.json")
+    _add_page("dano moral", 2, "cjsg/results_normal_page_02.json")
+
+    df = jus.scraper("{tribunal}").cjsg("dano moral")
+
+    assert len(responses.calls) == 2
     assert len(df) > 0
 
 
@@ -114,7 +136,7 @@ def test_cjsg_single_page(mocker):
 
     df = jus.scraper("{tribunal}").cjsg("mandado de seguranca", paginas=1)
 
-    assert set(df.columns) >= CJSG_MIN_COLUMNS
+    assert set(df.columns) >= CJSG_COLUNAS
 
 
 @responses.activate
@@ -157,13 +179,28 @@ def _add(payload: dict) -> None:
     )
 
 
+# Um valor por campo do Input, como o usuário passaria. O teste abaixo exige que
+# esta lista cubra o schema inteiro: filtro novo reprova até entrar aqui.
+FILTROS = {
+    "relator": "FULANO DE TAL",
+    "classe": "Apelacao",
+    "data_julgamento_inicio": "2024-01-01",
+    "data_julgamento_fim": "2024-03-31",
+    "data_publicacao_inicio": "2024-02-01",
+    "data_publicacao_fim": "2024-04-30",
+}
+
+
+def test_filtros_cobrem_o_schema():
+    assert set(FILTROS) == set(InputCJSG{SIGLA}.model_fields) - {"pesquisa", "paginas"}
+
+
 @responses.activate
 def test_cjsg_todos_os_filtros_chegam_ao_body(mocker):
     mocker.patch("time.sleep")
     # Corpo literal, com os nomes de campo do backend vistos na captura. Montar
     # este esperado com build_cjsg_payload esconderia um filtro que o builder
     # deixa de mapear: ele sumiria do esperado e do enviado ao mesmo tempo.
-    # Um par chave/valor por filtro confirmado com o usuário na Etapa 1.
     _add({
         "texto": "dano moral",
         "pagina": 1,
@@ -172,14 +209,10 @@ def test_cjsg_todos_os_filtros_chegam_ao_body(mocker):
         "classe": "Apelacao",
         "dataJulgamentoInicio": "01/01/2024",
         "dataJulgamentoFim": "31/03/2024",
+        "dataPublicacaoInicio": "01/02/2024",
+        "dataPublicacaoFim": "30/04/2024",
     })
-    jus.scraper("{tribunal}").cjsg(
-        "dano moral", paginas=1,
-        relator="FULANO DE TAL",
-        classe="Apelacao",
-        data_julgamento_inicio="2024-01-01",
-        data_julgamento_fim="2024-03-31",
-    )
+    jus.scraper("{tribunal}").cjsg("dano moral", paginas=1, **FILTROS)
 
 
 @responses.activate

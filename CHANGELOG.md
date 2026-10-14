@@ -31,7 +31,12 @@ Corrigido:
 - `docs/` em ingles por convencao do projeto, nao por problema de encoding; extra do WAF e
   `juscraper[waf]`, nao `[stf]`; sai a orientacao de usar `httpx`, incompativel com o `HTTPScraper`.
 - Contrato de filtros conferia o corpo montado pelo proprio payload builder e nao pegava filtro que o
-  builder deixava de mapear; o esqueleto passa a afirmar um corpo literal.
+  builder deixava de mapear; o esqueleto passa a afirmar um corpo literal e a exigir que a lista de
+  filtros testados seja igual aos campos do `Input*`.
+- Esqueleto de contrato passa a testar o default `paginas=None`, derivar as colunas do `Output*` e
+  conferir valores da primeira linha; o parser do template passa `date_format`, sem o qual o pandas
+  trocava dia e mes; o builder deixa de descartar filtro com valor `0`/`False`; o download usa o perfil
+  `perfis_http["cjsg"]` em vez de `timeout=` literal, que anulava o perfil e o `politica=` do usuario.
 - Esqueleto de alias de data reprovava com `filterwarnings = ["error"]` porque o `match` cobria so um
   dos dois avisos.
 - `validate_scraper.py` aceita modulos divididos por endpoint (`cjsg_download.py`) e avisa quando o

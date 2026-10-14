@@ -79,7 +79,7 @@ response.encoding = "latin-1"  # Comum em eSAJ
 ```python
 # O User-Agent padrão vem do HTTPScraper; troque em _configure_session
 # só quando a medição mostrar que o portal exige cabeçalhos de navegador
-# (bot manager Akamai nos TRFs, AWS WAF no STF, gating de UA no TJPR/TJMG/TJRJ/TJGO).
+# (quem faz isso hoje: ver juscraper-conventions.md).
 # Os demais cabeçalhos abaixo entram só se a requisição falhar sem eles.
 headers = {
     # eSAJ frequentemente verifica Referer

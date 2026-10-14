@@ -42,7 +42,7 @@ Não use como modelo:
 
 ## Fatos que estão no código e não na documentação
 
-Conferidos em 14/10/2026 contra `origin/main` (82cbf15). Antes de confiar, rode de novo o comando indicado.
+Conferidos em 14/10/2026 contra `origin/main` (82cbf15; até a67a855 só mudou o checkpoint do STF). Antes de confiar, rode de novo o comando indicado.
 
 **Retorno de `cjsg_download`.** Todos os tribunais fora da família eSAJ devolvem `list` de respostas brutas, e `cjsg_parse` recebe essa lista; `EsajSearchScraper` e TJSP devolvem `str` com o caminho dos arquivos baixados.
 
@@ -50,13 +50,13 @@ Conferidos em 14/10/2026 contra `origin/main` (82cbf15). Antes de confiar, rode 
 uv run python -c 'import ast, pathlib as p; [print(f.parent.name, n.returns and ast.unparse(n.returns)) for f in sorted(p.Path("src/juscraper/courts").glob("*/*.py")) for n in ast.walk(ast.parse(f.read_text())) if isinstance(n, ast.FunctionDef) and n.name == "cjsg_download"]'
 ```
 
-**User-Agent.** `HTTPScraper.__init__` monta `juscraper/<__version__> (https://github.com/jtrecenti/juscraper)` e chama `_configure_session`. Os portais com gating de UA ou bot manager sobrescrevem ali, com docstring ou comentário dizendo o que foi medido: `_trf/` (Akamai; `BROWSER_HEADERS` com `Sec-Fetch-*`), TJPR, TJMG, TJRJ, TJGO, STF e TJPE (UA do navegador que obteve o token do WAF, porque o WAF amarra o cookie ao UA), TJSP (`CJSG_CHROME_UA`), além dos agregadores PDPJ, JusBR, ComunicaCNJ e Falcão.
+**User-Agent.** `HTTPScraper.__init__` monta `juscraper/<__version__> (https://github.com/jtrecenti/juscraper)` e chama `_configure_session`. Os portais com gating de UA ou bot manager trocam os cabeçalhos, com docstring ou comentário dizendo o que foi medido; o comando abaixo lista quem faz isso hoje. Dois casos ensinam: `_trf/download.py` (`BROWSER_HEADERS` com `Sec-Fetch-*`, por causa do Akamai) e `core/waf.py` (a sessão usa o UA do navegador que obteve o token, porque o AWS WAF amarra o cookie ao UA). Legado que não serve de modelo: a família eSAJ fixa `juscraper/0.1` por requisição em `_esaj/download.py`, e o TJSP troca o UA por requisição com `CJSG_CHROME_UA`, não em `_configure_session`.
 
 ```bash
 grep -rn "User-Agent\|BROWSER_HEADERS\|CHROME_UA" src/juscraper --include=*.py
 ```
 
-**Aliases de data.** `data_inicio`/`data_fim` estão em `DATE_ALIAS_TO_CANONICAL` (`src/juscraper/utils/params.py`) ao lado dos `*_de`/`*_ate`, e `normalize_datas` emite `DeprecationWarning` para todos. `docs/api-conventions.qmd` os chama de "Generic aliases" sem citar o aviso; vale o código.
+**Aliases de data.** `data_inicio`/`data_fim` estão em `DATE_ALIAS_TO_CANONICAL` (`src/juscraper/utils/params.py`) ao lado dos `*_de`/`*_ate`, e `normalize_datas` emite `DeprecationWarning` para todos. Na seção "Date Filters" de `docs/api-conventions.qmd` eles aparecem como "Generic aliases" sem o aviso; o "Migration Guide" do mesmo arquivo já o cita. Vale o código.
 
 **Perfis HTTP.** `RequestPolicy` e `perfis_http` (em `core/http.py`) dão timeout, número de tentativas e retry em timeout ou erro de conexão por endpoint; o usuário ajusta com `politica=` no construtor. O `CONTRIBUTING.md` ainda não os descreve.
 

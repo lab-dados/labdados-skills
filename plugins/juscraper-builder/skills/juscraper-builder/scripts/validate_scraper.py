@@ -169,11 +169,8 @@ def check_class_conventions(tribunal: str) -> list[str]:
                 "Remova; o HTTPScraper monta o header com __version__."
             )
 
-        # Verificar linhas longas
-        for i, line in enumerate(source.split("\n"), 1):
-            if len(line) > 120:
-                errors.append(f"{path.name}: linha {i} tem {len(line)} chars (max 120)")
-                break  # Só reportar a primeira
+        # Tamanho de linha fica com o ruff e o flake8 do juscraper, que leem o
+        # limite do pyproject.toml; repetir o número aqui o deixaria divergir.
 
     # Subclasse de família herda as requisições com retry da base.
     if not familia:
