@@ -31,6 +31,8 @@ def resolver_captcha(request_fn: RequestFn) -> str:
             "O TJXX precisa do pacote opcional `txtcaptcha` (`pip install txtcaptcha`)."
         ) from exc
 
+    # TODO: perfil declarado em ``perfis_http`` do raspador; perfil inexistente
+    # levanta ValueError (em cpopg, por exemplo, não é "cjsg").
     imagem = request_fn("GET", CAPTCHA_URL, perfil="cjsg").content
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as arquivo:
         arquivo.write(imagem)
@@ -42,7 +44,7 @@ def resolver_captcha(request_fn: RequestFn) -> str:
     return str(textos[0])
 ```
 
-Os raspadores antigos usam `import txtcaptcha` dentro da função e passam no lint por dispensa herdada em `ruff.toml`; arquivo novo não tem dispensa (`CONTRIBUTING.md` > "Política de lint e adoção gradual" > "Alcance das dispensas"), daí o `import_module`. O fake em `sys.modules` dos testes continua valendo, porque `import_module` olha ali primeiro.
+Os raspadores antigos usam `import txtcaptcha` dentro da função e passam no lint por dispensa herdada em `ruff.toml`; arquivo novo não tem dispensa (`CONTRIBUTING.md` > "Política de lint e adoção gradual" > "Alcance das dispensas"). O `import_module` passa no ruff, mas na prática faz o papel de um `# noqa: PLC0415`, e a política de `# noqa` está em discussão no juscraper ([jtrecenti/juscraper#401](https://github.com/jtrecenti/juscraper/issues/401)). Declare a escolha no PR para o mantenedor decidir entre ela e o `noqa`. O fake em `sys.modules` dos testes vale nos dois casos, porque `import_module` olha ali primeiro.
 
 A nova tentativa quando o backend recusa o texto fica em volta desta função, no download: detectar a resposta de "captcha inválido", chamar `resolver_captcha` de novo até o limite `max_captcha_attempts` e registrar cada falha com `logger.warning`.
 
@@ -51,27 +53,53 @@ A nova tentativa quando o backend recusa o texto fica em volta desta função, n
 ```python
 """Contrato do captcha do {SIGLA}: txtcaptcha mockado, nunca invocado."""
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 import requests
 import responses
 
 from juscraper.courts.{tribunal}.download import CAPTCHA_URL, resolver_captcha
 
+IMAGEM = b"\x89PNG fake"
 
-@responses.activate
-def test_resolver_captcha_usa_txtcaptcha(mocker):
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_resolver_captcha_le_a_imagem_da_sessao(mocker):
+    lidos = []
+
+    def decrypt(caminhos, **_kwargs):
+        # O fake lê o arquivo recebido: pega imagem vazia, bytes no lugar de
+        # caminho e arquivo apagado cedo demais.
+        lidos.append(Path(caminhos[0]).read_bytes())
+        return ["12345"]
+
     fake = MagicMock()
-    fake.decrypt = MagicMock(return_value=["12345"])
+    fake.decrypt = MagicMock(side_effect=decrypt)
     mocker.patch.dict(sys.modules, {"txtcaptcha": fake})
-    responses.add(responses.GET, CAPTCHA_URL, body=b"\x89PNG fake", status=200)
+    responses.add(responses.GET, CAPTCHA_URL, body=IMAGEM, status=200)
 
-    def request_fn(method, url, **kwargs):
+    sessao = requests.Session()
+
+    def via_sessao(metodo, url, **kwargs):
         kwargs.pop("perfil", None)
-        return requests.request(method, url, **kwargs)
+        return sessao.request(metodo, url, **kwargs)
+
+    # Spy no request_fn: a imagem tem de vir pela sessão do raspador, que
+    # carrega o cookie amarrado ao captcha, e não de um requests.get solto.
+    request_fn = MagicMock(side_effect=via_sessao)
 
     assert resolver_captcha(request_fn) == "12345"
-    fake.decrypt.assert_called_once()
+    assert request_fn.call_args.args[:2] == ("GET", CAPTCHA_URL)
+    assert lidos == [IMAGEM]
+    assert not Path(fake.decrypt.call_args.args[0][0]).exists()
+
+
+def test_resolver_captcha_sem_txtcaptcha(mocker):
+    mocker.patch.dict(sys.modules, {"txtcaptcha": None})
+    with pytest.raises(ImportError, match="txtcaptcha"):
+        resolver_captcha(MagicMock())
 ```
 
 No contrato do método público, a fixture com o fake fica em `tests/<xx>/conftest.py`, como `mock_txtcaptcha` em `tests/tjmg/conftest.py`, e a sequência imagem, validação e busca é registrada com `responses.registries.OrderedRegistry`.
