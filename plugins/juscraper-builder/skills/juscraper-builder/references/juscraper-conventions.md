@@ -1,245 +1,65 @@
-# Convenções do juscraper
+# Mapa das convenções do juscraper
 
-Referência rápida das convenções do projeto. **Sempre leia o código
-real dos scrapers existentes antes de gerar código novo** — este
-arquivo é um resumo, não substitui a leitura do código-fonte, do
-`CLAUDE.md` e do `CONTRIBUTING.md` (seções "Adding a new tribunal" e
-"Schemas pydantic").
+Este arquivo não repete as convenções do juscraper. Ele diz onde cada uma está escrita, quais raspadores ler como modelo e quais fatos só aparecem no código. A fonte da verdade é o repositório `jtrecenti/juscraper`; se algo aqui divergir dele, o repositório vence.
 
-## Arquitetura
+## Onde está cada regra
 
-```
-src/juscraper/
-├── __init__.py              # _SCRAPERS + scraper() factory
-├── core/
-│   ├── base.py              # BaseScraper
-│   ├── http.py              # HTTPScraper (session, User-Agent, retry)
-│   └── parse_utils.py       # clean_html, coerce_date_columns, ...
-├── schemas/                 # SearchBase, mixins, CnjInputBase, Output*Base
-├── courts/
-│   ├── _esaj/               # família eSAJ: EsajSearchScraper
-│   ├── _trf/                # família PJe TRF1/3/5: TRFConsultaScraper
-│   ├── tjro/                # exemplo de tribunal sem família
-│   │   ├── __init__.py
-│   │   ├── client.py        # TJROScraper: API pública
-│   │   ├── download.py      # HTTP, paginação, build_cjsg_payload
-│   │   ├── parse.py         # respostas brutas -> DataFrame
-│   │   └── schemas.py       # InputCJSGTJRO / OutputCJSGTJRO
-│   └── ...
-├── aggregators/             # datajud, jusbr, pdpj, comunica_cnj
-└── utils/
-    ├── params.py             # pipeline de normalização de parâmetros
-    └── cnj.py                # clean_cnj, format_cnj
-```
+| Assunto | Fonte única no juscraper |
+|---|---|
+| Ambiente, comandos de teste, pre-commit | `CLAUDE.md` > "Desenvolvimento" e "Testes" |
+| Quando criar família ou base compartilhada | `CLAUDE.md` > "Arquitetura" (regra de generalização) |
+| Nomes canônicos, `paginas`, aliases, `TypeError` × `ValidationError` | `CLAUDE.md` > "API pública"; `docs/api-conventions.qmd` |
+| Deprecação de parâmetro ou alias | `CLAUDE.md` > "Política de deprecação" |
+| Lista do que o PR de tribunal novo precisa ter | `CONTRIBUTING.md` > "Adding a new tribunal" |
+| Pirâmide de testes, samples, ferramentas, marker `anti_bot` | `CONTRIBUTING.md` > "Tests" |
+| Bases e mixins de schema, registro, paridade, wiring, `BACKEND_DATE_FORMAT` | `CONTRIBUTING.md` > "Schemas pydantic" |
+| Docstrings de método com `**kwargs` e dos pares `*_download` | `CONTRIBUTING.md` > "Docstrings de métodos públicos com kwargs" |
+| Hooks da família eSAJ | `CONTRIBUTING.md` > "Adding an eSAJ tribunal"; `src/juscraper/courts/_esaj/base.py` |
+| Retry, backoff, `Retry-After`, `sleep_time` | `docs/api-conventions.qmd` > "Rate limiting and retry behaviour"; `src/juscraper/core/http.py` |
+| Funções de normalização | `docs/api-conventions.qmd` > "Normalization Utilities"; `src/juscraper/utils/params.py` |
+| Nomes de campo substituídos | `tests/schemas/test_canonical_types.py::DEPRECATED_SYNONYMS` |
+| Changelog | `CLAUDE.md` > "Changelog" |
+| Idioma de docstring, commit e `docs/` | `CLAUDE.md` > "Idiomas" |
+| Lint e dispensas | `CONTRIBUTING.md` > "Política de lint e adoção gradual"; `pyproject.toml`, `ruff.toml` |
+| Configuração do pytest (markers, `filterwarnings`, `addopts`) | `pyproject.toml` > `[tool.pytest.ini_options]` |
 
-Tribunal novo ganha os quatro módulos `client.py`, `download.py`,
-`parse.py` e `schemas.py`, mais o `__init__.py`. O template em
-`assets/template_tribunal/` segue essa divisão.
+## Código para ler como modelo
 
-`src/juscraper/tribunal_manager.py` é código morto (importa módulos
-que não existem mais e ninguém o importa). Não edite; o registro vai
-em `_SCRAPERS`.
+Leia pelo menos dois, cliente e testes, antes de escrever:
 
-## Famílias e generalização
+- `src/juscraper/courts/tjro/` e `tests/tjro/`: raspador sobre `HTTPScraper` com backend JSON, `build_cjsg_payload` público, contrato, contrato de filtros e aliases deprecados específicos do tribunal (`magistrado` -> `relator`). Os arquivos do TJRO têm dispensas em `ruff.toml` (anotações, número de argumentos); arquivo novo não tem, então copie a estrutura e não as assinaturas.
+- O `cjsg` do TRF3 (`src/juscraper/courts/trf3/cjsg_download.py`, `cjsg_parse.py`, `cjsg_schemas.py`, `client.py` e `tests/trf3/`): portal atrás de bot manager com cabeçalhos medidos e documentados, sessão própria por busca, perfil `perfis_http["cjsg"]`, filtros que o JavaScript do formulário converte em texto, validação de combinações depois do pydantic, divisão de módulos por endpoint. Em 14/10/2026 ele estava no PR aberto [jtrecenti/juscraper#397](https://github.com/jtrecenti/juscraper/pull/397); se ainda não estiver em `main`, leia com `git show origin/feat/trf3-cjsg:<caminho>`.
+- `src/juscraper/courts/stf/` e `src/juscraper/core/waf.py`: a exceção do navegador para obter o cookie do AWS WAF.
+- `src/juscraper/courts/_trf/base.py`: `cpopg` da família PJe, com `_configure_session` aplicando `BROWSER_HEADERS`.
+- `src/juscraper/courts/tjmg/`: captcha de imagem sobre `HTTPScraper` (ver a skill `juscraper-builder-captcha`).
 
-- **eSAJ** (TJAC, TJAL, TJAM, TJCE, TJMS, TJSP): infra em
-  `courts/_esaj/`. Tribunal eSAJ típico é uma subclasse de
-  `EsajSearchScraper` com `BASE_URL` e `TRIBUNAL_NAME`; particularidades
-  entram pelos hooks (`_configure_session`, `INPUT_CJSG`,
-  `CJSG_CHROME_UA`, `CJSG_EXTRACT_CONVERSATION_ID`, `_build_cjsg_body`).
-  Nunca `if tribunal == "X"` no código compartilhado.
-- **PJe consulta pública** (TRF1, TRF3, TRF5): infra em `courts/_trf/`,
-  subclasse de `TRFConsultaScraper`.
-- **Regra de generalização**: só mover algo para `_<familia>/` ou criar
-  mixin/base com **2+ ocorrências concretas**. Com um caso só, duplicar
-  é mais barato que abstrair errado. Vale para schemas também.
+Não use como modelo:
 
-## Classe base
+- `courts/trf6/`: herda `BaseScraper` direto e cria a própria `Session`, anterior ao `HTTPScraper`.
+- `cpopg`/`cposg` do TJSP: devolvem dict de DataFrames, formato legado.
+- `download.py` do TJMG e do TJBA: sem payload builder público, anteriores a essa convenção.
+- `src/juscraper/tribunal_manager.py`: código morto, que importa módulos inexistentes e não é importado por ninguém. O registro vai em `_SCRAPERS` de `src/juscraper/__init__.py`.
 
-Scraper novo herda de `juscraper.core.http.HTTPScraper`, que:
+## Fatos que estão no código e não na documentação
 
-- cria `self.session = requests.Session()` com o User-Agent
-  `juscraper/<__version__> (https://github.com/jtrecenti/juscraper)`
-  (não fixar User-Agent próprio);
-- expõe o hook `_configure_session(session)` para adapter TLS, cookies
-  ou User-Agent de navegador quando o site exigir;
-- guarda `self.sleep_time` (default `1.0`) para a pausa entre páginas;
-- oferece `self._request_with_retry(method, url, ...)` com backoff
-  exponencial para 403/429/5xx e respeito a `Retry-After` numérico.
-  O client repassa esse método como `request_fn` para o `download.py`.
+Conferidos em 14/10/2026 contra `origin/main` (82cbf15). Antes de confiar, rode de novo o comando indicado.
 
-## Nomes de classes
+**Retorno de `cjsg_download`.** Todos os tribunais fora da família eSAJ devolvem `list` de respostas brutas, e `cjsg_parse` recebe essa lista; `EsajSearchScraper` e TJSP devolvem `str` com o caminho dos arquivos baixados.
 
-PEP 8 CamelCase: `{SIGLA}Scraper` com a sigla em maiúsculas
-(`TJROScraper`, `TRF6Scraper`, `STFScraper`). Schemas:
-`Input<Endpoint><SIGLA>` e `Output<Endpoint><SIGLA>` (`InputCJSGTJRO`).
-
-## Factory function
-
-`juscraper.scraper("tjro")` resolve a sigla em minúsculas no dict
-`_SCRAPERS` de `src/juscraper/__init__.py`, no formato
-`"módulo:Classe"`, com import lazy:
-
-```python
-"tjro":  "juscraper.courts.tjro.client:TJROScraper",
+```bash
+uv run python -c 'import ast, pathlib as p; [print(f.parent.name, n.returns and ast.unparse(n.returns)) for f in sorted(p.Path("src/juscraper/courts").glob("*/*.py")) for n in ast.walk(ast.parse(f.read_text())) if isinstance(n, ast.FunctionDef) and n.name == "cjsg_download"]'
 ```
 
-## Parâmetros padronizados
+**User-Agent.** `HTTPScraper.__init__` monta `juscraper/<__version__> (https://github.com/jtrecenti/juscraper)` e chama `_configure_session`. Os portais com gating de UA ou bot manager sobrescrevem ali, com docstring ou comentário dizendo o que foi medido: `_trf/` (Akamai; `BROWSER_HEADERS` com `Sec-Fetch-*`), TJPR, TJMG, TJRJ, TJGO, STF e TJPE (UA do navegador que obteve o token do WAF, porque o WAF amarra o cookie ao UA), TJSP (`CJSG_CHROME_UA`), além dos agregadores PDPJ, JusBR, ComunicaCNJ e Falcão.
 
-| Parâmetro                  | Tipo                        | Descrição                         |
-|----------------------------|-----------------------------|-----------------------------------|
-| `pesquisa`                 | str                         | Termo de busca                    |
-| `paginas`                  | int \| list \| range \| None | Páginas a baixar (1-based)        |
-| `data_julgamento_inicio`   | str ou date                 | Data de julgamento início         |
-| `data_julgamento_fim`      | str ou date                 | Data de julgamento fim            |
-| `data_publicacao_inicio`   | str ou date                 | Data de publicação início         |
-| `data_publicacao_fim`      | str ou date                 | Data de publicação fim            |
-| `tamanho_pagina`           | int                         | Itens por página (default 10)     |
-| `numero_processo`          | str                         | Filtro por número (Input)         |
-| `relator`                  | str                         | Filtro por relator                |
-| `classe` / `assunto`       | str                         | Filtros por classe e assunto      |
-| `id_cnj`                   | str \| list[str]            | Entrada de `cpopg`/`cposg`        |
-
-Datas de entrada aceitam `DD/MM/AAAA`, `DD-MM-AAAA`, `AAAA-MM-DD`,
-`AAAA/MM/DD` e `datetime.date`; o pipeline converte para o
-`BACKEND_DATE_FORMAT` declarado no schema.
-
-Aliases deprecados, aceitos com `DeprecationWarning`: `query`/`termo`
--> `pesquisa`; `data_inicio`/`data_fim` -> `data_julgamento_*`;
-`*_de`/`*_ate` -> `*_inicio`/`*_fim`. Nome antigo específico do
-tribunal (`nr_processo`, `magistrado`, `classe_judicial`) vira alias
-com `resolve_deprecated_alias`/`pop_deprecated_alias`, sem remover o
-campo canônico.
-
-## Normalização (`src/juscraper/utils/params.py`)
-
-O caminho padrão de `cjsg`/`cjpg` é `apply_input_pipeline_search`,
-chamado no método público depois de popar os aliases específicos do
-tribunal:
-
-```python
-relator = resolve_deprecated_alias(kwargs, "magistrado", "relator", relator)
-inp = apply_input_pipeline_search(
-    InputCJSGTJXX,
-    "TJXXScraper.cjsg_download()",
-    pesquisa=pesquisa,
-    paginas=paginas,
-    kwargs=kwargs,
-    consume_pesquisa_aliases=True,
-    relator=relator,
-)
+```bash
+grep -rn "User-Agent\|BROWSER_HEADERS\|CHROME_UA" src/juscraper --include=*.py
 ```
 
-Ele roda, em ordem: `normalize_pesquisa` (aliases de busca),
-`normalize_paginas` (int vira `range(1, n+1)`), `normalize_datas`
-(aliases de data), conversão das datas, `validate_intervalo_datas`,
-o schema pydantic e `raise_on_extra_kwargs` (kwarg desconhecido vira
-`TypeError` com sugestão de nome parecido). Validador próprio do
-tribunal (ex.: limite de tamanho da pesquisa) roda antes do pipeline.
-Backend com limite documentado de janela passa `max_dias` e
-`origem_mensagem`.
+**Aliases de data.** `data_inicio`/`data_fim` estão em `DATE_ALIAS_TO_CANONICAL` (`src/juscraper/utils/params.py`) ao lado dos `*_de`/`*_ate`, e `normalize_datas` emite `DeprecationWarning` para todos. `docs/api-conventions.qmd` os chama de "Generic aliases" sem citar o aviso; vale o código.
 
-## Paginação
+**Perfis HTTP.** `RequestPolicy` e `perfis_http` (em `core/http.py`) dão timeout, número de tentativas e retry em timeout ou erro de conexão por endpoint; o usuário ajusta com `politica=` no construtor. O `CONTRIBUTING.md` ainda não os descreve.
 
-- Sempre **1-based**: `range(1, 4)` baixa páginas 1, 2 e 3
-- `paginas=3` é equivalente a `range(1, 4)`
-- `paginas=None` baixa todas as páginas
-- `paginas` vem de `SearchBase`; não redeclarar no schema concreto
+**Extra do navegador.** O Playwright entra pelo extra `juscraper[waf]`; `juscraper[stf]` continua como alias (`pyproject.toml`).
 
-## Schemas pydantic
-
-- `courts/<xx>/schemas.py` com `Input<Endpoint><SIGLA>` e
-  `Output<Endpoint><SIGLA>` para cada endpoint implementado.
-- Input herda de `SearchBase` (`pesquisa`, `paginas`,
-  `extra="forbid"`) e dos mixins aplicáveis (`DataJulgamentoMixin`,
-  `DataPublicacaoMixin`); consulta por CNJ herda de `CnjInputBase`.
-  Declara `BACKEND_DATE_FORMAT: ClassVar[str]` quando o backend não
-  usa `DD/MM/AAAA`.
-- Output herda de `OutputCJSGBase` (+ `OutputRelatoriaMixin`,
-  `OutputDataPublicacaoMixin`) ou de `OutputCnjConsultaBase`, com
-  `extra="allow"`.
-- Campos do Input batem byte a byte com os parâmetros explícitos do
-  método público.
-- Nomes canônicos de coluna: `processo` (não `nr_processo`/
-  `numero_cnj`), `classe` (não `classe_cnj`), `assunto` (não
-  `assunto_principal`), `relator` (não `magistrado`); no Input o filtro
-  por número é `numero_processo`. O parser renomeia as chaves do
-  backend antes de montar o DataFrame.
-- Registrar em `tests/schemas/test_schema_coverage.py::EXPECTED_COURT_SCHEMAS`
-  e `tests/schemas/test_output_parity.py::EXPECTED_COURT_OUTPUT_SCHEMAS`,
-  e rodar `pytest tests/schemas/`.
-
-## Métodos por tribunal
-
-Cada tribunal pode implementar:
-
-| Método              | Input                     | Output                        | Descrição                          |
-|---------------------|---------------------------|-------------------------------|------------------------------------|
-| `.cjsg()`           | params de busca           | pd.DataFrame                  | Consulta jurisprudência            |
-| `.cjsg_download()`  | params de busca           | respostas brutas              | Baixa as páginas (lista de JSON/HTML; na família eSAJ, caminho da pasta) |
-| `.cjsg_parse()`     | saída do download         | pd.DataFrame                  | Processa as respostas brutas       |
-| `.cjpg()`           | params de busca           | pd.DataFrame                  | Consulta julgados 1º grau          |
-| `.cpopg()`          | `id_cnj: str \| list[str]` | pd.DataFrame                  | Consulta processos 1º grau         |
-| `.cpopg_download()` | `id_cnj`                  | respostas brutas              | Baixa o detalhe de cada processo   |
-| `.cpopg_parse()`    | saída do download         | pd.DataFrame                  | Processa o detalhe                 |
-| `.cposg()`          | `id_cnj`                  | pd.DataFrame                  | Consulta processos 2º grau         |
-
-`cpopg` novo devolve um DataFrame: em TRF1/3/5 e TRF6, uma linha por
-processo com a coluna `id_cnj` (herdada de `OutputCnjConsultaBase`);
-JusBR e PDPJ também devolvem DataFrame. O `cpopg`/`cposg` do
-TJSP é legado: devolve um dict de DataFrames (`basicos`, `partes`,
-`movimentacoes`, `peticoes_diversas`) e não serve de modelo.
-
-Nem todos os métodos são obrigatórios — implemente o que o site do
-tribunal disponibiliza. Não crie schema para método que só levanta
-`NotImplementedError`.
-
-## Docstrings
-
-Métodos públicos em português, estilo Google (`Args:`/`Returns:`/
-`Raises:`). Métodos com filtros via `**kwargs` listam cada campo do
-schema, têm seção "Aliases deprecados" e terminam com `See also:`
-apontando o `Input*`. Os pares `*_download` referenciam o método
-top-level com `:meth:` em vez de repetir a lista. `docs/*.qmd` e os
-notebooks continuam em inglês.
-
-## Testes
-
-- Ficam em `tests/{tribunal}/` com `__init__.py`
-- Contrato offline obrigatório por método público
-  (`test_<endpoint>_contract.py`, com `responses` e samples); detalhes
-  em `test-patterns.md`
-- Integração é opcional (`test_<endpoint>_integration.py`,
-  `@pytest.mark.integration`)
-- `pytest`: roda só o offline (o `addopts` exclui `integration`)
-- `pytest -m integration`: só integração; `pytest -m ""`: tudo
-- Marker `anti_bot` para integração sujeita a bloqueio condicional ao
-  IP (Akamai nos TRFs PJe): o conftest converte
-  `BotChallengeBlockedError` em xfail
-- `--strict-markers` ativo — markers registrados em `pyproject.toml`
-- `filterwarnings = ["error"]`: warning não esperado quebra o teste;
-  use `pytest.warns` ao testar alias deprecado
-
-## Playwright no código final
-
-Regra: o scraper usa `requests`. A exceção existente é o STF: o
-portal fica atrás de um desafio JavaScript do AWS WAF, e o
-Playwright entra como extra opcional (`juscraper[stf]`), com import
-lazy, só para obter o cookie `aws-waf-token`; a busca segue em
-`requests`. Repetir esse desenho exige autorização do usuário.
-
-## Estilo de código
-
-- Python >= 3.11
-- Linha máxima: 120 caracteres
-- Pre-commit hooks: trailing whitespace, ruff (inclui `PERF`, `SIM`, `RET`,
-  `PTH`), isort, pylint, flake8, mypy e bandit (só em `src/`); rodar
-  `pre-commit run --files <arquivos>`
-- Gerenciador de pacotes: `uv` (`uv pip install -e ".[dev]"`)
-- Sem hacks de `sys.path` nos testes
-
-## Workflow Git
-
-- Worktree dedicada com branch de feature + PR (nunca push direto na main)
-- CHANGELOG.md em formato Keep a Changelog, entrada em `[Unreleased]`
-- Documentação em `docs/` em inglês (problemas de encoding com PT)
+**Documentação do site.** As tabelas de tribunais de `README.md` e `docs/index.qmd` divergem entre si, e o STF não aparece em `docs/_quarto.yml`, `docs/index.qmd` nem `README.md`. Não há regra escrita sobre quais desses arquivos um tribunal novo atualiza; pergunte ao mantenedor.

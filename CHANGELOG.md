@@ -4,6 +4,39 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.15.0] - 2026-10-14
+
+Alterado:
+
+- `juscraper-builder` (plugin 1.2.0): a skill `juscraper-builder` passa a ser so o fluxo de trabalho e
+  aponta para as secoes do `CLAUDE.md`, do `CONTRIBUTING.md` e do `docs/api-conventions.qmd` do
+  juscraper, que sao a fonte unica das convencoes; saem as copias da checklist de tribunal novo, da
+  tabela de parametros e da lista de hooks do pre-commit. `references/juscraper-conventions.md` vira
+  o mapa de onde cada regra mora, que raspadores ler e que fatos so aparecem no codigo.
+- A engenharia reversa deixa de exigir o Playwright MCP: serve o navegador automatizado que a sessao
+  tiver ou `curl`/`requests` lendo o HTML e o JavaScript do formulario. A skill
+  `juscraper-builder-captcha` continua exigindo o Playwright MCP.
+- O mapeamento de todos os campos do formulario (inclusive ocultos e o que o JavaScript faz antes do
+  envio) e a confirmacao do usuario antes de escrever codigo viram etapa obrigatoria; a checagem de
+  captcha continua no inicio.
+- Template: builder e manager recebem o `Input*` validado, todos os filtros vao em `**kwargs` como
+  bullets da docstring, sem alias especifico de tribunal; passa no ruff estrito sem dispensa, no mypy
+  e em `tests/schemas` do juscraper.
+
+Corrigido:
+
+- `data_inicio`/`data_fim` descritos como alias comum; sao aliases deprecados com `DeprecationWarning`.
+- User-Agent: a regra passa a ser a do repositorio (UA `juscraper/<versao>` por padrao; cabecalhos de
+  navegador em `_configure_session` so com medicao documentada, como nos TRFs atras do Akamai).
+- `docs/` em ingles por convencao do projeto, nao por problema de encoding; extra do WAF e
+  `juscraper[waf]`, nao `[stf]`; sai a orientacao de usar `httpx`, incompativel com o `HTTPScraper`.
+- Contrato de filtros conferia o corpo montado pelo proprio payload builder e nao pegava filtro que o
+  builder deixava de mapear; o esqueleto passa a afirmar um corpo literal.
+- Esqueleto de alias de data reprovava com `filterwarnings = ["error"]` porque o `match` cobria so um
+  dos dois avisos.
+- `validate_scraper.py` aceita modulos divididos por endpoint (`cjsg_download.py`) e avisa quando o
+  tribunal falta em `tests/schemas/test_docstring_parity.py`.
+
 ## [1.14.0] - 2026-09-25
 
 Adicionado:

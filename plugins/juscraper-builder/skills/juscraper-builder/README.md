@@ -1,79 +1,58 @@
 # juscraper-builder
 
-Skill para Claude Code que gera automaticamente scrapers de tribunais
-brasileiros para o pacote [juscraper](https://github.com/jtrecenti/juscraper).
+Skill para Claude Code que leva um tribunal brasileiro do formulário de busca até um PR na biblioteca [juscraper](https://github.com/jtrecenti/juscraper). As convenções de código, testes e documentação não estão copiadas aqui: a skill aponta para o `CLAUDE.md`, o `CONTRIBUTING.md` e o `docs/api-conventions.qmd` do juscraper, que são a fonte única e vencem a skill quando divergirem.
 
 ## Instalação
 
-### 1. Copie a pasta para o diretório de skills do Claude Code
+Pelo marketplace `labdados-skills`:
 
-```bash
-# Nível de usuário (disponível em qualquer projeto)
-cp -r juscraper-builder ~/.claude/skills/
-
-# OU nível de projeto (apenas no juscraper)
-cp -r juscraper-builder /caminho/para/juscraper/.claude/skills/
+```
+/plugin install juscraper-builder@labdados-skills
 ```
 
-### 2. Instale o Playwright MCP
+O plugin traz também a skill `juscraper-builder-captcha`, para formulários com captcha.
 
-```bash
-# A skill precisa do Playwright MCP para navegar nos sites
-claude mcp add playwright -- npx @playwright/mcp@latest
-```
-
-Requer Node.js 18+. Se não tiver:
-```bash
-# Ubuntu/Debian
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# macOS
-brew install node
-```
-
-### 3. Pronto!
+## Uso
 
 ```bash
 cd /caminho/para/juscraper
 claude
+```
 
-# Diga algo como:
-> Crie um scraper de jurisprudência para o TJMG.
-> A página é: https://www5.tjmg.jus.br/jurisprudencia/
+```
+> Crie um raspador de jurisprudência para o TJXX.
+> A página é: https://www.tjxx.jus.br/jurisprudencia/
 ```
 
 ## O que a skill faz
 
-1. Navega até o site do tribunal usando Playwright (browser real)
-2. Mapeia os campos do formulário de busca
-3. Submete uma busca de teste e captura as requisições HTTP
-4. Identifica a API/endpoint por baixo do site
-5. Gera código Python usando `requests` (sem Playwright no código final)
-6. Cria testes de contrato offline (`responses` + samples capturados), schemas pydantic e, se pedido, testes de integração
-7. Valida que tudo funciona
+1. Verifica captcha e família de sistema (eSAJ, PJe) antes de tudo; com captcha, passa para `juscraper-builder-captcha`.
+2. Mapeia todos os campos do formulário, inclusive ocultos e o que o JavaScript faz antes do envio, e pede confirmação do mapeamento antes de escrever código.
+3. Captura as requisições da busca com o navegador automatizado que a sessão tiver, ou com `curl`/`requests` lendo o HTML e o JavaScript do formulário, e mede quais cabeçalhos o portal exige.
+4. Gera o raspador sobre `HTTPScraper`, com schemas pydantic e wiring pelo pipeline canônico, usando só `requests` no código final.
+5. Gera o script de captura de samples, os contratos offline com `responses`, o contrato de filtros e aliases deprecados e, se pedido, integração com marker `integration`.
+6. Valida com a suíte, o pre-commit e `scripts/validate_scraper.py`, e atualiza notebook, site e CHANGELOG.
 
 ## Estrutura
 
 ```
 juscraper-builder/
-├── SKILL.md                           # Instruções principais
+├── SKILL.md                           # Fluxo de trabalho
 ├── README.md                          # Este arquivo
 ├── references/
-│   ├── juscraper-conventions.md       # Convenções do projeto
-│   ├── tribunal-checklist.md          # Checklist de novo tribunal
-│   ├── tribunal-patterns.md           # Padrões de sites de tribunais
-│   └── test-patterns.md               # Padrões de testes
+│   ├── juscraper-conventions.md       # Onde está cada convenção no juscraper e que código ler
+│   ├── tribunal-checklist.md          # Checklist do fluxo
+│   ├── tribunal-patterns.md           # Sistemas e padrões comuns de sites de tribunais
+│   └── test-patterns.md               # Ordem dos testes e esqueletos de código
 ├── scripts/
-│   ├── analyze_requests.py            # Analisa requisições capturadas
-│   └── validate_scraper.py            # Valida scraper gerado
+│   ├── analyze_requests.py            # Pontua requisições capturadas e sugere o endpoint
+│   └── validate_scraper.py            # Checagem mecânica do raspador gerado
 └── assets/
-    └── template_tribunal/             # Template base: __init__, client, download, parse, schemas
+    └── template_tribunal/             # Módulos base: __init__, client, download, parse, schemas
 ```
 
 ## Requisitos
 
-- Claude Code com Playwright MCP configurado
-- Node.js 18+ (para o Playwright MCP)
-- Python 3.11+ (para o juscraper)
-- Repositório juscraper clonado e instalado em modo editável
+- Clone do juscraper com ambiente de desenvolvimento (`uv sync --extra dev`).
+- Para a engenharia reversa, qualquer navegador automatizado disponível na sessão (Playwright MCP, Claude in Chrome, navegador embutido do app) ou só `curl`/`requests`. Nenhum é obrigatório.
+- Python e demais dependências conforme o `pyproject.toml` do juscraper.

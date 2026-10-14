@@ -1,9 +1,9 @@
 """Schemas pydantic dos endpoints do TJXX.
 
 Template da skill juscraper-builder. Troque ``TJXX``/``tjxx`` pela sigla real.
-Um par Input/Output por endpoint implementado. Registrar os dois em
-``tests/schemas/test_schema_coverage.py::EXPECTED_COURT_SCHEMAS`` e
-``tests/schemas/test_output_parity.py::EXPECTED_COURT_OUTPUT_SCHEMAS``.
+Um par Input/Output por endpoint implementado. Os registros que os testes de
+``tests/schemas/`` exigem estão no CONTRIBUTING.md do juscraper, seção
+"Schemas pydantic".
 """
 from __future__ import annotations
 
@@ -32,9 +32,10 @@ class InputCJSGTJXX(SearchBase, DataJulgamentoMixin, DataPublicacaoMixin):
     # variações de data e ``datetime.date``; o pipeline converte para este formato.
     BACKEND_DATE_FORMAT: ClassVar[str] = "%d/%m/%Y"  # TODO: "%Y-%m-%d" se o backend for ISO
 
-    # TODO: um campo por filtro do formulário, com o nome canônico
-    # (``relator``, ``classe``, ``assunto``, ``numero_processo``), e cada
-    # campo igual, byte a byte, a um parâmetro da assinatura pública.
+    # TODO: um campo por filtro do formulário confirmado com o usuário, com o
+    # nome canônico (``relator``, ``classe``, ``assunto``, ``numero_processo``).
+    # Cada campo aparece como bullet em ``**kwargs`` na docstring do método
+    # público (tests/schemas/test_docstring_parity.py confere a igualdade).
     relator: str | None = None
     classe: str | None = None
 
