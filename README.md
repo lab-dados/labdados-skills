@@ -81,10 +81,8 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 - Clone do juscraper com ambiente de desenvolvimento (`uv sync --extra dev`)
 - `juscraper-builder`: nenhum navegador obrigatorio; a engenharia reversa usa o navegador automatizado que a sessao tiver (Playwright MCP, Claude in Chrome, navegador do app) ou `curl`/`requests` lendo o HTML e o JavaScript do formulario
-- `juscraper-builder-captcha`: Playwright MCP configurado no Claude Code (para navegacao e captura de requisicoes de rede durante a engenharia reversa)
+- `juscraper-builder-captcha`: os mesmos da `juscraper-builder`, que ela usa; para captcha de imagem, `txtcaptcha` pelo extra `[tjmg]` do juscraper
 - Python conforme o `pyproject.toml` do juscraper
-- Para paginas com captcha text-based: `txtcaptcha`, que no juscraper entra pelo
-  extra `[tjmg]` (`uv pip install -e ".[dev,tjmg]"` no clone do juscraper)
 
 ### raspe-builder
 

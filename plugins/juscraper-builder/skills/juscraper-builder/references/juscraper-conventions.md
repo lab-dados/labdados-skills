@@ -28,7 +28,7 @@ Este arquivo não repete as convenções do juscraper. Ele diz onde cada uma est
 Leia pelo menos dois, cliente e testes, antes de escrever:
 
 - `src/juscraper/courts/tjro/` e `tests/tjro/`: raspador sobre `HTTPScraper` com backend JSON, `build_cjsg_payload` público, contrato, contrato de filtros e aliases deprecados específicos do tribunal (`magistrado` -> `relator`). Os arquivos do TJRO têm dispensas em `ruff.toml` (anotações, número de argumentos); arquivo novo não tem, então copie a estrutura e não as assinaturas.
-- O `cjsg` do TRF3 (`src/juscraper/courts/trf3/cjsg_download.py`, `cjsg_parse.py`, `cjsg_schemas.py`, `client.py` e `tests/trf3/`): portal atrás de bot manager com cabeçalhos medidos e documentados, sessão própria por busca, perfil `perfis_http["cjsg"]`, filtros que o JavaScript do formulário converte em texto, validação de combinações depois do pydantic, divisão de módulos por endpoint. Em 14/10/2026 ele estava no PR aberto [jtrecenti/juscraper#397](https://github.com/jtrecenti/juscraper/pull/397); se ainda não estiver em `main`, leia com `git show origin/feat/trf3-cjsg:<caminho>`.
+- O `cjsg` do TRF3 (`src/juscraper/courts/trf3/cjsg_download.py`, `cjsg_parse.py`, `cjsg_schemas.py`, `client.py` e `tests/trf3/`): portal atrás de bot manager com cabeçalhos medidos e documentados, sessão própria por busca, perfil `perfis_http["cjsg"]`, filtros que o JavaScript do formulário converte em texto, validação de combinações depois do pydantic, divisão de módulos por endpoint. Entrou em `main` pelo PR [jtrecenti/juscraper#397](https://github.com/jtrecenti/juscraper/pull/397); é o modelo mais próximo do template desta skill (`build_cjsg_payload(inp)` recebendo o modelo validado).
 - `src/juscraper/courts/stf/` e `src/juscraper/core/waf.py`: a exceção do navegador para obter o cookie do AWS WAF.
 - `src/juscraper/courts/_trf/base.py`: `cpopg` da família PJe, com `_configure_session` aplicando `BROWSER_HEADERS`.
 - `src/juscraper/courts/tjmg/`: captcha de imagem sobre `HTTPScraper` (ver a skill `juscraper-builder-captcha`).
@@ -42,7 +42,7 @@ Não use como modelo:
 
 ## Fatos que estão no código e não na documentação
 
-Conferidos em 14/10/2026 contra `origin/main` (82cbf15; até a67a855 só mudou o checkpoint do STF). Antes de confiar, rode de novo o comando indicado.
+Conferidos em 14/10/2026 contra `origin/main` (82cbf15, revisto em 4abd214 depois da entrada do `cjsg` do TRF3). Antes de confiar, rode de novo o comando indicado.
 
 **Retorno de `cjsg_download`.** Todos os tribunais fora da família eSAJ devolvem `list` de respostas brutas, e `cjsg_parse` recebe essa lista; `EsajSearchScraper` e TJSP devolvem `str` com o caminho dos arquivos baixados.
 

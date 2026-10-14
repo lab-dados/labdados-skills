@@ -14,8 +14,13 @@ Alterado:
   tabela de parametros e da lista de hooks do pre-commit. `references/juscraper-conventions.md` vira
   o mapa de onde cada regra mora, que raspadores ler e que fatos so aparecem no codigo.
 - A engenharia reversa deixa de exigir o Playwright MCP: serve o navegador automatizado que a sessao
-  tiver ou `curl`/`requests` lendo o HTML e o JavaScript do formulario. A skill
-  `juscraper-builder-captcha` continua exigindo o Playwright MCP.
+  tiver ou `curl`/`requests` lendo o HTML e o JavaScript do formulario.
+- `juscraper-builder-captcha` vira so o desvio de captcha (classificar, testar sem resolver,
+  `txtcaptcha` para imagem validada, parar e registrar em `docs/captcha/` para captcha interativo) e
+  devolve o fluxo a `juscraper-builder`, cujas referencias, scripts e template passa a usar. Saem as
+  copias que ela mantinha, identicas a versao antiga da `juscraper-builder` e ja divergentes. O
+  esqueleto do `txtcaptcha` usa `importlib.import_module`, que passa no lint sem a dispensa de
+  PLC0415 que so os raspadores antigos tem.
 - O mapeamento de todos os campos do formulario (inclusive ocultos e o que o JavaScript faz antes do
   envio) e a confirmacao do usuario antes de escrever codigo viram etapa obrigatoria; a checagem de
   captcha continua no inicio.
