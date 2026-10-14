@@ -1,6 +1,6 @@
 {
   "name": "juscraper-builder",
-  "description": "Gerar scrapers Python para tribunais brasileiros (com e sem captcha) seguindo a arquitetura do pacote juscraper.",
+  "description": "Gerar scrapers Python para tribunais brasileiros (com e sem captcha) na biblioteca juscraper, por engenharia reversa do formulario de busca e seguindo as convencoes do proprio repositorio.",
   "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
   "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/juscraper-builder",
   "repository": "https://github.com/lab-dados/labdados-skills",

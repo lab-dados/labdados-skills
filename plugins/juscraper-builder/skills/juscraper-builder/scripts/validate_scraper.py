@@ -58,15 +58,19 @@ def check_file_structure(tribunal: str) -> list[str]:
 
     # Subclasse de família (_esaj/, _trf/) herda download, parse e schema
     # compartilhados; não precisa dos módulos próprios nem do payload builder.
+    # Tribunal com endpoints de sistemas diferentes pode dividir os módulos
+    # por endpoint (``cjsg_download.py``, ``cjsg_parse.py``, ``cjsg_schemas.py``).
     if not _scraper_bases(tribunal) & FAMILY_BASES:
-        for modulo in ("download.py", "parse.py", "schemas.py"):
-            if not (base / modulo).exists():
-                errors.append(f"Falta: {base / modulo}")
-        download = base / "download.py"
-        if download.exists() and not re.search(r"^def build_\w+", download.read_text(), re.MULTILINE):
+        for modulo in ("download", "parse", "schemas"):
+            if not (base / f"{modulo}.py").exists() and not list(base.glob(f"*_{modulo}.py")):
+                errors.append(f"Falta: {base / (modulo + '.py')} (ou <endpoint>_{modulo}.py)")
+        downloads = sorted(base.glob("*download.py"))
+        if downloads and not any(
+            re.search(r"^def build_\w+", d.read_text(), re.MULTILINE) for d in downloads
+        ):
             errors.append(
-                f"{download}: sem payload builder público (def build_<endpoint>_payload). "
-                "O script de captura e os contratos importam essa função."
+                f"{', '.join(str(d) for d in downloads)}: sem payload builder público "
+                "(def build_<endpoint>_payload). O script de captura e os contratos importam essa função."
             )
 
     tests_dir = Path(f"tests/{tribunal}")
@@ -165,11 +169,8 @@ def check_class_conventions(tribunal: str) -> list[str]:
                 "Remova; o HTTPScraper monta o header com __version__."
             )
 
-        # Verificar linhas longas
-        for i, line in enumerate(source.split("\n"), 1):
-            if len(line) > 120:
-                errors.append(f"{path.name}: linha {i} tem {len(line)} chars (max 120)")
-                break  # Só reportar a primeira
+        # Tamanho de linha fica com o ruff e o flake8 do juscraper, que leem o
+        # limite do pyproject.toml; repetir o número aqui o deixaria divergir.
 
     # Subclasse de família herda as requisições com retry da base.
     if not familia:
@@ -196,6 +197,13 @@ def check_recommendations(tribunal: str) -> list[str]:
         )
     if "tqdm" not in todo_codigo:
         avisos.append("Não encontrei tqdm. Barra de progresso no download é recomendada.")
+    paridade = Path("tests/schemas/test_docstring_parity.py")
+    if paridade.exists() and f"juscraper.courts.{tribunal}.client" not in paridade.read_text():
+        avisos.append(
+            f"{paridade} não registra '{tribunal}'. Método público com filtros em **kwargs "
+            "entra em CASES, e o par *_download em DOWNLOAD_REFERENCE_CASES "
+            "(CONTRIBUTING.md > Docstrings de métodos públicos com kwargs)."
+        )
     return avisos
 
 
