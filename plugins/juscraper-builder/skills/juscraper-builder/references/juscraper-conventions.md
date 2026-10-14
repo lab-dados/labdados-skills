@@ -42,7 +42,7 @@ Não use como modelo:
 
 ## Fatos que estão no código e não na documentação
 
-Conferidos em 14/10/2026 contra `origin/main` (82cbf15, revisto em 4abd214 depois da entrada do `cjsg` do TRF3). Antes de confiar, rode de novo o comando indicado.
+Conferidos em 14/10/2026 contra `origin/main` (82cbf15, revisto em eb905f5 depois da entrada do `cjsg` do TRF3). Antes de confiar, rode de novo o comando indicado.
 
 **Retorno de `cjsg_download`.** Todos os tribunais fora da família eSAJ devolvem `list` de respostas brutas, e `cjsg_parse` recebe essa lista; `EsajSearchScraper` e TJSP devolvem `str` com o caminho dos arquivos baixados.
 

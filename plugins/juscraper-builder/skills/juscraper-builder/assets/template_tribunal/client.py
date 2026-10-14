@@ -104,7 +104,7 @@ class TJXXScraper(HTTPScraper):
             ``relator``, ``orgao_julgador``, ``data_julgamento``,
             ``data_publicacao`` e ``ementa``.
 
-        Exemplo:
+        Examples: Exemplo
             >>> import juscraper as jus
             >>> tjxx = jus.scraper("tjxx")
             >>> df = tjxx.cjsg("dano moral", paginas=range(1, 3))

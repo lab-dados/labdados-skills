@@ -25,8 +25,9 @@ Alterado:
   envio) e a confirmacao do usuario antes de escrever codigo viram etapa obrigatoria; a checagem de
   captcha continua no inicio.
 - Template: builder e manager recebem o `Input*` validado, todos os filtros vao em `**kwargs` como
-  bullets da docstring, sem alias especifico de tribunal; passa no ruff estrito sem dispensa, no mypy
-  e em `tests/schemas` do juscraper.
+  bullets da docstring, sem alias especifico de tribunal, exemplo na secao `Examples: Exemplo` que o
+  juscraper passou a exigir; passa no ruff estrito sem dispensa, no mypy, em `tests/schemas` e em
+  `tests/test_docstring_examples.py` do juscraper.
 
 Corrigido:
 
