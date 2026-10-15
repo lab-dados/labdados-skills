@@ -129,3 +129,26 @@ def test_crawl_delay_do_grupo_que_vale_para_o_robo(servidor, reconhecer, monkeyp
     conclusoes = [linha for linha in saida.splitlines() if linha.startswith("Crawl-delay:")]
     assert len(conclusoes) == 1, saida
     assert conclusoes[0].startswith("Crawl-delay: 10 s"), saida
+
+
+# --- codificação do robots.txt ------------------------------------------------------------------
+
+
+def test_robots_text_plain_sem_charset_com_bom_e_acento_vale_como_utf8(servidor, reconhecer, monkeypatch, capsys):
+    """A RFC 9309 (2.3) diz que o robots.txt é UTF-8; o `requests` lê `text/plain` sem charset como
+    ISO-8859-1, e aí o BOM vira "ï»¿" e a regra acentuada vira outra palavra."""
+    robots = "﻿User-agent: *\nDisallow: /licitação\n".encode("utf-8")
+    montar_site(servidor, robots, tipo_robots="text/plain")
+    servidor.rotas["/licita%C3%A7%C3%A3o"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/licita%C3%A7%C3%A3o?q=x")
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert servidor.pedidos == ["/robots.txt"]
+    assert "Disallow: /licitação" in saida  # o eco do arquivo sai legível
+
+
+def test_robots_com_bom_na_primeira_linha_nao_perde_o_grupo(servidor, reconhecer, monkeypatch, capsys):
+    montar_site(servidor, "﻿User-agent: *\nDisallow: /busca\n", tipo_robots="text/plain")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    assert codigo == 2, capsys.readouterr().out
+    assert servidor.pedidos == ["/robots.txt"]

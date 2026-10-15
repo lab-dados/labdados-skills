@@ -206,14 +206,17 @@ def conferir_robots(visitante, endereco):
         return RegrasRobots(""), True
     # Decide pelo conteúdo, não pelo Content-Type: há servidor que entrega o robots.txt como
     # text/html, e há site que responde com uma página HTML qualquer onde não há robots.txt.
-    regras = RegrasRobots(resposta.text)
+    # O arquivo é UTF-8 (RFC 9309, 2.3). `resposta.text` não serve: com `text/plain` sem charset,
+    # o requests decodifica como ISO-8859-1, o BOM vira "ï»¿" e "/licitação" vira outra palavra.
+    texto = resposta.content.decode("utf-8", errors="replace")
+    regras = RegrasRobots(texto)
     tipo = resposta.headers.get("Content-Type", "")
     if "html" in tipo.lower():
         print(f"O servidor entregou o arquivo como {tipo!r}; o que vale é o conteúdo.")
     if not regras.linhas_reconhecidas:
         print("O arquivo não traz nenhuma regra para robôs (User-agent, Allow, Disallow): o site não declarou regra.")
     else:
-        linhas = resposta.text.splitlines()
+        linhas = texto.splitlines()
         print("Conteúdo:")
         for linha in linhas[:60]:
             print(f"  | {linha}")
