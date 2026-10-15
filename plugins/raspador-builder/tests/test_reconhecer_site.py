@@ -248,19 +248,83 @@ def permite(reconhecer, robots, caminho):
 
 
 # A tabela de exemplos da seção 2.2.2 (figura 4): a regra escrita como "Path" casa com o endereço
-# "Path to Match". A terceira linha é o caractere U+30C4, que em UTF-8 é E3 83 84.
+# "Path to Match". A terceira linha é o caractere U+30C4, que em UTF-8 é E3 83 84. As duas últimas
+# conferem o que a tabela dá a entender: o mesmo %XX dos dois lados casa, e o texto "U+E38384"
+# escrito na regra é letra, não o caractere.
 TABELA_RFC_9309 = [
-    ("/foo/bar?baz=quz", "/foo/bar?baz=quz"),
-    ("/foo/bar?baz=https://foo.bar", "/foo/bar?baz=https%3A%2F%2Ffoo.bar"),
-    ("/foo/bar/ツ", "/foo/bar/%E3%83%84"),
-    ("/foo/bar/%E3%83%84", "/foo/bar/%E3%83%84"),
-    ("/foo/bar/%62%61%7A", "/foo/bar/baz"),
+    ("/foo/bar?baz=quz", "/foo/bar?baz=quz", False),
+    ("/foo/bar?baz=https://foo.bar", "/foo/bar?baz=https%3A%2F%2Ffoo.bar", False),
+    ("/foo/bar/ツ", "/foo/bar/%E3%83%84", False),
+    ("/foo/bar/%E3%83%84", "/foo/bar/%E3%83%84", False),
+    ("/foo/bar/%62%61%7A", "/foo/bar/baz", False),
+    ("/foo/bar/%62%61%7A", "/foo/bar/%62%61%7A", False),
+    ("/foo/bar/U+E38384", "/foo/bar/%E3%83%84", True),
 ]
 
 
-@pytest.mark.parametrize("regra, caminho", TABELA_RFC_9309, ids=[c[0] for c in TABELA_RFC_9309])
-def test_tabela_de_exemplos_da_rfc_9309(reconhecer, regra, caminho):
-    assert not permite(reconhecer, f"User-agent: *\nDisallow: {regra}\n", caminho)
+@pytest.mark.parametrize(
+    "regra, caminho, permitido", TABELA_RFC_9309, ids=[f"{c[0]} {c[1]}" for c in TABELA_RFC_9309]
+)
+def test_tabela_de_exemplos_da_rfc_9309(reconhecer, regra, caminho, permitido):
+    assert permite(reconhecer, f"User-agent: *\nDisallow: {regra}\n", caminho) is permitido
+
+
+def proibe(regra):
+    return f"User-agent: *\nDisallow: {regra}\n"
+
+
+# A regra casa com o caminho mais a consulta como uma cadeia só: o curinga atravessa o "?", e o
+# "=", o "&" e a "/" que ele alcança na consulta são os da consulta.
+# Cada caso: (descrição, robots.txt, caminho, permitido?)
+CASOS_CURINGA_ATE_A_CONSULTA = [
+    ("parâmetro depois do curinga", proibe("/*sort="), "/busca?sort=1", False),
+    ("& depois do curinga", proibe("/*&page="), "/busca?q=a&page=2", False),
+    ("= e âncora depois do curinga", proibe("/*=x$"), "/p?a=x", False),
+    ("curinga no lugar do ?", proibe("/busca*q="), "/busca?q=1", False),
+    ("barra da consulta depois do curinga", proibe("/*/b"), "/x?u=/b", False),
+    ("parâmetro entre curingas", proibe("/*add-to-cart=*"), "/?add-to-cart=12", False),
+    ("Allow mais longo com curinga até a consulta",
+     "User-agent: *\nDisallow: /busca\nAllow: /busca*sort=\n", "/busca?sort=1", True),
+]
+
+
+@pytest.mark.parametrize(
+    "descricao, robots, caminho, permitido",
+    CASOS_CURINGA_ATE_A_CONSULTA,
+    ids=[c[0] for c in CASOS_CURINGA_ATE_A_CONSULTA],
+)
+def test_curinga_atravessa_para_a_consulta(reconhecer, descricao, robots, caminho, permitido):
+    assert permite(reconhecer, robots, caminho) is permitido
+
+
+# O endereço é conferido como o requests o manda: "|" e '"' vão como %7C e %22, o "%" solto vai como
+# %25 e "/publico/../privado" vai como "/privado". "*" e "$" do endereço são letras, e casam com o
+# %2A e o %24 da regra.
+# Cada caso: (descrição, regra, caminho, permitido?)
+CASOS_COMO_ENVIADO = [
+    ("| na regra, %7C no endereço", "/a|b", "/a%7Cb", False),
+    ("%7C na regra, | no endereço", "/a%7Cb", "/a|b", False),
+    ('" na regra, %22 no endereço', '/a"b', "/a%22b", False),
+    ('%22 na regra, " no endereço', "/a%22b", '/a"b', False),
+    ("% solto no endereço vai como %25", "/a%25zz", "/a%zz", False),
+    ("% solto dos dois lados", "/a%zz", "/a%zz", False),
+    ("%25 não é decodificado duas vezes", "/A", "/%2541", True),
+    ("segmento .. resolvido", "/privado", "/publico/../privado/x", False),
+    ("* do endereço é letra e casa com %2A", "/a%2A", "/a*", False),
+    ("$ no fim do endereço é letra e casa com %24", "/a%24", "/a$", False),
+    ("* da regra é curinga e casa com %2A", "/a*b", "/a%2Axb", False),
+    ("%3F da regra não abre a consulta", "/a%3Fb", "/a?b", True),
+    ("? da regra casa com o %3F de dentro da consulta", "/a?b?c", "/a?b%3Fc", False),
+    ("= da regra não casa com %3D na consulta", "/a?b=c", "/a?b%3Dc", True),
+    ("& da regra casa com %26 no caminho", "/a&b", "/a%26b", False),
+]
+
+
+@pytest.mark.parametrize(
+    "descricao, regra, caminho, permitido", CASOS_COMO_ENVIADO, ids=[c[0] for c in CASOS_COMO_ENVIADO]
+)
+def test_endereco_conferido_como_o_requests_o_manda(reconhecer, descricao, regra, caminho, permitido):
+    assert permite(reconhecer, proibe(regra), caminho) is permitido
 
 
 # Caractere reservado escrito por extenso de um lado e codificado do outro é o mesmo caractere.
@@ -363,6 +427,12 @@ CASOS_CURINGA = [
     ("/a**b", "/ab", True),
     ("*", "/qualquer", True),
     ("/*$", "/", True),
+    # Cada trecho do meio é procurado depois do anterior: o "b" do meio não pode ser o de "/ab".
+    ("/ab*b*c", "/abc", False),
+    ("/ab*b*c", "/abbc", True),
+    # "/" e "?" do alvo também passam pelo casamento com classes.
+    ("/a*?b*/c$", "/a?b/c", True),
+    ("/a*?b*/c$", "/a?c/b", False),
 ]
 
 

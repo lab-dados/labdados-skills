@@ -28,7 +28,7 @@ import re
 import string
 import sys
 import time
-from urllib.parse import quote, urljoin, urlsplit
+from urllib.parse import urljoin, urlsplit
 
 import requests
 
@@ -54,85 +54,166 @@ PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpReques
 #
 # Até o Python 3.14, o `urllib.robotparser` aplica a primeira regra que casa, na ordem do arquivo,
 # e lê `*` e `$` como letras. Com "Allow: /" antes de "Disallow: /busca" ele libera /busca, e com
-# "Disallow: /*?q=" não proíbe nada; a partir do 3.15 ele segue a RFC. O mesmo site daria respostas
-# diferentes conforme a versão de quem roda o script, então a leitura fica aqui.
+# "Disallow: /*?q=" não proíbe nada. O do 3.15 segue a RFC nisso, mas divide a regra no "?" e
+# codifica "=" e "&" do lado do caminho, e aí "Disallow: /*sort=" não proíbe "/busca?sort=1". O mesmo
+# site daria respostas diferentes conforme a versão de quem roda o script, então a leitura fica aqui.
 
-# RFC 3986: caracteres "não reservados" e "reservados".
-NAO_RESERVADOS = frozenset(string.ascii_letters + string.digits + "-._~")
-RESERVADOS = frozenset(":/?#[]@!$&'()*+,;=")
+# RFC 3986: caracteres "não reservados", que valem o mesmo por extenso e como %XX.
+NAO_RESERVADOS = frozenset((string.ascii_letters + string.digits + "-._~").encode())
+# Os reservados que dão a estrutura do endereço em cada parte dele. Ali, por extenso e codificados
+# têm sentidos diferentes: no caminho, "/" separa segmentos e "%2F" é letra de um segmento; o
+# primeiro "?" abre a consulta e "%3F" é letra; na consulta, "&" e "=" separam os parâmetros e
+# "%26" e "%3D" são parte do valor. Fora da sua parte, cada um deles vale o mesmo nas duas grafias.
+ESTRUTURAIS = {"caminho": frozenset(b"/?"), "consulta": frozenset(b"&=")}
+PODEM_SER_ESTRUTURAIS = ESTRUTURAIS["caminho"] | ESTRUTURAIS["consulta"]
+# Um octeto estrutural do endereço vira um caractere da área de uso privado do Unicode, longe dos
+# 256 valores de octeto, com uma faixa para a grafia por extenso e outra para a codificada.
+POR_EXTENSO, CODIFICADO = 0xE000, 0xE100
+# Uma sequência de %XX, ou uma sequência sem "%", ou um "%" solto.
+PADRAO_OCTETOS = re.compile(r"((?:%[0-9A-Fa-f]{2})+)|([^%]+|%)")
 
 
-def normalizar_caminho(caminho, regra=False):
-    """Põe o caminho da regra e o do endereço na mesma grafia antes de comparar (RFC 9309, 2.2.2).
+def octetos(texto):
+    """Os octetos do texto, cada um como (valor, veio codificado como %XX?).
 
-    A RFC manda decodificar o %XX de caractere não reservado e codificar o caractere reservado,
-    nos dois lados: "/%7Euser" e "/~user" viram "/~user"; "/licitação" vira "/licita%C3%A7%C3%A3o",
-    igual ao que o navegador manda; ":" e "%3a" viram "%3A". Assim a regra
-    "/foo/bar?baz=https://foo.bar" casa com o endereço "/foo/bar?baz=https%3A%2F%2Ffoo.bar", como
-    na tabela de exemplos da seção.
-
-    Ficam por extenso os reservados que dão a estrutura do endereço, porque codificados eles mudam
-    de sentido e não podem casar com a forma por extenso: o "?" que abre a consulta; "/" na parte
-    do caminho, que separa segmentos ("/a%2Fb" é um segmento só); "&" e "=" na consulta, que
-    separam os parâmetros ("a=1%26b" é um parâmetro só). A tabela da RFC os mantém assim.
-
-    Com `regra=True`, `*` e o `$` final continuam sendo curinga e âncora, e não letras.
+    "%62" e "b" dão o mesmo valor; "ç" dá os dois octetos do UTF-8. Um "%" sem dois dígitos
+    hexadecimais depois é o próprio "%", que o requests manda como "%25". Não decodifica duas
+    vezes: "%2541" são os octetos "%", "4" e "1".
     """
-    ancora = "$" if regra and caminho.endswith("$") else ""
-    caminho = caminho[: len(caminho) - len(ancora)]
-    parte_caminho, interrogacao, consulta = caminho.partition("?")
-    saida = _normalizar_trecho(parte_caminho, "/", regra)
-    if interrogacao:
-        saida += "?" + _normalizar_trecho(consulta, "&=", regra)
-    return saida + ancora
-
-
-def _normalizar_trecho(trecho, estruturais, regra):
     saida = []
-    posicao = 0
-    while posicao < len(trecho):
-        letra = trecho[posicao]
-        codigo = trecho[posicao + 1 : posicao + 3]
-        if letra == "%" and len(codigo) == 2 and all(c in string.hexdigits for c in codigo):
-            decodificada = chr(int(codigo, 16))
-            saida.append(decodificada if decodificada in NAO_RESERVADOS else "%" + codigo.upper())
-            posicao += 3
-            continue
-        if regra and letra == "*":
-            saida.append(letra)
-        elif (letra in RESERVADOS and letra not in estruturais) or ord(letra) > 126 or ord(letra) <= 32:
-            saida.append(quote(letra, safe=""))
+    for codificados, por_extenso in PADRAO_OCTETOS.findall(texto):
+        if codificados:
+            saida += [(octeto, True) for octeto in bytes.fromhex(codificados.replace("%", ""))]
         else:
-            saida.append(letra)
-        posicao += 1
-    return "".join(saida)
+            saida += [(octeto, False) for octeto in por_extenso.encode("utf-8")]
+    return saida
 
 
-def casa(regra, alvo):
-    """A regra casa com o início do alvo; `*` vale qualquer sequência e `$` no fim exige o fim.
+def caminho_enviado(endereco):
+    """O caminho e a consulta exatamente como o requests os manda ao servidor.
 
-    Sem expressão regular: com ela, cada `*` vira `.*`, e o retrocesso cresce como potência do
-    tamanho do endereço (oito curingas contra 41 letras levavam segundos). Aqui cada trecho entre
-    curingas é procurado uma vez, na primeira posição em que aparece depois do anterior. Pegar a
-    primeira ocorrência nunca impede um casamento que outra permitiria, porque deixa mais alvo
-    livre para os trechos seguintes. Com `$`, o último trecho tem de estar no fim do alvo.
+    O requests (com o urllib3) codifica o que não pode ir por extenso ("|" vira "%7C", "ç" vira
+    "%C3%A7", "%" solto vira "%25"), decodifica os não reservados ("%7E" vira "~"), resolve os
+    segmentos "." e ".." (RFC 3986, 5.2.4, também em endereço absoluto) e tira o fragmento. A
+    regra do robots.txt tem de ser conferida contra esse caminho, e não contra o que foi escrito.
     """
-    ancorada = regra.endswith("$")
-    primeiro, *meio = (regra[:-1] if ancorada else regra).split("*")
-    if not alvo.startswith(primeiro):
-        return False
-    if not meio:  # regra sem curinga
-        return not ancorada or alvo == primeiro
-    *meio, ultimo = meio
-    posicao = len(primeiro)
-    for trecho in meio:
-        achado = alvo.find(trecho, posicao)
-        if achado < 0:
+    try:
+        return requests.Request("GET", endereco).prepare().path_url
+    except (requests.RequestException, ValueError):  # endereço que o requests nem pediria
+        partes = urlsplit(endereco)
+        return (partes.path or "/") + ("?" + partes.query if partes.query else "")
+
+
+def codificar_alvo(caminho):
+    """O caminho enviado (com a consulta) como texto em que cada octeto é um caractere.
+
+    O octeto comum vira o caractere de mesmo valor, venha por extenso ou como %XX. O estrutural na
+    sua parte do endereço (ver ESTRUTURAIS) vira um caractere de POR_EXTENSO ou de CODIFICADO,
+    conforme a grafia. O primeiro "?" por extenso é o separador: estrutural do caminho, e a partir
+    dele vale a lista da consulta. "*" e "$" do endereço são letras como as outras.
+    """
+    codigos = []
+    estruturais = ESTRUTURAIS["caminho"]
+    for valor, codificado in octetos(caminho):
+        if valor in estruturais:
+            codigos.append(chr((CODIFICADO if codificado else POR_EXTENSO) + valor))
+        else:
+            codigos.append(chr(valor))
+        if valor == ord("?") and not codificado:
+            estruturais = ESTRUTURAIS["consulta"]
+    return "".join(codigos)
+
+
+class Regra:
+    """Um caminho de Allow ou Disallow, pronto para casar com o alvo de `codificar_alvo`.
+
+    Critério de comparação. A regra casa com o caminho mais a consulta como uma cadeia só, sem ser
+    dividida no "?": o curinga atravessa do caminho para a consulta, e "Disallow: /*sort=" proíbe
+    "/busca?sort=1". Os dois lados são comparados octeto a octeto, depois de decodificar o %XX,
+    como manda a RFC 9309 (2.2.2): "/%7Euser" e "/~user", ":" e "%3a", "|" e "%7C" são iguais.
+    A exceção são os reservados estruturais (ver ESTRUTURAIS), que só casam com a mesma grafia na
+    parte do endereço em que são estruturais. Como a regra não sabe em que parte do endereço cada
+    letra dela vai cair, um octeto que pode ser estrutural vira uma classe de dois caracteres: o
+    comum, para onde ele não é estrutural, e o da sua grafia, para onde é. Assim "/" da regra casa
+    com "/" e "%2F" da consulta, mas só com "/" do caminho; "%2F" da regra casa com "%2F" do caminho
+    e com "/" e "%2F" da consulta.
+
+    `*` vale qualquer sequência e o `$` final exige o fim do alvo; "%2A" e "%24" são letras.
+
+    Casamento sem retrocesso: cada trecho entre curingas tem tamanho fixo e é procurado uma vez, na
+    primeira posição em que aparece depois do trecho anterior. Pegar a primeira ocorrência nunca
+    impede um casamento que outra permitiria, porque deixa mais alvo livre para os trechos
+    seguintes. Com `.*` no lugar dos curingas, o retrocesso cresceria como potência do tamanho do
+    endereço (oito curingas contra 41 letras levavam segundos). O trecho sem octeto que possa ser
+    estrutural é texto e se procura com `str.find`; o que tem vira expressão regular de classes,
+    sem `*` nem `+`, que também não retrocede.
+    """
+
+    def __init__(self, texto, permitida=False):
+        self.permitida = permitida
+        self.ancorada = texto.endswith("$")
+        trechos = [octetos(trecho) for trecho in (texto[:-1] if self.ancorada else texto).split("*")]
+        self.trechos = [_trecho(trecho) for trecho in trechos]
+        self.tamanhos = [len(trecho) for trecho in trechos]
+        # Especificidade (RFC 9309, 2.2.2: vence a regra com mais octetos). Cada octeto conta pelo
+        # tamanho com que vai ao servidor: 1 o não reservado e o estrutural por extenso, 3 os outros
+        # (%XX). Assim ":" e "%3A", que são o mesmo octeto, empatam. Curinga e âncora contam 1.
+        self.comprimento = len(trechos) - 1 + self.ancorada + sum(
+            1 if valor in NAO_RESERVADOS or (valor in PODEM_SER_ESTRUTURAIS and not codificado) else 3
+            for trecho in trechos
+            for valor, codificado in trecho
+        )
+
+    def casa(self, alvo):
+        primeiro, *meio = self.trechos
+        if not _comeca_em(primeiro, alvo, 0):
             return False
-        posicao = achado + len(trecho)
-    if ancorada:
-        return alvo.endswith(ultimo) and len(alvo) - len(ultimo) >= posicao
-    return alvo.find(ultimo, posicao) >= 0
+        posicao = self.tamanhos[0]
+        if not meio:  # regra sem curinga
+            return not self.ancorada or posicao == len(alvo)
+        *meio, ultimo = meio
+        for trecho in meio:
+            posicao = _fim_da_primeira(trecho, alvo, posicao)
+            if posicao < 0:
+                return False
+        if self.ancorada:
+            inicio = len(alvo) - self.tamanhos[-1]
+            return inicio >= posicao and _comeca_em(ultimo, alvo, inicio)
+        return _fim_da_primeira(ultimo, alvo, posicao) >= 0
+
+
+def _trecho(octetos_do_trecho):
+    """Texto, se nenhum octeto pode ser estrutural; senão, expressão regular em que o octeto que
+    pode ser estrutural vira a classe dos dois caracteres com que casa (ver `Regra`)."""
+    if not any(valor in PODEM_SER_ESTRUTURAIS for valor, _ in octetos_do_trecho):
+        return "".join(chr(valor) for valor, _ in octetos_do_trecho)
+    partes = []
+    for valor, codificado in octetos_do_trecho:
+        letra = re.escape(chr(valor))
+        if valor in PODEM_SER_ESTRUTURAIS:
+            letra = "[" + letra + re.escape(chr((CODIFICADO if codificado else POR_EXTENSO) + valor)) + "]"
+        partes.append(letra)
+    return re.compile("".join(partes))
+
+
+def _comeca_em(trecho, alvo, posicao):
+    if isinstance(trecho, str):
+        return alvo.startswith(trecho, posicao)
+    return trecho.match(alvo, posicao) is not None
+
+
+def _fim_da_primeira(trecho, alvo, posicao):
+    """Onde termina a primeira ocorrência do trecho em `alvo` a partir de `posicao`, ou -1."""
+    if isinstance(trecho, str):
+        inicio = alvo.find(trecho, posicao)
+        return -1 if inicio < 0 else inicio + len(trecho)
+    achado = trecho.search(alvo, posicao)
+    return -1 if achado is None else achado.end()
+
+
+def casa(regra, caminho):
+    """A regra (texto de Allow ou Disallow) casa com o início do caminho enviado?"""
+    return Regra(regra).casa(codificar_alvo(caminho))
 
 
 def produto(agente):
@@ -178,7 +259,7 @@ class RegrasRobots:
                     except ValueError:
                         pass
                 elif valor:  # "Disallow:" vazio não proíbe nada
-                    grupo["regras"].append((normalizar_caminho(valor, regra=True), chave == "allow"))
+                    grupo["regras"].append(Regra(valor, permitida=chave == "allow"))
 
     def nome_do_grupo(self, agente):
         """O nome do grupo que vale para `agente` ("*" se só o geral), ou None se nenhum vale."""
@@ -194,14 +275,13 @@ class RegrasRobots:
         return [grupo for grupo in self.grupos if nome in grupo["agentes"]]
 
     def permite(self, agente, endereco):
-        partes = urlsplit(endereco)
-        alvo = normalizar_caminho((partes.path or "/") + ("?" + partes.query if partes.query else ""))
+        alvo = codificar_alvo(caminho_enviado(endereco))
         vencedora = None  # (comprimento da regra, é Allow)
         for grupo in self._grupos_para(agente):
-            for regra, permitida in grupo["regras"]:
-                candidata = (len(regra), permitida)
+            for regra in grupo["regras"]:
+                candidata = (regra.comprimento, regra.permitida)
                 # A tupla maior vence: a regra mais longa e, no empate, o Allow (True > False).
-                if casa(regra, alvo) and (vencedora is None or candidata > vencedora):
+                if regra.casa(alvo) and (vencedora is None or candidata > vencedora):
                     vencedora = candidata
         return True if vencedora is None else vencedora[1]
 
