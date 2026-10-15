@@ -13,8 +13,8 @@ import pandas as pd
 
 tabela = pd.read_csv("resultados.csv")
 print(len(tabela), "linhas")                                   # igual ao total que o site informa?
-print(tabela.duplicated().sum(), "linhas repetidas")           # tem de ser 0
-print(tabela["<identificador>"].duplicated().sum(), "ids repetidos")
+print(tabela.duplicated().sum(), "linhas repetidas")           # sem id entre os campos, podem ser processos diferentes
+print(tabela["<identificador>"].duplicated().sum(), "ids repetidos")  # tem de ser 0
 print(tabela.isna().sum())                                      # campos pedidos vazios?
 print(tabela.head())
 ```
