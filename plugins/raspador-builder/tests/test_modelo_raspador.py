@@ -90,10 +90,12 @@ def test_site_que_ignora_a_pagina_para_com_erro_e_grava_o_parcial(servidor, mode
     saida = tmp_path / "resultados.csv"
     codigo = rodar(modelo, monkeypatch, saida)
     assert codigo != 0
-    assert [linha["titulo"] for linha in linhas_do_csv(saida)] == fatia(1)
+    parcial = tmp_path / "resultados.parcial.csv"
+    assert [linha["titulo"] for linha in linhas_do_csv(parcial)] == fatia(1)
+    assert not saida.exists()
     erro = capsys.readouterr().err
     assert "a página 2 só trouxe linhas da página 1" in erro
-    assert str(saida) in erro
+    assert str(parcial) in erro
 
 
 @pytest.mark.parametrize("total", [None, 30, 33], ids=["sem total", "total 30", "total 33"])
@@ -133,7 +135,8 @@ def test_site_que_ignora_a_pagina_e_muda_a_ordem_para_com_erro(servidor, modelo,
     assert codigo == 2
     erro = capsys.readouterr().err
     assert "confira o parâmetro de paginação" in erro
-    assert sorted(linha["titulo"] for linha in linhas_do_csv(saida)) == sorted(primeira)
+    parcial = tmp_path / "resultados.parcial.csv"
+    assert sorted(linha["titulo"] for linha in linhas_do_csv(parcial)) == sorted(primeira)
 
 
 def test_acesso_negado_no_meio_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):
@@ -146,8 +149,27 @@ def test_acesso_negado_no_meio_grava_o_parcial(servidor, modelo, monkeypatch, tm
     saida = tmp_path / "resultados.csv"
     codigo = rodar(modelo, monkeypatch, saida)
     assert codigo != 0
-    assert len(linhas_do_csv(saida)) == POR_PAGINA
+    assert len(linhas_do_csv(tmp_path / "resultados.parcial.csv")) == POR_PAGINA
     assert "403" in capsys.readouterr().err
+
+
+def test_parcial_nao_sobrescreve_o_csv_completo_anterior(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """Quem roda de novo e cai num erro não perde o CSV completo da rodada anterior."""
+    saida = tmp_path / "resultados.csv"
+    saida.write_text("titulo\nresultado completo de ontem\n", encoding="utf-8-sig")
+
+    def responder(query):
+        if query.get("pagina") == "2":
+            return (403, "text/html", "<html>proibido</html>")
+        return pagina_json(fatia(1), total=24)
+
+    servidor.rotas["/api/busca"] = responder
+    codigo = rodar(modelo, monkeypatch, saida)
+    assert codigo == 2
+    assert linhas_do_csv(saida) == [{"titulo": "resultado completo de ontem"}]
+    parcial = tmp_path / "resultados.parcial.csv"
+    assert len(linhas_do_csv(parcial)) == POR_PAGINA
+    assert f"salvas em {parcial}" in capsys.readouterr().err
 
 
 # --- Retry-After --------------------------------------------------------------------------------
