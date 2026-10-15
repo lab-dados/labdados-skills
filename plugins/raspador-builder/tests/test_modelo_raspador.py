@@ -139,6 +139,73 @@ def test_site_que_ignora_a_pagina_e_muda_a_ordem_para_com_erro(servidor, modelo,
     assert sorted(linha["titulo"] for linha in linhas_do_csv(parcial)) == sorted(primeira)
 
 
+def resultados_com_campos(dados):
+    """`ler_resultados` de quem pediu só a data e a classe: processos diferentes dão a mesma linha."""
+    return [{"data": item["data"], "classe": item["classe"]} for item in dados["resultados"]]
+
+
+def processo(data, classe):
+    return {"data": data, "classe": classe}
+
+
+A, B, C, D, E, F = (processo(f"2026-0{mes}-01", "Apelação") for mes in range(1, 7))
+
+
+def paginas_fixas(paginas):
+    """Site sem total que devolve `paginas` e, além da última, a última de novo."""
+
+    def responder(query):
+        numero = min(int(query.get("pagina", "1")), len(paginas))
+        return pagina_json(paginas[numero - 1])
+
+    return responder
+
+
+def test_pagina_legitima_com_linhas_ja_vistas_nao_encerra_a_coleta(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """A página 3 só traz linhas iguais a linhas já vistas, mas não repete página nenhuma inteira:
+    é página nova. Comparando linha a linha, a coleta parava ali com 4 das 8 linhas e saída 0."""
+    monkeypatch.setattr(modelo, "ler_resultados", resultados_com_campos)
+    servidor.rotas["/api/busca"] = paginas_fixas([[A, B], [C, D], [A, D], [E, F]])
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 0
+    assert [(linha["data"], linha["classe"]) for linha in linhas_do_csv(saida)] == [
+        (item["data"], item["classe"]) for item in [A, B, C, D, A, D, E, F]
+    ]
+    assert "página 5 repete a página 4" in capsys.readouterr().err
+
+
+def test_parada_por_pagina_repetida_sem_total_avisa_que_pode_estar_incompleta(
+    servidor, modelo, monkeypatch, tmp_path, capsys
+):
+    """A página 3 repete a 1 inteira. Sem total, isso não se distingue de um site que volta à
+    primeira página quando se pede além da última: a coleta para, mas não em silêncio."""
+    monkeypatch.setattr(modelo, "ler_resultados", resultados_com_campos)
+    servidor.rotas["/api/busca"] = paginas_fixas([[A, B], [C, D], [A, B], [E, F]])
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 0
+    assert len(linhas_do_csv(saida)) == 4
+    erro = capsys.readouterr().err
+    assert "página 3 repete a página 1" in erro
+    assert "pode estar incompleta" in erro
+
+
+def test_site_que_volta_a_primeira_pagina_encerra_sem_duplicar(servidor, modelo, monkeypatch, tmp_path):
+    """Pedida além da última, a página volta à primeira (e segue o ciclo). A página 4 repete a 1,
+    não a 3: comparar só com a página anterior duplicaria a primeira página. Depois da página 12 o
+    servidor responde 404, para que um raspador que não pare reprove em vez de travar."""
+
+    def responder(query):
+        pagina = int(query.get("pagina", "1"))
+        if pagina > 12:
+            return (404, JSON, "{}")
+        return pagina_json(fatia((pagina - 1) % 3 + 1))
+
+    servidor.rotas["/api/busca"] = responder
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 0
+    assert [linha["titulo"] for linha in linhas_do_csv(saida)] == TITULOS
+
+
 def test_acesso_negado_no_meio_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):
     def responder(query):
         if query.get("pagina") == "2":

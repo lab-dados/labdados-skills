@@ -136,9 +136,13 @@ def coletar(pesquisa, max_paginas=None):
     sessao = requests.Session()  # guarda os cookies entre um pedido e outro, como um navegador
     sessao.headers["User-Agent"] = USER_AGENT
     linhas, total_informado = [], None
-    # As linhas já coletadas, para reconhecer página que só repete o que já veio. Cada linha entra
-    # como texto (repr), porque um valor pode ser lista ou dicionário, que não cabem num set.
-    vistas = set()
+    # Cada página já coletada, para reconhecer a que repete uma delas. A comparação é de página
+    # inteira, e não de linha: `ler_resultados` guarda só os campos pedidos, então dois resultados
+    # diferentes podem dar a mesma linha, e uma página legítima pode trazer só linhas iguais a
+    # linhas já vistas. Cada página entra como a lista ordenada das suas linhas, para que a mesma
+    # página em outra ordem (relevância com empate) conte como repetida; cada linha entra como
+    # texto (repr), porque um valor pode ser lista ou dicionário, que não se ordenam.
+    paginas_vistas = []
     pagina = 1
     try:
         while True:
@@ -155,25 +159,35 @@ def coletar(pesquisa, max_paginas=None):
                     print(f"O site informa {total_informado} resultados para {pesquisa!r}.", file=sys.stderr)
             if not novos:  # página vazia: acabou
                 break
-            chaves = [repr(sorted(linha.items())) for linha in novos]
-            if all(chave in vistas for chave in chaves):
-                # A página só trouxe linhas que já vieram (na mesma ordem ou não). Na página 2, o
-                # site ignorou o número da página e devolveu a primeira: parar com erro, senão o
-                # laço não termina e as linhas se repetem. Da 3 em diante, as anteriores já
-                # mostraram que a paginação funciona: muitos sites devolvem a última página de
-                # novo quando se pede uma além dela, e isso é o fim da coleta.
+            assinatura = sorted(repr(sorted(linha.items())) for linha in novos)
+            if assinatura in paginas_vistas:
+                # A página repete uma já coletada (na mesma ordem ou não). Na página 2, o site
+                # ignorou o número da página e devolveu a primeira: parar com erro, senão o laço
+                # não termina e as linhas se repetem. Da 3 em diante, as anteriores já mostraram
+                # que a paginação funciona: muitos sites devolvem a última página de novo quando
+                # se pede uma além dela, e outros voltam à primeira; isso é o fim da coleta.
                 if pagina == 2:
                     raise RuntimeError(
                         "a página 2 só trouxe linhas da página 1; confira o parâmetro de paginação"
                     )
-                if total_informado is not None and len(linhas) < total_informado:
+                repetida = paginas_vistas.index(assinatura) + 1
+                if total_informado is None:
+                    # Sem total, nada confirma que a página repetida veio depois da última: uma
+                    # página legítima pode coincidir, nos campos pedidos, com uma anterior.
                     print(
-                        f"  página {pagina} só trouxe linhas já coletadas: fim da coleta, com {len(linhas)} "
-                        f"dos {total_informado} resultados informados.",
+                        f"  página {pagina} repete a página {repetida}: a coleta parou aqui, com {len(linhas)} "
+                        "linhas. O site não informa o total, então ela pode estar incompleta: confira no "
+                        "navegador se a busca tem mais páginas.",
+                        file=sys.stderr,
+                    )
+                elif len(linhas) < total_informado:
+                    print(
+                        f"  página {pagina} repete a página {repetida} (só trouxe linhas já coletadas): fim da "
+                        f"coleta, com {len(linhas)} dos {total_informado} resultados informados.",
                         file=sys.stderr,
                     )
                 break
-            vistas.update(chaves)
+            paginas_vistas.append(assinatura)
             linhas.extend(novos)
             print(f"  página {pagina}: {len(novos)} resultados ({len(linhas)} até agora)", file=sys.stderr)
             if total_informado is not None and len(linhas) >= total_informado:
