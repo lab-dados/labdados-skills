@@ -10,7 +10,7 @@ O `robots.txt` fica sempre na raiz do domínio (`https://site.gov.br/robots.txt`
 
 - **Não existe (404)**: o site não declarou regra para robôs. Isso não é autorização ampla; siga para os termos de uso e mantenha a coleta educada (um segundo entre pedidos, só o necessário).
 - **Existe e permite o caminho**: siga. Se houver `Crawl-delay: N`, o raspador espera `max(1, N)` segundos entre pedidos.
-- **Proíbe o caminho** (`Disallow` que cobre a página de busca ou a API, para `User-agent: *` ou para um nome que case com o User-Agent do raspador): **pare**. Não troque o User-Agent para escapar da regra.
+- **Proíbe o caminho** (`Disallow` que cobre a página de busca ou a API no grupo que vale para o raspador): **pare**. Não troque o User-Agent para escapar da regra. Pela RFC 9309, vale o grupo cujo `User-agent` é o nome do raspador (`raspador-de-pesquisa`) e, se não houver, o de `User-agent: *`; dentro do grupo, vence a regra de caminho mais longo, não a primeira do arquivo (`Allow: /` antes de `Disallow: /busca` proíbe `/busca`), e no empate vence o `Allow`. `*` no caminho vale qualquer sequência e `$` marca o fim. O script já lê assim; confira à mão só quando o arquivo for confuso.
 - **Devolve outro 4xx (401, 403, 410)**: a norma do `robots.txt` (RFC 9309, seção 2.3.1.3) trata como arquivo indisponível, igual ao 404. Mas um 403 no `robots.txt` costuma vir de um bloqueio de robôs: confira se a página de busca também devolve 403 ao `requests`; se devolver, é a pergunta 4, e a coleta para.
 - **Devolve 5xx ou não responde**: a mesma norma manda tratar como proibição total enquanto durar. Não colete agora; diga ao usuário para tentar mais tarde.
 

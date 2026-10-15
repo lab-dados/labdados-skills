@@ -5,7 +5,8 @@
 """Reconhecimento de um site antes de escrever o raspador (skill raspador-builder).
 
 Uso:
-    python reconhecer_site.py "<endereço da página de busca>" [--max-testes 5]
+    python3 reconhecer_site.py "<endereço da página de busca>" [--max-testes 5]
+(no Windows, `python` no lugar de `python3`; com uv, `uv run reconhecer_site.py ...`)
 
 Faz poucos pedidos, com um segundo entre eles, e imprime cinco seções:
   1. robots.txt: o arquivo, o código de resposta e se o caminho da página é permitido;
@@ -14,17 +15,19 @@ Faz poucos pedidos, com um segundo entre eles, e imprime cinco seções:
   4. página: código, tipo de conteúdo, tamanho, se o HTML parece vazio (montado por script);
   5. API candidatos: endereços do mesmo site, achados no HTML e nos scripts, que devolvem JSON.
 
-O script sinaliza; quem decide é quem lê. Ele não testa endereço que o robots.txt proíbe e não
-segue endereço de outro domínio.
+O script sinaliza; quem decide é quem lê. Nenhum pedido depois do robots.txt (página pedida,
+página inicial, scripts, API candidatos) vai a endereço que o robots.txt proíba para este robô,
+e nenhum vai a outro domínio. O robots.txt é lido como manda a RFC 9309, pelo código deste
+arquivo e não pelo `urllib.robotparser`, para que a resposta não dependa da versão do Python.
 """
 
 import argparse
 import html
 import re
+import string
 import sys
 import time
-from urllib.parse import urljoin, urlsplit
-from urllib.robotparser import RobotFileParser
+from urllib.parse import quote, urljoin, urlsplit
 
 import requests
 
@@ -42,6 +45,122 @@ PALAVRAS_TERMOS = re.compile(
 PADRAO_ENDERECO = re.compile(r"""https?://[^\s"'<>`]+|(?<![\w/<])/[\w\-.~%]+(?:/[^\s"'<>`)]*)?""")
 PARECE_API = re.compile(r"/api/|\.json\b|graphql|/rest/|/v\d+/|format=json", re.IGNORECASE)
 PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpRequest", re.IGNORECASE)
+
+
+# --- robots.txt (RFC 9309) -----------------------------------------------------------------------
+#
+# Até o Python 3.14, o `urllib.robotparser` aplica a primeira regra que casa, na ordem do arquivo,
+# e lê `*` e `$` como letras. Com "Allow: /" antes de "Disallow: /busca" ele libera /busca, e com
+# "Disallow: /*?q=" não proíbe nada; a partir do 3.15 ele segue a RFC. O mesmo site daria respostas
+# diferentes conforme a versão de quem roda o script, então a leitura fica aqui.
+
+# RFC 3986: caracteres "não reservados". Codificados como %XX, são decodificados antes de comparar;
+# qualquer outro %XX fica codificado, porque decodificá-lo mudaria o sentido do endereço.
+NAO_RESERVADOS = frozenset(string.ascii_letters + string.digits + "-._~")
+
+
+def normalizar_caminho(caminho):
+    """Põe o caminho da regra e o do endereço na mesma grafia antes de comparar (RFC 9309, 2.2.2).
+
+    "/%7Euser" e "/~user" viram "/~user"; "/licitação" vira "/licita%C3%A7%C3%A3o", igual ao que o
+    navegador manda; "%2f" vira "%2F" e continua codificado.
+    """
+    saida = []
+    posicao = 0
+    while posicao < len(caminho):
+        letra = caminho[posicao]
+        codigo = caminho[posicao + 1 : posicao + 3]
+        if letra == "%" and len(codigo) == 2 and all(c in string.hexdigits for c in codigo):
+            decodificada = chr(int(codigo, 16))
+            saida.append(decodificada if decodificada in NAO_RESERVADOS else "%" + codigo.upper())
+            posicao += 3
+            continue
+        saida.append(quote(letra, safe="") if ord(letra) > 126 or ord(letra) <= 32 else letra)
+        posicao += 1
+    return "".join(saida)
+
+
+def casa(regra, alvo):
+    """A regra casa com o início do alvo; `*` vale qualquer sequência e `$` no fim exige o fim."""
+    ancorada = regra.endswith("$")
+    corpo = re.sub(r"\*+", "*", regra[:-1] if ancorada else regra)  # "**" vale o mesmo que "*", e é mais lento
+    padrao = ".*".join(re.escape(parte) for parte in corpo.split("*"))
+    return re.match(padrao + (r"\Z" if ancorada else ""), alvo, re.DOTALL) is not None
+
+
+def produto(agente):
+    """O nome do robô sem versão nem comentário: "raspador-de-pesquisa/1.0 (...)" vira "raspador-de-pesquisa"."""
+    achado = re.match(r"\*|[a-z_-]+", agente.strip().lower())
+    return achado.group(0) if achado else ""
+
+
+class RegrasRobots:
+    """Um robots.txt lido como manda a RFC 9309.
+
+    Grupo: uma ou mais linhas User-agent seguidas das regras (Allow, Disallow, Crawl-delay). Vale o
+    grupo cujo nome é o do robô; se não houver, o de `*`; grupos com o mesmo nome se somam. Entre
+    as regras do grupo que casam com o caminho, vence a de caminho mais longo, e no empate o Allow.
+    Sem regra que case, o caminho é permitido. Crawl-delay não está na RFC, mas muitos sites o usam.
+    """
+
+    def __init__(self, texto):
+        self.grupos = []
+        self.linhas_reconhecidas = 0
+        lendo_agentes = False
+        for linha in texto.lstrip("\ufeff").splitlines():
+            linha = linha.split("#", 1)[0].strip()
+            if ":" not in linha:
+                continue
+            chave, valor = (parte.strip() for parte in linha.split(":", 1))
+            chave = chave.lower()
+            if chave == "user-agent":
+                if not lendo_agentes:  # User-agent depois de regra abre grupo novo
+                    self.grupos.append({"agentes": set(), "regras": [], "atrasos": []})
+                    lendo_agentes = True
+                self.grupos[-1]["agentes"].add(produto(valor))
+                self.linhas_reconhecidas += 1
+            elif chave in ("allow", "disallow", "crawl-delay"):
+                lendo_agentes = False
+                self.linhas_reconhecidas += 1
+                if not self.grupos:  # regra antes de qualquer User-agent não pertence a grupo
+                    continue
+                grupo = self.grupos[-1]
+                if chave == "crawl-delay":
+                    try:
+                        grupo["atrasos"].append(float(valor))
+                    except ValueError:
+                        pass
+                elif valor:  # "Disallow:" vazio não proíbe nada
+                    grupo["regras"].append((normalizar_caminho(valor), chave == "allow"))
+
+    def nome_do_grupo(self, agente):
+        """O nome do grupo que vale para `agente` ("*" se só o geral), ou None se nenhum vale."""
+        nome = produto(agente)
+        if any(nome in grupo["agentes"] for grupo in self.grupos):
+            return nome
+        if any("*" in grupo["agentes"] for grupo in self.grupos):
+            return "*"
+        return None
+
+    def _grupos_para(self, agente):
+        nome = self.nome_do_grupo(agente)
+        return [grupo for grupo in self.grupos if nome in grupo["agentes"]]
+
+    def permite(self, agente, endereco):
+        partes = urlsplit(endereco)
+        alvo = normalizar_caminho((partes.path or "/") + ("?" + partes.query if partes.query else ""))
+        vencedora = None  # (comprimento da regra, é Allow)
+        for grupo in self._grupos_para(agente):
+            for regra, permitida in grupo["regras"]:
+                candidata = (len(regra), permitida)
+                # A tupla maior vence: a regra mais longa e, no empate, o Allow (True > False).
+                if casa(regra, alvo) and (vencedora is None or candidata > vencedora):
+                    vencedora = candidata
+        return True if vencedora is None else vencedora[1]
+
+    def atraso(self, agente):
+        atrasos = [valor for grupo in self._grupos_para(agente) for valor in grupo["atrasos"]]
+        return max(atrasos) if atrasos else None
 
 
 class Visitante:
@@ -70,38 +189,48 @@ def conferir_robots(visitante, endereco):
     partes = urlsplit(endereco)
     endereco_robots = f"{partes.scheme}://{partes.netloc}/robots.txt"
     resposta = visitante.get(endereco_robots)
-    leitor = RobotFileParser()
     titulo("1. robots.txt")
     print(f"Endereço: {endereco_robots}")
+    proibe_tudo = RegrasRobots("User-agent: *\nDisallow: /")
     if resposta is None:
         print("Sem resposta: trate como proibição enquanto durar (RFC 9309). Não colete agora.")
-        return leitor, False
+        return proibe_tudo, False
     print(f"Código: {resposta.status_code}")
     if resposta.status_code >= 500:
         print("Erro do servidor: trate como proibição enquanto durar (RFC 9309). Não colete agora.")
-        return leitor, False
-    if resposta.status_code >= 400 or "html" in resposta.headers.get("Content-Type", "").lower():
-        print("Não existe robots.txt (ou devolveu outra coisa). O site não declarou regra para robôs.")
+        return proibe_tudo, False
+    if resposta.status_code >= 400:
+        print("Não existe robots.txt. O site não declarou regra para robôs.")
         if resposta.status_code in (401, 403):
             print("ATENÇÃO: 401/403 no robots.txt. Confira se a página também recusa o requests (bloqueio).")
-        leitor.parse([])
-        return leitor, True
-    linhas = resposta.text.splitlines()
-    print("Conteúdo:")
-    for linha in linhas[:60]:
-        print(f"  | {linha}")
-    if len(linhas) > 60:
-        print(f"  | ... ({len(linhas) - 60} linhas a mais)")
-    leitor.parse(linhas)
+        return RegrasRobots(""), True
+    # Decide pelo conteúdo, não pelo Content-Type: há servidor que entrega o robots.txt como
+    # text/html, e há site que responde com uma página HTML qualquer onde não há robots.txt.
+    regras = RegrasRobots(resposta.text)
+    tipo = resposta.headers.get("Content-Type", "")
+    if "html" in tipo.lower():
+        print(f"O servidor entregou o arquivo como {tipo!r}; o que vale é o conteúdo.")
+    if not regras.linhas_reconhecidas:
+        print("O arquivo não traz nenhuma regra para robôs (User-agent, Allow, Disallow): o site não declarou regra.")
+    else:
+        linhas = resposta.text.splitlines()
+        print("Conteúdo:")
+        for linha in linhas[:60]:
+            print(f"  | {linha}")
+        if len(linhas) > 60:
+            print(f"  | ... ({len(linhas) - 60} linhas a mais)")
     caminho = partes.path or "/"
     if partes.query:
         caminho += "?" + partes.query
-    permitido = leitor.can_fetch(USER_AGENT, endereco) and leitor.can_fetch("*", endereco)
-    print(f"Caminho {caminho!r} permitido para '*' e para este robô: {'sim' if permitido else 'NÃO'}")
-    atraso = leitor.crawl_delay("*")
+    grupo = regras.nome_do_grupo(USER_AGENT)
+    if grupo is not None:
+        print(f"Grupo que vale para este robô: User-agent: {grupo}")
+    permitido = regras.permite(USER_AGENT, endereco)
+    print(f"Caminho {caminho!r} permitido para este robô: {'sim' if permitido else 'NÃO'}")
+    atraso = regras.atraso(USER_AGENT)
     if atraso:
-        print(f"Crawl-delay: {atraso} s (o raspador deve esperar max(1, {atraso}) s entre pedidos)")
-    return leitor, permitido
+        print(f"Crawl-delay: {atraso:g} s (o raspador deve esperar max(1, {atraso:g}) s entre pedidos)")
+    return regras, permitido
 
 
 def links_de_termos(pagina_html, base):
@@ -163,8 +292,17 @@ def main():
         print("\nPARE: o robots.txt não permite este caminho (ou o servidor não respondeu). Avise o usuário.")
         return 2
 
+    def pode_pedir(alvo):
+        """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts e a API."""
+        if robots.permite(USER_AGENT, alvo):
+            return True
+        print(f"  {alvo}: proibido pelo robots.txt, não pedido")
+        return False
+
     paginas = {}
     for alvo in dict.fromkeys([endereco, raiz]):
+        if not pode_pedir(alvo):
+            continue
         resposta = visitante.get(alvo)
         if resposta is not None:
             paginas[alvo] = resposta
@@ -217,6 +355,8 @@ def main():
     titulo("5. API candidatos")
     textos = [p.text for p in paginas.values()]
     for src in scripts_externos[:10]:
+        if not pode_pedir(src):
+            continue
         resposta = visitante.get(src)
         if resposta is not None and resposta.ok:
             textos.append(resposta.text)
@@ -225,8 +365,7 @@ def main():
         print("Nenhum endereço com cara de API no HTML nem nos scripts do mesmo site.")
         print("Se a página mostra os resultados no HTML, raspe o HTML; se não, leia os scripts à mão.")
     for candidato in candidatos[: argumentos.max_testes]:
-        if not robots.can_fetch(USER_AGENT, candidato):
-            print(f"  {candidato}: proibido pelo robots.txt, não testado")
+        if not pode_pedir(candidato):
             continue
         resposta = visitante.get(candidato)
         if resposta is None:
