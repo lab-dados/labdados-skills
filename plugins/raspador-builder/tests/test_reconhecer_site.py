@@ -283,6 +283,17 @@ def test_redirecionamento_em_laco_para_em_cinco_saltos(servidor, reconhecer, mon
     assert "mais de 5 redirecionamentos" in saida
 
 
+def test_location_vazio_para_no_primeiro_pedido(servidor, reconhecer, monkeypatch, capsys):
+    """Location vazio resolve para a própria página: sem a parada, ela era pedida seis vezes."""
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    servidor.rotas["/busca"] = redirecionar("")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert servidor.pedidos.count("/busca") == 1, servidor.pedidos
+    assert "Location vazio" in saida
+
+
 def test_robots_txt_redirecionado_e_seguido(servidor, reconhecer, monkeypatch, capsys):
     """RFC 9309, 2.3.1.2: o robots.txt redirecionado vale (até cinco saltos)."""
     montar_site(servidor, "")

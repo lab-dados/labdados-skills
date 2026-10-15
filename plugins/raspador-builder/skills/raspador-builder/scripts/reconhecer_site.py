@@ -338,7 +338,7 @@ class Visitante:
         permitida que redireciona para caminho proibido, ou para outro site, seria pedida. Aqui
         cada destino passa antes por `conferir` (quando dado); se não passar, nada é pedido, o
         destino fica em `self.barrado` e a função devolve None. Devolve None também em erro de
-        rede e depois de saltos demais.
+        rede, em redirecionamento sem destino e depois de saltos demais.
         """
         saltos = []
         self.barrado = None
@@ -354,10 +354,14 @@ class Visitante:
                 resposta.history = saltos  # `sinais` usa o histórico para achar redirecionamento a login
                 return resposta
             saltos.append(resposta)
+            destino = resposta.headers["Location"].strip()
+            if not destino:  # urljoin devolveria a própria página, e o laço a pediria seis vezes
+                print(f"  {resposta.url}: redirecionamento sem destino (Location vazio), desisti")
+                return None
             # O destino é conferido já como o requests vai pedi-lo: com os segmentos "." e ".."
             # resolvidos também no endereço absoluto ("http://site/publico/../privado/x" vai ao
             # servidor como "/privado/x"), que o urljoin deixa como veio.
-            endereco = endereco_enviado(urljoin(resposta.url, resposta.headers["Location"]))
+            endereco = endereco_enviado(urljoin(resposta.url, destino))
             if conferir is not None and not conferir(endereco):
                 self.barrado = endereco
                 return None
