@@ -1,0 +1,9 @@
+{
+  "name": "raspador-builder",
+  "description": "Construir do zero um programa Python autonomo que coleta os dados de qualquer site e salva em CSV: confere robots.txt e termos, procura a API antes de raspar o HTML, usa so requests com espera entre pedidos e testa a contagem contra o total do site. Nao depende de biblioteca de raspagem nem de repositorio clonado.",
+  "author": { "name": "lab-dados", "url": "https://github.com/lab-dados" },
+  "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspador-builder",
+  "repository": "https://github.com/lab-dados/labdados-skills",
+  "license": "MIT",
+  "keywords": ["scraping", "raspagem", "builder", "requests", "api", "robots-txt", "csv", "pandas", "ensino"]
+}
