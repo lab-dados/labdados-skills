@@ -152,3 +152,84 @@ def test_robots_com_bom_na_primeira_linha_nao_perde_o_grupo(servidor, reconhecer
     codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
     assert codigo == 2, capsys.readouterr().out
     assert servidor.pedidos == ["/robots.txt"]
+
+
+# --- redirecionamentos --------------------------------------------------------------------------
+
+PAGINA_COM_SCRIPT_E_API = PAGINA_DE_BUSCA.replace(
+    "</body>", '<script src="/js/app.js"></script><script>fetch("/api/dados.json")</script></body>'
+)
+
+
+def redirecionar(destino, codigo=302):
+    return (codigo, HTML, "", {"Location": destino})
+
+
+# Cada caso: (descrição, rota que redireciona para /privado/...)
+CASOS_REDIRECIONAMENTO = [
+    ("página pedida", "/busca"),
+    ("página inicial", "/"),
+    ("script do mesmo site", "/js/app.js"),
+    ("API candidato", "/api/dados.json"),
+]
+
+
+@pytest.mark.parametrize("descricao, origem", CASOS_REDIRECIONAMENTO, ids=[c[0] for c in CASOS_REDIRECIONAMENTO])
+def test_redirecionamento_para_caminho_proibido_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys, descricao,
+                                                              origem):
+    """O robots.txt vale para cada salto: Location que cai em caminho proibido não é pedido."""
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = (200, HTML, PAGINA_COM_SCRIPT_E_API)
+    servidor.rotas["/js/app.js"] = (200, "application/javascript", "var x = 1;")
+    servidor.rotas["/api/dados.json"] = (200, "application/json", "{}")
+    servidor.rotas[origem] = redirecionar("/privado/destino")
+    servidor.rotas["/privado/destino"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert not [p for p in servidor.pedidos if p.startswith("/privado")], servidor.pedidos
+    assert "/privado/destino: proibido pelo robots.txt, não pedido" in saida
+
+
+def test_redirecionamento_para_outro_site_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys):
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    porta = servidor.raiz.rsplit(":", 1)[1]
+    # localhost e 127.0.0.1 chegam ao mesmo servidor, mas são sites diferentes para o script.
+    servidor.rotas["/busca"] = redirecionar(f"http://localhost:{porta}/outra")
+    servidor.rotas["/outra"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "/outra" not in servidor.pedidos
+    assert f"http://localhost:{porta}/outra: outro site, não pedido" in saida
+
+
+def test_redirecionamento_permitido_e_seguido_e_aparece_nos_sinais(servidor, reconhecer, monkeypatch, capsys):
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = redirecionar("/login")
+    servidor.rotas["/login"] = (200, HTML, '<html><body><input type="password"></body></html>')
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "/login" in servidor.pedidos
+    assert f"redirecionou para {servidor.raiz}/login" in saida
+
+
+def test_redirecionamento_em_laco_para_em_cinco_saltos(servidor, reconhecer, monkeypatch, capsys):
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    servidor.rotas["/busca"] = redirecionar("/busca")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert servidor.pedidos.count("/busca") == 6  # o pedido e cinco saltos
+    assert "mais de 5 redirecionamentos" in saida
+
+
+def test_robots_txt_redirecionado_e_seguido(servidor, reconhecer, monkeypatch, capsys):
+    """RFC 9309, 2.3.1.2: o robots.txt redirecionado vale (até cinco saltos)."""
+    montar_site(servidor, "")
+    servidor.rotas["/robots.txt"] = redirecionar("/novo/robots.txt", codigo=301)
+    servidor.rotas["/novo/robots.txt"] = (200, TEXTO, "User-agent: *\nDisallow: /\n")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    assert codigo == 2, capsys.readouterr().out
+    assert servidor.pedidos == ["/robots.txt", "/novo/robots.txt"]

@@ -17,7 +17,8 @@ Faz poucos pedidos, com um segundo entre eles, e imprime cinco seções:
 
 O script sinaliza; quem decide é quem lê. Nenhum pedido depois do robots.txt (página pedida,
 página inicial, scripts, API candidatos) vai a endereço que o robots.txt proíba para este robô,
-e nenhum vai a outro domínio. O robots.txt é lido como manda a RFC 9309, pelo código deste
+e nenhum vai a outro domínio, nem seguindo redirecionamento: cada salto passa pela mesma
+conferência, e o que não passa não é pedido. O robots.txt é lido como manda a RFC 9309, pelo código deste
 arquivo e não pelo `urllib.robotparser`, para que a resposta não dependa da versão do Python.
 """
 
@@ -33,6 +34,8 @@ import requests
 
 USER_AGENT = "raspador-de-pesquisa/1.0 (reconhecimento; coleta academica)"
 ESPERA = 1.0
+# Redirecionamentos seguidos em sequência; a RFC 9309 (2.3.1.2) pede ao menos cinco para o robots.txt.
+MAX_SALTOS = 5
 
 SINAIS_CAPTCHA = ["g-recaptcha", "recaptcha/api.js", "hcaptcha", "cf-turnstile", "captcha"]
 SINAIS_DESAFIO = ["challenge-platform", "just a moment", "checking your browser", "cf-chl", "attention required"]
@@ -171,14 +174,32 @@ class Visitante:
         self.sessao.headers["User-Agent"] = USER_AGENT
         self.pedidos = 0
 
-    def get(self, endereco):
-        time.sleep(ESPERA)
-        self.pedidos += 1
-        try:
-            return self.sessao.get(endereco, timeout=30, allow_redirects=True)
-        except requests.RequestException as erro:
-            print(f"  erro ao pedir {endereco}: {erro}")
-            return None
+    def get(self, endereco, conferir=None):
+        """Pede `endereco` e segue até MAX_SALTOS redirecionamentos, um pedido de cada vez.
+
+        O requests seguiria o redirecionamento sozinho, sem perguntar ao robots.txt: uma página
+        permitida que redireciona para caminho proibido, ou para outro site, seria pedida. Aqui
+        cada destino passa antes por `conferir` (quando dado); se não passar, nada é pedido e a
+        função devolve None. Devolve None também em erro de rede e depois de saltos demais.
+        """
+        saltos = []
+        for _ in range(MAX_SALTOS + 1):
+            time.sleep(ESPERA)
+            self.pedidos += 1
+            try:
+                resposta = self.sessao.get(endereco, timeout=30, allow_redirects=False)
+            except requests.RequestException as erro:
+                print(f"  erro ao pedir {endereco}: {erro}")
+                return None
+            if not resposta.is_redirect:
+                resposta.history = saltos  # `sinais` usa o histórico para achar redirecionamento a login
+                return resposta
+            saltos.append(resposta)
+            endereco = urljoin(resposta.url, resposta.headers["Location"])
+            if conferir is not None and not conferir(endereco):
+                return None
+        print(f"  {saltos[0].url}: mais de {MAX_SALTOS} redirecionamentos seguidos, desisti")
+        return None
 
 
 def titulo(texto):
@@ -296,7 +317,11 @@ def main():
         return 2
 
     def pode_pedir(alvo):
-        """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts e a API."""
+        """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts, a API e
+        cada destino de redirecionamento."""
+        if not mesmo_site(alvo, raiz):
+            print(f"  {alvo}: outro site, não pedido")
+            return False
         if robots.permite(USER_AGENT, alvo):
             return True
         print(f"  {alvo}: proibido pelo robots.txt, não pedido")
@@ -306,7 +331,7 @@ def main():
     for alvo in dict.fromkeys([endereco, raiz]):
         if not pode_pedir(alvo):
             continue
-        resposta = visitante.get(alvo)
+        resposta = visitante.get(alvo, conferir=pode_pedir)
         if resposta is not None:
             paginas[alvo] = resposta
 
@@ -360,7 +385,7 @@ def main():
     for src in scripts_externos[:10]:
         if not pode_pedir(src):
             continue
-        resposta = visitante.get(src)
+        resposta = visitante.get(src, conferir=pode_pedir)
         if resposta is not None and resposta.ok:
             textos.append(resposta.text)
     candidatos = candidatos_de_api(textos, raiz)
@@ -370,7 +395,7 @@ def main():
     for candidato in candidatos[: argumentos.max_testes]:
         if not pode_pedir(candidato):
             continue
-        resposta = visitante.get(candidato)
+        resposta = visitante.get(candidato, conferir=pode_pedir)
         if resposta is None:
             continue
         tipo = resposta.headers.get("Content-Type", "")
