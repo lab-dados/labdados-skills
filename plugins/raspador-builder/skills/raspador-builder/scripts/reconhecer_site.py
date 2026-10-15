@@ -364,7 +364,7 @@ def main():
         """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts, a API e
         cada destino de redirecionamento."""
         if not mesmo_site(alvo, raiz):
-            print(f"  {alvo}: outro site, não pedido (o robots.txt lido é o de {raiz}; rode o script com esse endereço)")
+            print(f"  {alvo}: outro site, não pedido (para ler o robots.txt de lá, rode o script com ele)")
             return False
         if robots.permite(USER_AGENT, alvo):
             return True

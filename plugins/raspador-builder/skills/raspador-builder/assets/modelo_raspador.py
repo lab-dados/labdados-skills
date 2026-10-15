@@ -163,7 +163,9 @@ def coletar(pesquisa, max_paginas=None):
                 # mostraram que a paginação funciona: muitos sites devolvem a última página de
                 # novo quando se pede uma além dela, e isso é o fim da coleta.
                 if pagina == 2:
-                    raise RuntimeError("a página 2 só trouxe linhas da página 1; confira o parâmetro de paginação")
+                    raise RuntimeError(
+                        "a página 2 só trouxe linhas da página 1; confira o parâmetro de paginação"
+                    )
                 if total_informado is not None and len(linhas) < total_informado:
                     print(
                         f"  página {pagina} só trouxe linhas já coletadas: fim da coleta, com {len(linhas)} "
@@ -206,8 +208,7 @@ def main():
         # Grava o que veio antes do erro: uma coleta longa não se perde por causa da última página.
         # Vai para outro arquivo, "<saida>.parcial.csv", para não apagar o CSV completo de uma
         # rodada anterior com o mesmo nome.
-        base = argumentos.saida[: -len(".csv")] if argumentos.saida.endswith(".csv") else argumentos.saida
-        parcial = base + ".parcial.csv"
+        parcial = argumentos.saida.removesuffix(".csv") + ".parcial.csv"
         erro.tabela.to_csv(parcial, index=False, encoding="utf-8-sig")
         print(f"Coleta interrompida: {erro}", file=sys.stderr)
         print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {parcial}.", file=sys.stderr)

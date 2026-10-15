@@ -139,7 +139,7 @@ def test_crawl_delay_do_grupo_que_vale_para_o_robo(servidor, reconhecer, monkeyp
 def test_robots_text_plain_sem_charset_com_bom_e_acento_vale_como_utf8(servidor, reconhecer, monkeypatch, capsys):
     """A RFC 9309 (2.3) diz que o robots.txt é UTF-8; o `requests` lê `text/plain` sem charset como
     ISO-8859-1, e aí o BOM vira "ï»¿" e a regra acentuada vira outra palavra."""
-    robots = "﻿User-agent: *\nDisallow: /licitação\n".encode("utf-8")
+    robots = "﻿User-agent: *\nDisallow: /licitação\n".encode()
     montar_site(servidor, robots, tipo_robots="text/plain")
     servidor.rotas["/licita%C3%A7%C3%A3o"] = (200, HTML, PAGINA_DE_BUSCA)
     codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/licita%C3%A7%C3%A3o?q=x")
