@@ -233,6 +233,19 @@ def test_destino_com_segmentos_de_ponto_e_conferido_resolvido(servidor, reconhec
     assert "que o robots.txt não permite" in saida.split("== 2.")[0], saida
 
 
+def test_troca_de_http_para_https_nao_e_seguida(servidor, reconhecer, monkeypatch, capsys):
+    """O robots.txt lido em http não vale para https: a troca de esquema é tratada como outro site."""
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    destino = servidor.raiz.replace("http://", "https://") + "/destino"
+    servidor.rotas["/busca"] = redirecionar(destino)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "erro ao pedir" not in saida, "o script tentou o https"
+    assert f"{destino}: troca de http para https, não pedido" in saida
+    assert f"rode o script de novo com {destino}" in saida
+
+
 def test_redirecionamento_para_outro_site_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys):
     montar_site(servidor, "User-agent: *\nAllow: /\n")
     porta = servidor.raiz.rsplit(":", 1)[1]

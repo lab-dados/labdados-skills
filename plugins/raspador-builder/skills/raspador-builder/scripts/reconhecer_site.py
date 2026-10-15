@@ -444,7 +444,10 @@ def sinais(resposta):
 
 
 def mesmo_site(endereco, base):
-    return urlsplit(endereco).netloc == urlsplit(base).netloc
+    """Mesmo esquema e mesmo host (com a porta). O robots.txt vale só para eles (RFC 9309, 2.3):
+    o de http://site.gov.br não diz nada sobre https://site.gov.br."""
+    partes, partes_base = urlsplit(endereco), urlsplit(base)
+    return (partes.scheme.lower(), partes.netloc) == (partes_base.scheme.lower(), partes_base.netloc)
 
 
 def candidatos_de_api(textos, base):
@@ -452,7 +455,7 @@ def candidatos_de_api(textos, base):
     for texto in textos:
         for achado in filter(PARECE_API.search, PADRAO_ENDERECO.findall(html.unescape(texto))):
             completo = urljoin(base, achado.rstrip(".,;"))
-            if not mesmo_site(completo, base):
+            if urlsplit(completo).netloc != urlsplit(base).netloc:
                 continue
             # A página pode escrever o próprio endereço com outro esquema (https atrás de proxy);
             # o teste usa o esquema pelo qual o site respondeu.
@@ -481,7 +484,13 @@ def main():
         """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts, a API e
         cada destino de redirecionamento."""
         if not mesmo_site(alvo, raiz):
-            print(f"  {alvo}: outro site, não pedido (para ler o robots.txt de lá, rode o script com ele)")
+            if urlsplit(alvo).netloc == partes.netloc:
+                print(
+                    f"  {alvo}: troca de {partes.scheme} para {urlsplit(alvo).scheme}, não pedido. O robots.txt "
+                    f"lido vale só para {raiz}; rode o script de novo com {alvo}"
+                )
+            else:
+                print(f"  {alvo}: outro site, não pedido (para ler o robots.txt de lá, rode o script com ele)")
             return False
         if robots.permite(USER_AGENT, alvo):
             return True
