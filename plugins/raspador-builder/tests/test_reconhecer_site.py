@@ -219,7 +219,10 @@ def test_redirecionamento_permitido_e_seguido_e_aparece_nos_sinais(servidor, rec
 
 def test_redirecionamento_em_laco_para_em_cinco_saltos(servidor, reconhecer, monkeypatch, capsys):
     montar_site(servidor, "User-agent: *\nAllow: /\n")
-    servidor.rotas["/busca"] = redirecionar("/busca")
+    # O servidor desiste do laço no 21º pedido, para que um script sem limite reprove em vez de travar.
+    servidor.rotas["/busca"] = lambda query: (
+        redirecionar("/busca") if servidor.pedidos.count("/busca") <= 20 else (200, HTML, PAGINA_DE_BUSCA)
+    )
     codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca")
     saida = capsys.readouterr().out
     assert codigo == 0, saida
@@ -326,9 +329,9 @@ def test_robots_sem_resposta_proibe_tudo(reconhecer, monkeypatch, capsys):
     pedidos = []
     original = reconhecer.Visitante.get
 
-    def registrar(visitante, endereco, conferir=None):
+    def registrar(visitante, endereco, *argumentos, **nomeados):
         pedidos.append(endereco)
-        return original(visitante, endereco, conferir)
+        return original(visitante, endereco, *argumentos, **nomeados)
 
     monkeypatch.setattr(reconhecer.Visitante, "get", registrar)
     codigo = rodar(reconhecer, monkeypatch, f"http://127.0.0.1:{porta}/busca?q=licitacao")
