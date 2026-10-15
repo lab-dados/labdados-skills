@@ -104,6 +104,30 @@ def caminho_enviado(endereco):
         return (partes.path or "/") + ("?" + partes.query if partes.query else "")
 
 
+def sem_segmentos_de_ponto(caminho):
+    """O caminho com "." e ".." resolvidos (RFC 3986, 5.2.4); a consulta fica como está."""
+    parte_caminho, interrogacao, consulta = caminho.partition("?")
+    segmentos = parte_caminho.split("/")[1:]
+    resolvidos = []
+    for segmento in segmentos:
+        if segmento == "..":
+            if resolvidos:
+                resolvidos.pop()
+        elif segmento != ".":
+            resolvidos.append(segmento)
+    if segmentos and segmentos[-1] in (".", ".."):  # "/a/.." é "/", com a barra do fim
+        resolvidos.append("")
+    return "/" + "/".join(resolvidos) + interrogacao + consulta
+
+
+def endereco_enviado(endereco):
+    """O endereço inteiro como o requests o pede (ver `caminho_enviado`)."""
+    try:
+        return requests.Request("GET", endereco).prepare().url
+    except (requests.RequestException, ValueError):
+        return endereco
+
+
 def codificar_alvo(caminho):
     """O caminho enviado (com a consulta) como texto em que cada octeto é um caractere.
 
@@ -275,7 +299,15 @@ class RegrasRobots:
         return [grupo for grupo in self.grupos if nome in grupo["agentes"]]
 
     def permite(self, agente, endereco):
-        alvo = codificar_alvo(caminho_enviado(endereco))
+        caminho = caminho_enviado(endereco)
+        # O requests resolve "." e ".." antes de decodificar "%2E": "/a/%2E%2E/privado" vai ao
+        # servidor como "/a/../privado", que ele costuma ler como "/privado". Sobrando segmento de
+        # ponto, o caminho resolvido também tem de ser permitido.
+        resolvido = sem_segmentos_de_ponto(caminho)
+        return all(self._permite_caminho(agente, alvo) for alvo in dict.fromkeys([caminho, resolvido]))
+
+    def _permite_caminho(self, agente, caminho):
+        alvo = codificar_alvo(caminho)
         vencedora = None  # (comprimento da regra, é Allow)
         for grupo in self._grupos_para(agente):
             for regra in grupo["regras"]:
@@ -322,7 +354,10 @@ class Visitante:
                 resposta.history = saltos  # `sinais` usa o histórico para achar redirecionamento a login
                 return resposta
             saltos.append(resposta)
-            endereco = urljoin(resposta.url, resposta.headers["Location"])
+            # O destino é conferido já como o requests vai pedi-lo: com os segmentos "." e ".."
+            # resolvidos também no endereço absoluto ("http://site/publico/../privado/x" vai ao
+            # servidor como "/privado/x"), que o urljoin deixa como veio.
+            endereco = endereco_enviado(urljoin(resposta.url, resposta.headers["Location"]))
             if conferir is not None and not conferir(endereco):
                 self.barrado = endereco
                 return None
@@ -371,9 +406,7 @@ def conferir_robots(visitante, endereco):
             print(f"  | {linha}")
         if len(linhas) > 60:
             print(f"  | ... ({len(linhas) - 60} linhas a mais)")
-    caminho = partes.path or "/"
-    if partes.query:
-        caminho += "?" + partes.query
+    caminho = caminho_enviado(endereco)
     grupo = regras.nome_do_grupo(USER_AGENT)
     if grupo is not None:
         print(f"Grupo que vale para este robô: User-agent: {grupo}")

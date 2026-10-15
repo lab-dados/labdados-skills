@@ -212,6 +212,27 @@ def test_pagina_pedida_que_redireciona_para_caminho_proibido_para_como_proibida(
     assert f"redireciona para {servidor.raiz}/privado/x, que o robots.txt não permite" in secao_1, saida
 
 
+@pytest.mark.parametrize(
+    "destino",
+    ["/publico/../privado/x", "{raiz}/publico/../privado/x", "{raiz}/publico/%2E%2E/privado/x"],
+    ids=["relativo", "absoluto", "ponto-ponto codificado"],
+)
+def test_destino_com_segmentos_de_ponto_e_conferido_resolvido(servidor, reconhecer, monkeypatch, capsys, destino):
+    """O destino é conferido com os segmentos ".." resolvidos, como o requests o pede: o urllib3
+    manda "http://site/publico/../privado/x" como "/privado/x".
+
+    "%2E%2E" o requests decodifica depois de resolver os pontos e manda "/publico/../privado/x",
+    que o servidor costuma ler como "/privado/x": a conferência olha as duas formas."""
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = redirecionar(destino.format(raiz=servidor.raiz))
+    servidor.rotas["/privado/x"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert servidor.pedidos == ["/robots.txt", "/busca?q=licitacao"], servidor.pedidos
+    assert "que o robots.txt não permite" in saida.split("== 2.")[0], saida
+
+
 def test_redirecionamento_para_outro_site_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys):
     montar_site(servidor, "User-agent: *\nAllow: /\n")
     porta = servidor.raiz.rsplit(":", 1)[1]
