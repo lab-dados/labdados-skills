@@ -109,11 +109,30 @@ def _normalizar_trecho(trecho, estruturais, regra):
 
 
 def casa(regra, alvo):
-    """A regra casa com o início do alvo; `*` vale qualquer sequência e `$` no fim exige o fim."""
+    """A regra casa com o início do alvo; `*` vale qualquer sequência e `$` no fim exige o fim.
+
+    Sem expressão regular: com ela, cada `*` vira `.*`, e o retrocesso cresce como potência do
+    tamanho do endereço (oito curingas contra 41 letras levavam segundos). Aqui cada trecho entre
+    curingas é procurado uma vez, na primeira posição em que aparece depois do anterior. Pegar a
+    primeira ocorrência nunca impede um casamento que outra permitiria, porque deixa mais alvo
+    livre para os trechos seguintes. Com `$`, o último trecho tem de estar no fim do alvo.
+    """
     ancorada = regra.endswith("$")
-    corpo = re.sub(r"\*+", "*", regra[:-1] if ancorada else regra)  # "**" vale o mesmo que "*", e é mais lento
-    padrao = ".*".join(re.escape(parte) for parte in corpo.split("*"))
-    return re.match(padrao + (r"\Z" if ancorada else ""), alvo, re.DOTALL) is not None
+    primeiro, *meio = (regra[:-1] if ancorada else regra).split("*")
+    if not alvo.startswith(primeiro):
+        return False
+    if not meio:  # regra sem curinga
+        return not ancorada or alvo == primeiro
+    *meio, ultimo = meio
+    posicao = len(primeiro)
+    for trecho in meio:
+        achado = alvo.find(trecho, posicao)
+        if achado < 0:
+            return False
+        posicao = achado + len(trecho)
+    if ancorada:
+        return alvo.endswith(ultimo) and len(alvo) - len(ultimo) >= posicao
+    return alvo.find(ultimo, posicao) >= 0
 
 
 def produto(agente):

@@ -9,6 +9,7 @@ nem `$`, e a RFC 9309 manda aplicar a regra de caminho mais longo.
 
 import socket
 import sys
+import time
 
 import pytest
 from conftest import carregar_modulo
@@ -335,3 +336,33 @@ def test_robots_sem_resposta_proibe_tudo(reconhecer, monkeypatch, capsys):
     assert codigo == 2, saida
     assert pedidos == [f"http://127.0.0.1:{porta}/robots.txt"]
     assert "Sem resposta" in saida
+
+
+def test_regra_com_muitos_curingas_nao_trava(reconhecer):
+    """Com expressão regular, cada `*` vira `.*` e o retrocesso cresce como potência do tamanho
+    do endereço: oito curingas contra 41 letras levavam segundos, e um robots.txt hostil travaria
+    o script. O casamento tem de ser linear."""
+    robots = "User-agent: *\nDisallow: /" + "*a" * 8 + "*b\n"
+    inicio = time.perf_counter()
+    assert permite(reconhecer, robots, "/" + "a" * 40)
+    assert time.perf_counter() - inicio < 0.5
+
+
+# Cada caso: (regra, caminho, casa?). Conferem o casamento por partes entre curingas.
+CASOS_CURINGA = [
+    ("/a*b*c", "/aXbYc", True),
+    ("/a*b*c", "/aXcYb", False),
+    ("/a*b$", "/abab", True),
+    ("/a*b$", "/abba", False),
+    ("/*.pdf$", "/x.pdf.pdf", True),
+    ("/*ab*ab$", "/ab", False),
+    ("/*ab*ab$", "/abab", True),
+    ("/a**b", "/ab", True),
+    ("*", "/qualquer", True),
+    ("/*$", "/", True),
+]
+
+
+@pytest.mark.parametrize("regra, caminho, casa", CASOS_CURINGA, ids=[f"{c[0]} {c[1]}" for c in CASOS_CURINGA])
+def test_casamento_com_curinga_e_ancora(reconhecer, regra, caminho, casa):
+    assert reconhecer.casa(regra, caminho) is casa
