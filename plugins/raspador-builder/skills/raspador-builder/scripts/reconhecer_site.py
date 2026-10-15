@@ -35,13 +35,13 @@ SINAIS_CAPTCHA = ["g-recaptcha", "recaptcha/api.js", "hcaptcha", "cf-turnstile",
 SINAIS_DESAFIO = ["challenge-platform", "just a moment", "checking your browser", "cf-chl", "attention required"]
 SINAIS_LOGIN = ['type="password"', "type='password'", "faça login", "faça seu login", "entrar com", "acesso restrito"]
 PALAVRAS_TERMOS = re.compile(
-    r"termos?|condi[cç][oõ]es de uso|pol[ií]tica|aviso legal|privacidade|uso dos dados|licen[cç]a", re.I
+    r"termos?|condi[cç][oõ]es de uso|pol[ií]tica|aviso legal|privacidade|uso dos dados|licen[cç]a", re.IGNORECASE
 )
 # Endereços com cara de API: primeiro todo endereço (absoluto ou começando em /) que aparece no texto,
 # depois só os que têm /api/, .json, graphql, /rest/, /vN/ ou format=json.
 PADRAO_ENDERECO = re.compile(r"""https?://[^\s"'<>`]+|(?<![\w/<])/[\w\-.~%]+(?:/[^\s"'<>`)]*)?""")
-PARECE_API = re.compile(r"/api/|\.json\b|graphql|/rest/|/v\d+/|format=json", re.I)
-PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpRequest", re.I)
+PARECE_API = re.compile(r"/api/|\.json\b|graphql|/rest/|/v\d+/|format=json", re.IGNORECASE)
+PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpRequest", re.IGNORECASE)
 
 
 class Visitante:
@@ -106,7 +106,7 @@ def conferir_robots(visitante, endereco):
 
 def links_de_termos(pagina_html, base):
     achados = []
-    for href, texto in re.findall(r"<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", pagina_html, re.I | re.S):
+    for href, texto in re.findall(r"<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", pagina_html, re.IGNORECASE | re.DOTALL):
         texto_limpo = re.sub(r"<[^>]+>", " ", texto).strip()
         if PALAVRAS_TERMOS.search(texto_limpo) or PALAVRAS_TERMOS.search(href):
             achados.append((texto_limpo[:60], urljoin(base, html.unescape(href))))
@@ -124,7 +124,7 @@ def sinais(resposta):
         encontrados.append(f"código {resposta.status_code}")
     if "cf-mitigated" in resposta.headers:
         encontrados.append("cabeçalho cf-mitigated (desafio do Cloudflare)")
-    if resposta.history and re.search(r"login|entrar|signin|auth", resposta.url, re.I):
+    if resposta.history and re.search(r"login|entrar|signin|auth", resposta.url, re.IGNORECASE):
         encontrados.append(f"redirecionou para {resposta.url}")
     return encontrados
 
@@ -199,15 +199,15 @@ def main():
         for nome in ("X-Robots-Tag", "Retry-After", "Set-Cookie", "Server"):
             if nome in principal.headers:
                 print(f"  {nome}: {principal.headers[nome][:120]}")
-        if re.search(r"<meta[^>]+name=[\"']robots[\"'][^>]*noindex", principal.text, re.I):
+        if re.search(r"<meta[^>]+name=[\"']robots[\"'][^>]*noindex", principal.text, re.IGNORECASE):
             print("  meta robots noindex: pede que buscadores não indexem; não proíbe acesso.")
-        texto_visivel = re.sub(r"<script.*?</script>|<style.*?</style>|<[^>]+>", " ", principal.text, flags=re.S)
+        texto_visivel = re.sub(r"<script.*?</script>|<style.*?</style>|<[^>]+>", " ", principal.text, flags=re.DOTALL)
         palavras = len(texto_visivel.split())
         print(f"  Texto visível: cerca de {palavras} palavras.")
-        if re.search(r"carregando|loading", texto_visivel, re.I) or palavras < 40:
+        if re.search(r"carregando|loading", texto_visivel, re.IGNORECASE) or palavras < 40:
             print("  A página parece ser preenchida por script: procure a API (seção 5 e scripts).")
         for pagina in paginas.values():
-            for src in re.findall(r"<script[^>]+src=[\"']([^\"']+)[\"']", pagina.text, re.I):
+            for src in re.findall(r"<script[^>]+src=[\"']([^\"']+)[\"']", pagina.text, re.IGNORECASE):
                 completo = urljoin(pagina.url, html.unescape(src))
                 if mesmo_site(completo, raiz) and completo not in scripts_externos:
                     scripts_externos.append(completo)
