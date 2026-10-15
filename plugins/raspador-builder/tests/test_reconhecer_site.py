@@ -213,13 +213,18 @@ def test_pagina_pedida_que_redireciona_para_caminho_proibido_para_como_proibida(
 
 
 @pytest.mark.parametrize(
-    "destino",
-    ["/publico/../privado/x", "{raiz}/publico/../privado/x", "{raiz}/publico/%2E%2E/privado/x"],
+    "destino, como_enviado",
+    [
+        ("/publico/../privado/x", "/privado/x"),
+        ("{raiz}/publico/../privado/x", "/privado/x"),
+        ("{raiz}/publico/%2E%2E/privado/x", "/publico/../privado/x"),
+    ],
     ids=["relativo", "absoluto", "ponto-ponto codificado"],
 )
-def test_destino_com_segmentos_de_ponto_e_conferido_resolvido(servidor, reconhecer, monkeypatch, capsys, destino):
+def test_destino_com_segmentos_de_ponto_e_conferido_resolvido(servidor, reconhecer, monkeypatch, capsys, destino,
+                                                             como_enviado):
     """O destino é conferido com os segmentos ".." resolvidos, como o requests o pede: o urllib3
-    manda "http://site/publico/../privado/x" como "/privado/x".
+    manda "http://site/publico/../privado/x" como "/privado/x", e é esse o endereço que a saída mostra.
 
     "%2E%2E" o requests decodifica depois de resolver os pontos e manda "/publico/../privado/x",
     que o servidor costuma ler como "/privado/x": a conferência olha as duas formas."""
@@ -230,7 +235,8 @@ def test_destino_com_segmentos_de_ponto_e_conferido_resolvido(servidor, reconhec
     saida = capsys.readouterr().out
     assert codigo == 2, saida
     assert servidor.pedidos == ["/robots.txt", "/busca?q=licitacao"], servidor.pedidos
-    assert "que o robots.txt não permite" in saida.split("== 2.")[0], saida
+    secao_1 = saida.split("== 2.")[0]
+    assert f"redireciona para {servidor.raiz}{como_enviado}, que o robots.txt não permite" in secao_1, saida
 
 
 def test_troca_de_http_para_https_nao_e_seguida(servidor, reconhecer, monkeypatch, capsys):
