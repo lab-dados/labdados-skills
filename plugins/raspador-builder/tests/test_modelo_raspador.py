@@ -206,6 +206,22 @@ def test_site_que_volta_a_primeira_pagina_encerra_sem_duplicar(servidor, modelo,
     assert [linha["titulo"] for linha in linhas_do_csv(saida)] == TITULOS
 
 
+@pytest.mark.parametrize("total", [None, 5], ids=["sem total", "total maior que os visíveis"])
+def test_busca_de_uma_pagina_que_se_repete_cita_as_duas_explicacoes(servidor, modelo, monkeypatch, tmp_path, capsys,
+                                                                     total):
+    """Busca com 3 resultados visíveis num site que repete a última página quando se pede além dela.
+    A resposta é igual à do site que ignora o número da página, então o erro continua; a mensagem
+    diz as duas explicações e, com total maior que o visível, de onde pode vir a diferença."""
+    servidor.rotas["/api/busca"] = lambda query: pagina_json(TITULOS[:3], total)
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 2
+    erro = capsys.readouterr().err
+    assert "confira o parâmetro de paginação" in erro
+    assert "a busca tem uma página só e o site repete a última" in erro
+    assert ("O site informa 5 resultados e a página 1 trouxe 3" in erro) is (total == 5)
+    assert [linha["titulo"] for linha in linhas_do_csv(tmp_path / "resultados.parcial.csv")] == TITULOS[:3]
+
+
 def test_acesso_negado_no_meio_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):
     def responder(query):
         if query.get("pagina") == "2":

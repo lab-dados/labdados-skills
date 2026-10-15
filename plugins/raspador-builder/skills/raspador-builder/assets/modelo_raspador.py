@@ -167,9 +167,22 @@ def coletar(pesquisa, max_paginas=None):
                 # que a paginação funciona: muitos sites devolvem a última página de novo quando
                 # se pede uma além dela, e outros voltam à primeira; isso é o fim da coleta.
                 if pagina == 2:
-                    raise RuntimeError(
-                        "a página 2 só trouxe linhas da página 1; confira o parâmetro de paginação"
+                    # A busca de uma página só, num site que repete a última página, dá a mesma
+                    # resposta, e nada nas respostas separa um caso do outro; nem o total maior
+                    # que as linhas da página 1, que também aparece quando o parâmetro está errado.
+                    # Na dúvida, o erro: as linhas vão para o parcial, e a mensagem diz as duas.
+                    mensagem = (
+                        "a página 2 só trouxe linhas da página 1. Ou o site ignora o número da página "
+                        "(confira o parâmetro de paginação), ou a busca tem uma página só e o site repete "
+                        "a última quando se pede além dela: abra a página 2 da busca no navegador para saber qual."
                     )
+                    if total_informado is not None and total_informado > len(linhas):
+                        mensagem += (
+                            f" O site informa {total_informado} resultados e a página 1 trouxe {len(linhas)}: "
+                            "se a busca tem uma página só, a diferença são resultados que o site conta e não "
+                            "mostra (em segredo de justiça, por exemplo), e o parcial é a coleta inteira."
+                        )
+                    raise RuntimeError(mensagem)
                 repetida = paginas_vistas.index(assinatura) + 1
                 if total_informado is None:
                     # Sem total, nada confirma que a página repetida veio depois da última: uma
