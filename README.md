@@ -24,6 +24,7 @@ Dentro do Claude Code, rode:
 /plugin install raspe@labdados-skills
 /plugin install juscraper-builder@labdados-skills
 /plugin install raspe-builder@labdados-skills
+/plugin install raspador-builder@labdados-skills
 /plugin install explainer-video@labdados-skills
 ```
 
@@ -41,6 +42,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 | [juscraper-builder](plugins/juscraper-builder/skills/juscraper-builder/SKILL.md) | Gera scraper Python para tribunal brasileiro (sem captcha) via engenharia reversa | Criar scraper de tribunal, implementar cjsg/cjpg/cpopg/cposg |
 | [juscraper-builder-captcha](plugins/juscraper-builder/skills/juscraper-builder-captcha/SKILL.md) | Gera scraper Python para tribunal com captcha (text-based via `txtcaptcha`) | Tribunal com captcha, reCAPTCHA detectado na pagina |
 | [raspe-builder](plugins/raspe-builder/skills/raspe-builder/SKILL.md) | Gera scraper Python para a biblioteca raspe (HTTP/HTML, HTTP/JSON, Playwright) — scraper + factory + testes offline + sync com a skill `raspe` | Adicionar fonte ao raspe, novo scraper para site governamental brasileiro, extender BaseScraper/PlaywrightScraper |
+| [raspador-builder](plugins/raspador-builder/skills/raspador-builder/SKILL.md) | Constroi do zero um programa Python autonomo (requests + pandas) que coleta os dados de qualquer site e salva em CSV: confere robots.txt e termos, procura a API antes de raspar o HTML, espera entre pedidos e testa a contagem contra o total do site | Programa que colete todos os resultados de uma busca, raspar um site que nenhuma biblioteca cobre, salvar em CSV |
 | [explainer-video](plugins/explainer-video/skills/explainer-video/SKILL.md) | Gera video explicativo curto de uma ferramenta web (gravacao Playwright + narracao TTS), com upload opcional no YouTube | Video explicativo, demo em video, screencast, tutorial em video, video walkthrough |
 
 ## Pre-requisitos por skill
@@ -94,6 +96,16 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 - `uv pip install -e ".[dev,browser]"` no repo raspe + `python -m playwright install chromium`
 - A skill gera codigo dentro do repo raspe (scraper, factory, testes offline com `responses`)
   e tambem atualiza a skill `raspe` deste marketplace com a nova fonte
+
+### raspador-builder
+
+- Python >= 3.9 com `requests` e `pandas` (e `beautifulsoup4` quando o site so oferece HTML);
+  o programa gerado declara as dependencias no bloco `# /// script`, e `uv run` as instala sozinho
+- Nao exige repositorio clonado nem biblioteca de raspagem
+- Opcional: Playwright MCP, para olhar os pedidos que a pagina faz (como a aba Rede do navegador);
+  sem ele, a skill le o HTML e os scripts da pagina com `requests`
+- No Codex: copiar a pasta `plugins/raspador-builder/skills/raspador-builder` para
+  `.agents/skills/` do projeto ou para `~/.codex/skills/`
 
 ### explainer-video
 

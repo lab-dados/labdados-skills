@@ -4,6 +4,20 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.15.0] - 2026-10-15
+
+Adicionado:
+
+- `raspador-builder` (plugin 1.0.0): skill que constroi do zero um programa Python autonomo para
+  coletar os dados de qualquer site e salvar em CSV, sem depender de biblioteca de raspagem nem de
+  repositorio clonado. Antes de coletar, confere robots.txt, termos de uso, login, captcha, bloqueio
+  anti-robo e dado pessoal sensivel (com segredo de justica em tribunal), e para quando a coleta nao
+  e permitida. Procura a API por baixo da pagina (Playwright MCP opcional; sem ele, le o HTML e os
+  scripts com requests) antes de raspar o HTML. O programa usa so requests, pagina ate a ultima
+  pagina, espera um segundo entre pedidos, trata 404, 403 e 429 (com Retry-After) e e testado contra
+  o total que o site informa antes da entrega. Acompanha `scripts/reconhecer_site.py` (reconhecimento
+  do site) e `assets/modelo_raspador.py` (esqueleto do programa).
+
 ## [1.14.0] - 2026-09-25
 
 Adicionado:

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills para pesquisa empirica em direito no Brasil: coleta de dados judiciais, coleta de dados de fontes oficiais/imprensa, busca de literatura academica, enriquecimento de DataFrames com LLMs, construcao de scrapers e producao de videos explicativos. As skills institucionais do LabDados (gestao do projeto, atas, relatorios e prestacao de contas) ficam no marketplace interno privado lab-dados/labdados-skills-interno.",
-    "version": "1.14.0"
+    "version": "1.15.0"
   },
   "plugins": [
     {
@@ -74,6 +74,17 @@
       "category": "data-collection",
       "license": "MIT",
       "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspe-builder"
+    },
+    {
+      "name": "raspador-builder",
+      "source": "./plugins/raspador-builder",
+      "description": "Construir do zero um programa Python autonomo que coleta os dados de qualquer site e salva em CSV: confere robots.txt e termos, procura a API antes de raspar o HTML, usa so requests com espera entre pedidos e testa a contagem contra o total do site. Nao depende de biblioteca de raspagem nem de repositorio clonado.",
+      "version": "1.0.0",
+      "author": { "name": "lab-dados" },
+      "keywords": ["scraping", "raspagem", "builder", "requests", "api", "robots-txt", "csv", "pandas", "ensino"],
+      "category": "data-collection",
+      "license": "MIT",
+      "homepage": "https://github.com/lab-dados/labdados-skills/tree/main/plugins/raspador-builder"
     },
     {
       "name": "explainer-video",
