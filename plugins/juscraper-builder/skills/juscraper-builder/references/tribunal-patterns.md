@@ -20,11 +20,9 @@ fazer a engenharia reversa.
 
 ### PJe (CNJ)
 - Usado por: vários TRTs, TRFs, e alguns TJs
-- URL: `pje.{tribunal}.jus.br`
-- API: REST com JSON
-- Autenticação: pode requerer certificado digital
-- Paginação: offset-based
-- Peculiaridade: API bem estruturada quando acessível
+- URL: `pje.{tribunal}.jus.br`, `pje1g.{tribunal}.jus.br`
+- Consulta pública sem login: aplicação JSF/Seam (`ConsultaPublica/listView.seam`), HTML com campos de formulário gerados e estado no servidor
+- Autenticação: o acesso logado pede certificado digital; o juscraper usa só a consulta pública
 - No juscraper: TRF1, TRF3 e TRF5 (`cpopg`) compartilham
   `courts/_trf/` (`TRFConsultaScraper`); o portal fica atrás do Akamai,
   que bloqueia IP de datacenter (testes de integração com marker
@@ -41,6 +39,7 @@ fazer a engenharia reversa.
 - TJMG: sistema customizado, captcha numérico de imagem
 - TJRJ: sistema customizado, frequentemente com WAF restritivo
 - STF: API Elasticsearch atrás do AWS WAF (desafio JavaScript)
+- TRF3 (jurisprudência, `web.trf3.jus.br/jurisprudencia`): ASP.NET MVC com estado na sessão do servidor, atrás do Akamai; sistema separado do PJe do mesmo tribunal
 
 ## Padrões de URL
 
@@ -79,7 +78,9 @@ response.encoding = "latin-1"  # Comum em eSAJ
 
 ```python
 # O User-Agent padrão vem do HTTPScraper; troque em _configure_session
-# só quando o site exigir UA de navegador (ex.: TJRJ, STF).
+# só quando a medição mostrar que o portal exige cabeçalhos de navegador
+# (quem faz isso hoje: ver juscraper-conventions.md).
+# Os demais cabeçalhos abaixo entram só se a requisição falhar sem eles.
 headers = {
     # eSAJ frequentemente verifica Referer
     "Referer": "{url_do_formulario}",
@@ -106,15 +107,14 @@ headers = {
 | TJAP     | Cloudflare Turnstile, validado | ✗ Bloqueado |
 | TJSE     | Cloudflare Turnstile, validado (`docs/captcha/tjse_captcha.md`) | ✗ Sem scraper |
 | TJMA     | reCAPTCHA v2 invisível, validado (`docs/captcha/tjma_captcha.md`) | ✗ Sem scraper |
-| STF      | Sem captcha; desafio JavaScript do AWS WAF | ✓ Funciona (token via extra `[stf]`) |
+| STF      | Sem captcha; desafio JavaScript do AWS WAF | ✓ Funciona (token via extra `[waf]`) |
+| TJPE (consulta pública PJe) | Sem captcha; desafio JavaScript do AWS WAF | ✓ Funciona (token via extra `[waf]`) |
 
-**Nota**: Esta tabela pode estar desatualizada. Sempre verificar
-na prática durante a Etapa 1 do workflow.
+**Nota**: Esta tabela pode estar desatualizada. Sempre verificar na prática durante a Etapa 1 do workflow; o estado atual de cada captcha está em `docs/captcha/` e nas docstrings dos raspadores do juscraper.
 
 ## Dicas de debugging
 
-1. **Comparar com browser**: Abrir DevTools no Chrome, aba Network,
-   e comparar as requisições manuais com as feitas pelo scraper
+1. **Comparar com o navegador**: comparar as requisições do navegador (aba de rede do DevTools ou do navegador automatizado da sessão) com as feitas pelo raspador. Sem navegador, ler o `<form>` e o JavaScript que monta o corpo: é ali que aparecem campos ocultos e valores reescritos antes do envio
 
 2. **Cookies**: Se o site retorna 403 ou redireciona para login,
    provavelmente falta um cookie de sessão. Fazer GET na página

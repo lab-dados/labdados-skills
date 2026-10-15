@@ -1,95 +1,27 @@
-# Padrões de Testes
+# Testes do raspador novo
 
-Referência para os testes que acompanham um scraper novo no juscraper.
-A fonte da verdade é o `CONTRIBUTING.md` do juscraper, seção "Adding a
-new tribunal": o PR fica bloqueado sem **pelo menos um teste de
-contrato offline por método público**. Integração contra o site real é
-opcional e fica fora do `pytest` padrão.
+A política de testes do juscraper é a do `CONTRIBUTING.md` dele: seção "Tests" (pirâmide, estrutura de samples, ferramentas, marker `anti_bot`) e seção "Adding a new tribunal" (a lista do que o PR precisa ter, que bloqueia o merge). Leia as duas antes de escrever o primeiro teste; este arquivo só ordena o trabalho e traz esqueletos de código para adaptar.
 
-## Princípios
+## Ordem de trabalho
 
-1. **Contrato offline primeiro**: a API pública é exercitada com
-   `responses` servindo samples reais; nada toca a rede, o relógio ou
-   TLS real
-2. **Samples capturados, nunca sintetizados**: o script de captura
-   roda o scraper contra o backend real e grava as respostas cruas
-3. **Payload conferido**: matchers do `responses` afirmam o que foi
-   enviado ao backend, a partir do `build_<endpoint>_payload` público
-4. **Schema por subset**: `{"col_a", "col_b"} <= set(df.columns)`,
-   nunca igualdade
-5. **Integração marcada e opcional**: `@pytest.mark.integration`,
-   excluída por default
+1. **Payload builder antes do teste.** `build_<endpoint>_payload` e as constantes de URL ficam públicos em `download.py` (ou `<endpoint>_download.py`), porque o script de captura e os contratos os importam. No template, o builder recebe o `Input*` validado; os testes montam o modelo direto para obter o corpo esperado.
+2. **Captura.** Escreva `tests/fixtures/capture/<xx>.py` e rode contra o backend real (`uv run python -m tests.fixtures.capture.<xx>`). Ele grava os cenários que o `CONTRIBUTING.md` exige em `tests/<xx>/samples/<endpoint>/`. Se o raspador configura cabeçalhos de navegador ou cookie de WAF, capture com a sessão do próprio raspador, senão o sample vem de uma resposta que a produção nunca recebe. Saneamento (truncar campos grandes, redigir dados pessoais) fica dentro do script.
+3. **Contrato** (`test_<endpoint>_contract.py`): API pública com `responses`, sample servido, matcher de payload (os matchers por tipo de requisição estão no item do contrato em "Adding a new tribunal"), colunas derivadas do `Output*`, valores da primeira linha e o caminho default `paginas=None`.
+4. **Filtros e aliases** (`test_<endpoint>_filters_contract.py`): todos os filtros mapeados na Etapa 1 da skill numa só chamada, conferidos contra um corpo literal com os nomes de campo do backend, e um teste por alias deprecado aceito, este sim comparado ao corpo que o builder monta para o nome canônico.
+5. **Schema**: teste do `Input*` e registro nos arquivos de `tests/schemas/` listados no `CONTRIBUTING.md`.
+6. **Integração**, opcional: `test_<endpoint>_integration.py` com marker `integration`.
+7. Rode `uv run pytest tests/<xx> tests/schemas`.
 
-## Pirâmide
+Conjunto de referência para copiar a forma: `tests/tjro/` (contrato, filtros, aliases específicos do tribunal) e `tests/fixtures/capture/tjrs.py` (captura com saneamento, citada pelo `CONTRIBUTING.md`). Para portal com sessão própria e bot manager, os testes do `cjsg` do TRF3 (ver `juscraper-conventions.md`).
 
-| Camada | Arquivo | Marker |
-|---|---|---|
-| Contrato (API pública via `responses` + samples) | `test_<endpoint>_contract.py` | nenhum |
-| Granular (função pura) | `test_<endpoint>_granular.py` | nenhum |
-| Cassete (`pytest-recording`, caso a caso) | `test_<endpoint>_cassette.py` | `vcr` |
-| Integração (tribunal real) | `test_<endpoint>_integration.py` | `integration` |
+## Armadilhas que a suíte pega
 
-## Estrutura de arquivo
+- `filterwarnings = ["error"]` no `pyproject.toml`: warning não esperado quebra o teste. Alias deprecado se testa com `pytest.warns(DeprecationWarning)`, e o `match=` precisa casar com todos os avisos do bloco: o pytest reemite os que não casam, e o `error` os transforma em falha (caso de `data_inicio` e `data_fim` na mesma chamada).
+- Em teste de filtro de data, passe `*_inicio` e `*_fim` juntos: com uma ponta só, `fill_open_ended_dates` completa a outra e emite `UserWarning`.
+- `responses` levanta `ConnectionError` quando o corpo enviado não bate com o matcher. Compare com o payload builder, não afrouxe o matcher.
+- Não teste contagem exata nem ordem de resultados contra o site real.
 
-```
-tests/{tribunal}/
-├── __init__.py                          # OBRIGATÓRIO (vazio)
-├── samples/cjsg/
-│   ├── results_normal_page_01.json      # typical, página 1
-│   ├── results_normal_page_02.json      # typical, página 2
-│   ├── single_page.json                 # página única
-│   └── no_results.json                  # sem resultados
-├── test_cjsg_contract.py                # cenários typical/single/empty
-├── test_cjsg_filters_contract.py        # todos os filtros + aliases deprecados
-└── test_cjsg_integration.py             # opcional, @pytest.mark.integration
-
-tests/fixtures/capture/{tribunal}.py     # script de captura dos samples
-tests/schemas/test_schema_coverage.py    # registrar Input em EXPECTED_COURT_SCHEMAS
-tests/schemas/test_output_parity.py      # registrar Output em EXPECTED_COURT_OUTPUT_SCHEMAS
-```
-
-Extensão do sample segue a resposta (`.html` ou `.json`). O teste de
-schema do `CONTRIBUTING.md` (`test_<endpoint>_schema_contract.py`) pode
-ficar no diretório do tribunal ou consolidado em
-`tests/schemas/test_cjsg_schemas.py`.
-
-## Checklist do `CONTRIBUTING.md` (Adding a new tribunal)
-
-1. Script de captura em `tests/fixtures/capture/<xx>.py`, que roda o
-   scraper contra o backend real e salva em
-   `tests/<xx>/samples/<endpoint>/<cenario>.<ext>`. Mínimo de 3
-   cenários por endpoint (typical, sem resultados, página única).
-   Saneamento (truncar campos grandes) fica dentro do script.
-2. Samples commitados com a convenção `results_normal.<ext>`,
-   `single_page.<ext>`, `no_results.<ext>`,
-   `results_normal_page_NN.<ext>`.
-3. `test_<endpoint>_contract.py`: `@responses.activate`,
-   `mocker.patch("time.sleep")`, `responses.add(...)` com o sample,
-   matcher de payload (`urlencoded_params_matcher(..., allow_blank=True)`
-   para POST form, `json_params_matcher` para JSON,
-   `query_param_matcher` para GET), schema por subset, 3 cenários.
-4. Schema pydantic em `src/juscraper/courts/<xx>/schemas.py`.
-5. Teste de schema: parâmetros documentados aceitos, kwarg
-   desconhecido rejeitado, defaults, validators e `Literal`.
-6. `test_<endpoint>_filters_contract.py`: chama o método com **todos**
-   os filtros de uma vez e o matcher confirma que cada um chegou ao
-   body/params.
-7. No mesmo arquivo, um teste por alias deprecado aceito, afirmando o
-   `DeprecationWarning` e que o valor chega ao backend como o canônico.
-8. Contrato sem `@pytest.mark.integration`.
-9. Sem rede, relógio ou TLS real; adapter TLS testado só por montagem.
-10. Fluxo multi-step com ordem obrigatória usa
-    `responses.registries.OrderedRegistry`.
-11. Captcha, token dinâmico e libs externas (`txtcaptcha`,
-    `browser_cookie3`) são mockados, nunca invocados; import lazy
-    ausente se injeta com `mocker.patch.dict(sys.modules, ...)`.
-12. Entrada no CHANGELOG em `[Unreleased]/Added`.
-13. Payload builder público `build_<endpoint>_payload` (sem underscore)
-    e constantes de URL em `courts/<xx>/download.py`, importados pelo
-    script de captura e pelos contratos.
-14. Base `juscraper.core.http.HTTPScraper` para scraper novo.
-
-## Template: script de captura
+## Esqueleto: script de captura
 
 ```python
 """Captura samples de cjsg do {SIGLA}.
@@ -98,24 +30,31 @@ Rodar da raiz do repositório::
 
     python -m tests.fixtures.capture.{tribunal}
 """
-import requests
+import logging
 
+import juscraper as jus
 from juscraper.courts.{tribunal}.download import BASE_URL, build_cjsg_payload
+from juscraper.courts.{tribunal}.schemas import InputCJSG{SIGLA}
 
 from ._util import dump, samples_dir_for
 
+logger = logging.getLogger(__name__)
+
 
 def _capturar(session, destino, pesquisa, pagina, arquivo):
-    payload = build_cjsg_payload(pesquisa, pagina)
-    resp = session.post(BASE_URL, json=payload, timeout=30)
+    payload = build_cjsg_payload(InputCJSG{SIGLA}(pesquisa=pesquisa), pagina)
+    resp = session.post(BASE_URL, json=payload, timeout=30)  # ADAPTAR: método e corpo reais
     resp.raise_for_status()
-    dump(destino / arquivo, resp.content)
-    print("wrote", arquivo)
+    dump(destino / arquivo, resp.content)  # sanear aqui, se preciso
+    logger.info("gravado %s", arquivo)
 
 
 def main() -> None:
+    # Script novo não ganha dispensa de T201 no ruff.toml: logging, não print.
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     destino = samples_dir_for("{tribunal}", "cjsg")
-    session = requests.Session()
+    # Sessão do raspador: leva os cabeçalhos que o _configure_session aplica.
+    session = jus.scraper("{tribunal}").session
     _capturar(session, destino, "dano moral", 1, "results_normal_page_01.json")
     _capturar(session, destino, "dano moral", 2, "results_normal_page_02.json")
     _capturar(session, destino, "mandado de seguranca", 1, "single_page.json")
@@ -126,19 +65,24 @@ if __name__ == "__main__":
     main()
 ```
 
-## Template: contrato de cjsg
+## Esqueleto: contrato de cjsg
 
 ```python
 """Contratos offline de cjsg do {SIGLA}."""
+import datetime
+
 import pandas as pd
 import responses
 from responses.matchers import json_params_matcher
 
 import juscraper as jus
 from juscraper.courts.{tribunal}.download import BASE_URL, build_cjsg_payload
+from juscraper.courts.{tribunal}.schemas import InputCJSG{SIGLA}, OutputCJSG{SIGLA}
 from tests._helpers import load_sample
 
-CJSG_MIN_COLUMNS = {"processo", "classe", "relator", "data_julgamento", "ementa"}
+# Colunas derivadas do Output, não listadas à mão: campo novo no schema que o
+# parser não entrega reprova aqui. Conferidas por subset, nunca por igualdade.
+CJSG_COLUNAS = set(OutputCJSG{SIGLA}.model_fields)
 
 
 def _add_page(pesquisa: str, pagina: int, sample: str) -> None:
@@ -148,7 +92,7 @@ def _add_page(pesquisa: str, pagina: int, sample: str) -> None:
         body=load_sample("{tribunal}", sample),
         status=200,
         content_type="application/json",
-        match=[json_params_matcher(build_cjsg_payload(pesquisa, pagina))],
+        match=[json_params_matcher(build_cjsg_payload(InputCJSG{SIGLA}(pesquisa=pesquisa), pagina))],
     )
 
 
@@ -161,7 +105,27 @@ def test_cjsg_typical_com_paginacao(mocker):
     df = jus.scraper("{tribunal}").cjsg("dano moral", paginas=range(1, 3))
 
     assert isinstance(df, pd.DataFrame)
-    assert set(df.columns) >= CJSG_MIN_COLUMNS
+    assert set(df.columns) >= CJSG_COLUNAS
+    primeira = df.iloc[0]
+    # ADAPTAR: valores da primeira decisão do sample, um por coluna que o
+    # parser monta; pega chave trocada e data com dia e mês invertidos.
+    assert primeira["processo"] == "0000"
+    assert primeira["relator"] == "FULANO"
+    assert primeira["orgao_julgador"] == "1ª Câmara"
+    assert primeira["data_julgamento"] == datetime.date(2024, 1, 10)
+
+
+@responses.activate
+def test_cjsg_paginas_none_baixa_todas(mocker):
+    # Default público: lê o total na página 1 e baixa as demais. ADAPTAR o
+    # número de páginas ao total do sample.
+    mocker.patch("time.sleep")
+    _add_page("dano moral", 1, "cjsg/results_normal_page_01.json")
+    _add_page("dano moral", 2, "cjsg/results_normal_page_02.json")
+
+    df = jus.scraper("{tribunal}").cjsg("dano moral")
+
+    assert len(responses.calls) == 2
     assert len(df) > 0
 
 
@@ -172,7 +136,7 @@ def test_cjsg_single_page(mocker):
 
     df = jus.scraper("{tribunal}").cjsg("mandado de seguranca", paginas=1)
 
-    assert set(df.columns) >= CJSG_MIN_COLUMNS
+    assert set(df.columns) >= CJSG_COLUNAS
 
 
 @responses.activate
@@ -185,7 +149,7 @@ def test_cjsg_no_results(mocker):
     assert df.empty
 ```
 
-## Template: filtros e aliases deprecados
+## Esqueleto: filtros e aliases deprecados
 
 ```python
 """Propagação de filtros e aliases deprecados de cjsg do {SIGLA}."""
@@ -195,7 +159,13 @@ from responses.matchers import json_params_matcher
 
 import juscraper as jus
 from juscraper.courts.{tribunal}.download import BASE_URL, build_cjsg_payload
+from juscraper.courts.{tribunal}.schemas import InputCJSG{SIGLA}
 from tests._helpers import assert_unknown_kwarg_raises, load_sample
+
+
+def _esperado(pesquisa: str, pagina: int = 1, **filtros) -> dict:
+    """Corpo que o backend deve receber; datas já no BACKEND_DATE_FORMAT."""
+    return build_cjsg_payload(InputCJSG{SIGLA}(pesquisa=pesquisa, **filtros), pagina)
 
 
 def _add(payload: dict) -> None:
@@ -209,35 +179,68 @@ def _add(payload: dict) -> None:
     )
 
 
+# Um valor por campo do Input, como o usuário passaria. O teste abaixo exige que
+# esta lista cubra o schema inteiro: filtro novo reprova até entrar aqui.
+FILTROS = {
+    "relator": "FULANO DE TAL",
+    "classe": "Apelacao",
+    "data_julgamento_inicio": "2024-01-01",
+    "data_julgamento_fim": "2024-03-31",
+    "data_publicacao_inicio": "2024-02-01",
+    "data_publicacao_fim": "2024-04-30",
+}
+
+
+def test_filtros_cobrem_o_schema():
+    assert set(FILTROS) == set(InputCJSG{SIGLA}.model_fields) - {"pesquisa", "paginas"}
+
+
 @responses.activate
 def test_cjsg_todos_os_filtros_chegam_ao_body(mocker):
     mocker.patch("time.sleep")
-    _add(build_cjsg_payload(
-        "dano moral", 1,
-        relator="FULANO DE TAL",
-        classe="Apelacao",
-        data_julgamento_inicio="01/01/2024",
-        data_julgamento_fim="31/03/2024",
-    ))
-    jus.scraper("{tribunal}").cjsg(
-        "dano moral", paginas=1,
-        relator="FULANO DE TAL",
-        classe="Apelacao",
-        data_julgamento_inicio="2024-01-01",
-        data_julgamento_fim="2024-03-31",
-    )
+    # Corpo literal, com os nomes de campo do backend vistos na captura. Montar
+    # este esperado com build_cjsg_payload esconderia um filtro que o builder
+    # deixa de mapear: ele sumiria do esperado e do enviado ao mesmo tempo.
+    _add({
+        "texto": "dano moral",
+        "pagina": 1,
+        "tamanho": 10,
+        "relator": "FULANO DE TAL",
+        "classe": "Apelacao",
+        "dataJulgamentoInicio": "01/01/2024",
+        "dataJulgamentoFim": "31/03/2024",
+        "dataPublicacaoInicio": "01/02/2024",
+        "dataPublicacaoFim": "30/04/2024",
+    })
+    jus.scraper("{tribunal}").cjsg("dano moral", paginas=1, **FILTROS)
 
 
 @responses.activate
 def test_cjsg_alias_query(mocker):
     mocker.patch("time.sleep")
-    _add(build_cjsg_payload("dano moral", 1))
-    with pytest.warns(DeprecationWarning, match="query.*deprecado"):
+    _add(_esperado("dano moral"))
+    with pytest.warns(DeprecationWarning, match="query"):
         jus.scraper("{tribunal}").cjsg(pesquisa=None, query="dano moral", paginas=1)
 
 
-# Repetir para ``termo``, ``data_inicio``/``data_fim``, ``*_de``/``*_ate``
-# e cada alias específico do tribunal (ex.: ``magistrado`` -> ``relator``).
+@responses.activate
+def test_cjsg_alias_data_inicio_fim(mocker):
+    mocker.patch("time.sleep")
+    _add(_esperado(
+        "dano moral",
+        data_julgamento_inicio="01/01/2024",
+        data_julgamento_fim="31/03/2024",
+    ))
+    # Os dois aliases emitem um aviso cada; o padrão precisa casar com ambos.
+    with pytest.warns(DeprecationWarning, match=r"'data_(inicio|fim)'"):
+        jus.scraper("{tribunal}").cjsg(
+            "dano moral", paginas=1, data_inicio="01/01/2024", data_fim="31/03/2024",
+        )
+
+
+# Repetir para ``termo``, ``*_de``/``*_ate`` e cada alias específico do
+# tribunal (ex.: ``magistrado`` -> ``relator``). O caso de alias que vira noop
+# com ``warn_unsupported`` está descrito no CONTRIBUTING.md.
 
 
 def test_cjsg_kwarg_desconhecido():
@@ -246,7 +249,7 @@ def test_cjsg_kwarg_desconhecido():
     )
 ```
 
-## Template: integração (opcional)
+## Esqueleto: integração (opcional)
 
 ```python
 """Integração de cjsg do {SIGLA} contra o site real."""
@@ -255,28 +258,25 @@ import pytest
 
 import juscraper as jus
 
+# Portal com bloqueio anti-bot condicional ao IP acrescenta o marker anti_bot
+# a esta lista (ver CONTRIBUTING.md > Tests).
+pytestmark = [pytest.mark.integration]
 
-@pytest.mark.integration
-class TestCJSG{SIGLA}:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.scraper = jus.scraper("{tribunal}")
 
-    def test_busca_simples(self):
-        df = self.scraper.cjsg("direito", paginas=1)
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) > 0
+def test_busca_simples():
+    df = jus.scraper("{tribunal}").cjsg("direito", paginas=1)
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
 
-    def test_paginacao(self):
-        df1 = self.scraper.cjsg("dano moral", paginas=1)
-        df2 = self.scraper.cjsg("dano moral", paginas=range(1, 3))
-        assert len(df2) > len(df1)
+
+def test_paginacao():
+    scraper = jus.scraper("{tribunal}")
+    df1 = scraper.cjsg("dano moral", paginas=1)
+    df2 = scraper.cjsg("dano moral", paginas=range(1, 3))
+    assert len(df2) > len(df1)
 ```
 
-Portal sujeito a bloqueio anti-bot condicional ao IP: acrescentar
-`pytestmark = pytest.mark.anti_bot` no topo do arquivo de integração.
-
-## Template: contrato de cpopg
+## Esqueleto: contrato de cpopg
 
 ```python
 """Contratos offline de cpopg do {SIGLA}."""
@@ -297,28 +297,6 @@ def test_cpopg_retorna_dataframe(mocker):
     )
     df = jus.scraper("{tribunal}").cpopg("NNNNNNN-DD.AAAA.J.TT.OOOO")
     assert isinstance(df, pd.DataFrame)
-    assert {"id_cnj", "processo", "classe"} <= set(df.columns)
+    # id_cnj vem de OutputCnjConsultaBase; acrescentar as colunas do Output concreto.
+    assert {"id_cnj"} <= set(df.columns)
 ```
-
-## Rodar
-
-- `pytest tests/{tribunal}/`: contratos (offline, padrão)
-- `pytest tests/schemas/`: cobertura, paridade de assinatura e de Output
-- `pytest -m integration tests/{tribunal}/`: só integração
-- `pytest -m ""`: tudo
-
-## Dicas
-
-- Use termos de busca genéricos que garantidamente retornam
-  resultados: "direito", "dano moral", "contrato"
-- Para cpopg, use números de processos públicos e conhecidos
-- Não teste contagens exatas — sites mudam seus dados
-- Não confie que a ordem dos resultados será estável
-- `filterwarnings = ["error"]` no pyproject: todo warning esperado
-  precisa de `pytest.warns`
-- Em teste de filtro de data, passe `*_inicio` e `*_fim` juntos: com
-  só uma ponta, `fill_open_ended_dates` completa a outra e emite
-  `UserWarning`, que o `filterwarnings = ["error"]` transforma em falha
-- Helpers em `tests/_helpers.py`: `load_sample`, `load_sample_bytes`
-  (quando o parser trata o encoding, ex.: latin-1),
-  `assert_unknown_kwarg_raises`

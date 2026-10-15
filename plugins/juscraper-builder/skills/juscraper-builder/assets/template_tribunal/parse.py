@@ -36,5 +36,7 @@ def cjsg_parse_manager(resultados_brutos: list) -> pd.DataFrame:
     df = pd.DataFrame(registros)
     if df.empty:
         return df
-    coerce_date_columns(df, ["data_julgamento", "data_publicacao"])
+    # TODO: o formato que o backend usa nas datas, visto no sample. Sem
+    # ``date_format`` o pandas lê "05/03/2024" como 3 de maio, sem avisar.
+    coerce_date_columns(df, ["data_julgamento", "data_publicacao"], date_format="%d/%m/%Y")
     return df

@@ -2,9 +2,10 @@
 """Analisa requisições HTTP capturadas para identificar a API do tribunal.
 
 Este script é usado pela skill juscraper-builder para processar
-as requisições capturadas pelo Playwright MCP e identificar
-automaticamente o endpoint principal, parâmetros, e mecanismo
-de paginação.
+as requisições capturadas na engenharia reversa (por qualquer
+navegador automatizado, ou montadas à mão a partir do HTML e do
+JavaScript do formulário) e identificar o endpoint principal,
+os parâmetros e o mecanismo de paginação.
 
 Uso:
     python analyze_requests.py requests.json
