@@ -236,9 +236,13 @@ def main():
     try:
         tabela = coletar(argumentos.pesquisa, argumentos.max_paginas)
     except ColetaInterrompida as erro:
+        print(f"Coleta interrompida: {erro}", file=sys.stderr)
+        if erro.tabela.empty:
+            # Sem linha, o CSV sairia sem nem o cabeçalho, e apagaria o parcial de outra rodada.
+            print(f"Nenhuma linha foi coletada antes da interrupção; {parcial} não foi gravado.", file=sys.stderr)
+            return 2
         # Grava o que veio antes do erro: uma coleta longa não se perde por causa da última página.
         erro.tabela.to_csv(parcial, index=False, encoding="utf-8-sig")
-        print(f"Coleta interrompida: {erro}", file=sys.stderr)
         print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {parcial}.", file=sys.stderr)
         return 2
     # utf-8-sig: o Excel reconhece a codificação e mostra os acentos certos.

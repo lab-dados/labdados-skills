@@ -367,3 +367,18 @@ def test_ctrl_c_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys)
     assert rodar(modelo, monkeypatch, saida) == 2
     assert [linha["titulo"] for linha in linhas_do_csv(tmp_path / "resultados.parcial.csv")] == TITULOS[:20]
     assert "Ctrl+C" in capsys.readouterr().err
+
+
+def test_ctrl_c_antes_da_primeira_linha_nao_grava_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """Sem linha coletada, o parcial sairia só com o BOM e uma quebra de linha, sem cabeçalho."""
+
+    def interromper(*argumentos):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(modelo, "pedir", interromper)
+    assert rodar(modelo, monkeypatch, tmp_path / "resultados.csv") == 2
+    parcial = tmp_path / "resultados.parcial.csv"
+    assert not parcial.exists()
+    erro = capsys.readouterr().err
+    assert "Ctrl+C" in erro
+    assert f"Nenhuma linha foi coletada antes da interrupção; {parcial} não foi gravado" in erro
