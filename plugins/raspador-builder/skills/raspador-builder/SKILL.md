@@ -60,8 +60,9 @@ carregá-la):
 python <pasta desta skill>/scripts/reconhecer_site.py "<endereço da página de busca>"
 ```
 
-Ele precisa só de `requests`; com `uv`, `uv run <pasta desta skill>/scripts/reconhecer_site.py ...`
-instala sozinho.
+Onde o comando `python` não existe (Linux e macOS costumam ter só `python3`),
+use `python3`. Ele precisa só de `requests`; com `uv`,
+`uv run <pasta desta skill>/scripts/reconhecer_site.py ...` instala sozinho.
 
 Ele lê o `robots.txt`, procura links de termos de uso, sinais de login, de
 captcha e de bloqueio anti-robô, e lista endereços de API candidatos. Leia a
