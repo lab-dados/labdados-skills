@@ -12,6 +12,7 @@ import sys
 import time
 
 import pytest
+import requests
 from conftest import carregar_modulo
 
 TEXTO = "text/plain; charset=utf-8"
@@ -541,6 +542,55 @@ def test_caractere_reservado_codificado_ou_por_extenso(reconhecer, descricao, re
     else:
         robots = f"User-agent: *\nDisallow: {regra}\n"
     assert permite(reconhecer, robots, caminho) is permitido
+
+
+# --- especificidade (RFC 9309, 2.2.2) -----------------------------------------------------------
+
+# Vence a regra com mais octetos, cada um contado pelo tamanho com que o requests o manda.
+# Cada caso: (descrição, robots.txt, caminho, permitido?)
+CASOS_ESPECIFICIDADE = [
+    # ":" e "," vão por extenso: o Allow tem 6 octetos contra 7 do Disallow.
+    ("':' por extenso conta 1", "User-agent: *\nDisallow: /*x*a*b\nAllow: /x::::\n", "/x::::ab", False),
+    ("',' por extenso conta 1", "User-agent: *\nDisallow: /a*b*c\nAllow: /a,,\n", "/a,,bc", False),
+    # "%61" vai como "a": o Allow tem 4 octetos, e não os 10 caracteres com que foi escrito.
+    ("%61 conta como o 'a' enviado", "User-agent: *\nDisallow: /aaaa\nAllow: /%61%61%61\n", "/aaaa", False),
+    # "|" vai como %7C: o Allow tem 8, empata com o Disallow, e o empate é do Allow.
+    ("'|' codificado no envio conta 3", "User-agent: *\nDisallow: /a*b*c*d\nAllow: /a||\n", "/a||bcd", True),
+]
+
+
+@pytest.mark.parametrize(
+    "descricao, robots, caminho, permitido", CASOS_ESPECIFICIDADE, ids=[c[0] for c in CASOS_ESPECIFICIDADE]
+)
+def test_especificidade_conta_cada_octeto_como_o_requests_o_manda(reconhecer, descricao, robots, caminho, permitido):
+    assert permite(reconhecer, robots, caminho) is permitido
+
+
+def como_o_requests_manda(caractere):
+    """O caractere como o requests o põe no caminho do endereço pedido ("|" vira "%7C")."""
+    endereco = requests.Request("GET", f"http://site.gov.br/a{caractere}b").prepare().url
+    return endereco.removeprefix("http://site.gov.br/a").removesuffix("b")
+
+
+# Todo caractere ASCII visível, mais o espaço e um acentuado. "*" e "$" por extenso são curinga e
+# âncora na regra, e "#" abre comentário no robots.txt e fragmento no endereço: entram só codificados.
+CARACTERES = [chr(valor) for valor in range(0x20, 0x7F)] + ["ç"]
+
+
+@pytest.mark.parametrize("caractere", CARACTERES, ids=[f"{ord(c):02X}" for c in CARACTERES])
+def test_comprimento_da_regra_e_o_tamanho_enviado_pelo_requests(reconhecer, caractere):
+    """Cada octeto da regra conta o que o requests manda por ele: o caractere escrito por extenso e
+    o mesmo octeto escrito como %XX contam igual, exceto os estruturais ("/", "?", "&", "=")
+    codificados, que vão ao servidor como %XX e contam 3."""
+    codificado = "".join(f"%{octeto:02X}" for octeto in caractere.encode())
+    if caractere == "#":  # não vai por extenso ao servidor: só como %23
+        enviado = como_o_requests_manda(codificado)
+    else:
+        enviado = como_o_requests_manda(caractere)
+    if caractere not in "*$#":
+        assert reconhecer.Regra("/" + caractere).comprimento == 1 + len(enviado)
+    estrutural = caractere in "/?&="
+    assert reconhecer.Regra("/" + codificado).comprimento == 1 + (3 if estrutural else len(enviado))
 
 
 # --- casos da RFC 9309 que nenhum teste acima prendia -------------------------------------------

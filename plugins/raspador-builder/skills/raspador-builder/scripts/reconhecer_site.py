@@ -25,7 +25,6 @@ arquivo e não pelo `urllib.robotparser`, para que a resposta não dependa da ve
 import argparse
 import html
 import re
-import string
 import sys
 import time
 from urllib.parse import urljoin, urlsplit
@@ -58,8 +57,43 @@ PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpReques
 # codifica "=" e "&" do lado do caminho, e aí "Disallow: /*sort=" não proíbe "/busca?sort=1". O mesmo
 # site daria respostas diferentes conforme a versão de quem roda o script, então a leitura fica aqui.
 
-# RFC 3986: caracteres "não reservados", que valem o mesmo por extenso e como %XX.
-NAO_RESERVADOS = frozenset((string.ascii_letters + string.digits + "-._~").encode())
+
+def _enviados_por_extenso():
+    """Os octetos que o requests manda por extenso no caminho e na consulta; os outros vão como %XX.
+
+    Sai do próprio requests, e não de uma lista escrita aqui, para acompanhar a versão instalada
+    (na 2.34, por exemplo, ":" e "," vão por extenso e "|" vai como "%7C"). Os octetos ASCII vão
+    num endereço só, cada um entre dois "z", que não é dígito hexadecimal nem forma segmento de
+    ponto, uma vez no caminho e outra na consulta; um pedido preparado por octeto deixaria o
+    script (e cada teste que o carrega) uma décima de segundo mais lento. Conta como por extenso o
+    octeto que volta como ele mesmo, seguido do "z", nas duas partes; o que volta como "%" mais
+    dois dígitos foi codificado, e o que não volta foi descartado. O "#" abriria o fragmento, que
+    não é enviado, e fica fora; o "%" volta como "%25". Octeto acima de 127 é sempre codificado.
+    """
+    caracteres = [chr(valor) for valor in range(128) if chr(valor) != "#"]
+    texto = "z" + "z".join(caracteres) + "z"
+    partes = []
+    for endereco in (f"http://x/{texto}", f"http://x/?{texto}"):
+        try:
+            enviado = requests.Request("GET", endereco).prepare().path_url
+        except (requests.RequestException, ValueError):
+            return frozenset()  # sem como saber: todo octeto conta 3, como o codificado
+        posicao = enviado.index("z") + 1
+        por_extenso = set()
+        for caractere in caracteres:
+            if enviado.startswith(caractere + "z", posicao):
+                por_extenso.add(ord(caractere))
+                posicao += 2
+            elif enviado.startswith("%", posicao):
+                posicao += 4
+            else:  # descartado pelo requests: o que está aqui já é o "z" seguinte
+                posicao += 1
+        partes.append(por_extenso)
+    return frozenset(partes[0] & partes[1])
+
+
+ENVIADOS_POR_EXTENSO = _enviados_por_extenso()
+
 # Os reservados que dão a estrutura do endereço em cada parte dele. Ali, por extenso e codificados
 # têm sentidos diferentes: no caminho, "/" separa segmentos e "%2F" é letra de um segmento; o
 # primeiro "?" abre a consulta e "%3F" é letra; na consulta, "&" e "=" separam os parâmetros e
@@ -180,10 +214,13 @@ class Regra:
         self.trechos = [_trecho(trecho) for trecho in trechos]
         self.tamanhos = [len(trecho) for trecho in trechos]
         # Especificidade (RFC 9309, 2.2.2: vence a regra com mais octetos). Cada octeto conta pelo
-        # tamanho com que vai ao servidor: 1 o não reservado e o estrutural por extenso, 3 os outros
-        # (%XX). Assim ":" e "%3A", que são o mesmo octeto, empatam. Curinga e âncora contam 1.
+        # tamanho com que o requests o manda ao servidor (ver ENVIADOS_POR_EXTENSO): 1 o que vai
+        # por extenso, 3 o que vai como %XX. A grafia da regra não muda a conta, porque ":" e
+        # "%3A" são o mesmo octeto e empatam; a exceção é o estrutural (ver ESTRUTURAIS), em que
+        # "/" e "%2F" são octetos diferentes e vão ao servidor cada um na sua grafia.
+        # Curinga e âncora contam 1.
         self.comprimento = len(trechos) - 1 + self.ancorada + sum(
-            1 if valor in NAO_RESERVADOS or (valor in PODEM_SER_ESTRUTURAIS and not codificado) else 3
+            3 if (codificado and valor in PODEM_SER_ESTRUTURAIS) or valor not in ENVIADOS_POR_EXTENSO else 1
             for trecho in trechos
             for valor, codificado in trecho
         )
