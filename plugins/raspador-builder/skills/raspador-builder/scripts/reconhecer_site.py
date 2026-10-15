@@ -447,11 +447,35 @@ def sinais(resposta):
     return encontrados
 
 
+PORTAS_PADRAO = {"http": 80, "https": 443}
+
+
+def origem(endereco):
+    """(esquema, host, porta) do endereço, na forma em que dois endereços do mesmo site coincidem.
+
+    Esquema e host não distinguem maiúsculas (RFC 3986, 3.1 e 3.2.2): "http://LOCALHOST:8000" e
+    "http://localhost:8000" são o mesmo site, e o requests manda o host em minúsculas. A porta
+    padrão do esquema escrita por extenso ("http://site.gov.br:80") é a mesma que a ausente, e as
+    duas viram None. Porta que não é número válido fica no host, para não coincidir com nenhum.
+    """
+    partes = urlsplit(endereco)
+    esquema = partes.scheme.lower()
+    try:
+        porta = partes.port
+    except ValueError:  # o requests nem pediria esse endereço
+        return esquema, partes.netloc.lower(), None
+    return esquema, partes.hostname or "", None if porta == PORTAS_PADRAO.get(esquema) else porta
+
+
 def mesmo_site(endereco, base):
     """Mesmo esquema e mesmo host (com a porta). O robots.txt vale só para eles (RFC 9309, 2.3):
     o de http://site.gov.br não diz nada sobre https://site.gov.br."""
-    partes, partes_base = urlsplit(endereco), urlsplit(base)
-    return (partes.scheme.lower(), partes.netloc) == (partes_base.scheme.lower(), partes_base.netloc)
+    return origem(endereco) == origem(base)
+
+
+def mesmo_host(endereco, base):
+    """Mesmo host e mesma porta, com qualquer esquema (ver `origem`)."""
+    return origem(endereco)[1:] == origem(base)[1:]
 
 
 def candidatos_de_api(textos, base):
@@ -459,11 +483,13 @@ def candidatos_de_api(textos, base):
     for texto in textos:
         for achado in filter(PARECE_API.search, PADRAO_ENDERECO.findall(html.unescape(texto))):
             completo = urljoin(base, achado.rstrip(".,;"))
-            if urlsplit(completo).netloc != urlsplit(base).netloc:
+            if not mesmo_host(completo, base):
                 continue
             # A página pode escrever o próprio endereço com outro esquema (https atrás de proxy);
-            # o teste usa o esquema pelo qual o site respondeu.
-            completo = urlsplit(completo)._replace(scheme=urlsplit(base).scheme).geturl()
+            # o teste usa o esquema pelo qual o site respondeu. O host vai na grafia da base:
+            # "https://site.gov.br:443" trocado só de esquema seria "http://site.gov.br:443".
+            partes_base = urlsplit(base)
+            completo = urlsplit(completo)._replace(scheme=partes_base.scheme, netloc=partes_base.netloc).geturl()
             if completo not in vistos:
                 vistos.append(completo)
     return vistos
@@ -476,7 +502,9 @@ def main():
     argumentos = leitor_argumentos.parse_args()
     endereco = argumentos.endereco
     partes = urlsplit(endereco)
-    raiz = f"{partes.scheme}://{partes.netloc}/"
+    # Esquema e host em minúsculas, como o requests os manda: o destino de um redirecionamento vem
+    # na grafia do requests e é comparado com esta raiz (ver `origem`). Usuário e senha ficam fora.
+    raiz = f"{partes.scheme.lower()}://{partes.netloc.rpartition('@')[2].lower()}/"
     visitante = Visitante()
 
     robots, permitido = conferir_robots(visitante, endereco)
@@ -488,7 +516,7 @@ def main():
         """Todo pedido depois do robots.txt passa por aqui: a página inicial, os scripts, a API e
         cada destino de redirecionamento."""
         if not mesmo_site(alvo, raiz):
-            if urlsplit(alvo).netloc == partes.netloc:
+            if mesmo_host(alvo, raiz):
                 print(
                     f"  {alvo}: troca de {partes.scheme} para {urlsplit(alvo).scheme}, não pedido. O robots.txt "
                     f"lido vale só para {raiz}; rode o script de novo com {alvo}"

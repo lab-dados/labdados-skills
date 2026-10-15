@@ -265,6 +265,60 @@ def test_redirecionamento_para_outro_site_nao_e_seguido(servidor, reconhecer, mo
     assert f"http://localhost:{porta}/outra: outro site, não pedido" in saida
 
 
+def endereco_com_host_maiusculo(servidor, caminho):
+    """O endereço do servidor de teste escrito com o host em maiúsculas, como o usuário pode digitar."""
+    porta = servidor.raiz.rsplit(":", 1)[1]
+    return f"http://LOCALHOST:{porta}{caminho}"
+
+
+def test_host_em_maiusculas_redirecionado_para_caminho_proibido_para_como_proibido(
+    servidor, reconhecer, monkeypatch, capsys
+):
+    """O requests manda o host em minúsculas, e o destino do redirecionamento volta assim. Comparado
+    com a raiz escrita em maiúsculas, ele parecia outro site: a saída dizia "outro site" e o código
+    era 0, quando o destino é um caminho proibido do mesmo site."""
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = redirecionar("/privado/x")
+    servidor.rotas["/privado/x"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, endereco_com_host_maiusculo(servidor, "/busca"))
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert "outro site" not in saida
+    assert not [p for p in servidor.pedidos if p.startswith("/privado")], servidor.pedidos
+
+
+def test_host_em_maiusculas_segue_redirecionamento_relativo_permitido(servidor, reconhecer, monkeypatch, capsys):
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = redirecionar("/destino")
+    servidor.rotas["/destino"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, endereco_com_host_maiusculo(servidor, "/busca"))
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "/destino" in servidor.pedidos, saida
+    assert "outro site" not in saida
+
+
+# Cada caso: (endereço, base, mesmo site?)
+CASOS_MESMO_SITE = [
+    ("http://site.gov.br/x", "http://SITE.gov.br/", True),
+    ("HTTP://site.gov.br/x", "http://site.gov.br/", True),
+    ("http://site.gov.br/x", "http://site.gov.br:80/", True),
+    ("https://site.gov.br:443/x", "https://site.gov.br/", True),
+    ("http://site.gov.br:8080/x", "http://site.gov.br/", False),
+    ("http://site.gov.br:443/x", "https://site.gov.br/", False),
+    ("https://site.gov.br/x", "http://site.gov.br/", False),
+    ("http://www.site.gov.br/x", "http://site.gov.br/", False),
+]
+
+
+@pytest.mark.parametrize(
+    "endereco, base, mesmo", CASOS_MESMO_SITE, ids=[f"{c[0]} {c[1]}" for c in CASOS_MESMO_SITE]
+)
+def test_mesmo_site_ignora_caixa_e_porta_padrao(reconhecer, endereco, base, mesmo):
+    """Esquema e host não distinguem maiúsculas, e a porta padrão escrita é a mesma que a ausente."""
+    assert reconhecer.mesmo_site(endereco, base) is mesmo
+
+
 def test_redirecionamento_permitido_e_seguido_e_aparece_nos_sinais(servidor, reconhecer, monkeypatch, capsys):
     montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
     servidor.rotas["/busca"] = redirecionar("/login")
