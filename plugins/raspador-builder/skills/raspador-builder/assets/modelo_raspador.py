@@ -12,9 +12,9 @@ robots.txt: <O QUE DIZ, ou "não existe (404)">.
 
 Como rodar:
     uv run raspador_<site>.py --pesquisa "<termo>"
-ou, sem uv:
-    python -m pip install requests pandas
-    python raspador_<site>.py --pesquisa "<termo>"
+ou, sem uv (no Windows, `python` no lugar de `python3`):
+    python3 -m pip install requests pandas
+    python3 raspador_<site>.py --pesquisa "<termo>"
 """
 
 import argparse

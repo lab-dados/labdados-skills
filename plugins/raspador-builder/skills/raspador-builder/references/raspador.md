@@ -32,8 +32,11 @@ from bs4 import BeautifulSoup
 
 
 def ler_total(pagina_html):
-    """O total vem num texto como "Resultados 1 a 10 de 132"."""
-    achado = re.search(r"de\s+([\d.]+)", BeautifulSoup(pagina_html, "html.parser").get_text(" "))
+    """O total vem num texto como "Resultados 1 a 10 de 132"; sem esse texto, devolve None."""
+    texto = BeautifulSoup(pagina_html, "html.parser").get_text(" ")
+    # ADAPTAR: o padrão ancora no texto do total, porque a página tem outros "de <número>"
+    # ("15 de outubro de 2026", "Tribunal de 2ª instância") que um padrão solto pegaria.
+    achado = re.search(r"Resultados\s+\d+\s+a\s+\d+\s+de\s+([\d.]+)", texto)
     return int(achado.group(1).replace(".", "")) if achado else None
 
 
