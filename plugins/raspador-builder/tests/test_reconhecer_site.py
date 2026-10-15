@@ -304,6 +304,32 @@ def test_robots_txt_redirecionado_e_seguido(servidor, reconhecer, monkeypatch, c
     assert servidor.pedidos == ["/robots.txt", "/novo/robots.txt"]
 
 
+@pytest.mark.parametrize("saltos", [5, 6], ids=["cinco saltos", "seis saltos"])
+def test_robots_txt_redirecionado_para_outro_host_e_seguido(servidor, reconhecer, monkeypatch, capsys, saltos):
+    """A RFC 9309 (2.3.1.2) manda seguir o redirecionamento do robots.txt, mesmo para outro host, por
+    ao menos cinco saltos; a regra de não sair do site vale para os pedidos de depois. Aqui os saltos
+    alternam entre localhost e 127.0.0.1, e o destino final permite: se ele não fosse lido, o
+    robots.txt ficaria sem resposta e tudo seria proibido. Com seis saltos, o robots.txt vale como
+    sem resposta."""
+    montar_site(servidor, "")
+    porta = servidor.raiz.rsplit(":", 1)[1]
+    hosts = [f"http://localhost:{porta}", servidor.raiz]
+    origens = ["/robots.txt"] + [f"/salto{numero}" for numero in range(1, saltos)]
+    destinos = origens[1:] + ["/novo/robots.txt"]
+    for numero, (origem, destino) in enumerate(zip(origens, destinos)):
+        servidor.rotas[origem] = redirecionar(hosts[numero % 2] + destino, codigo=301)
+    servidor.rotas["/novo/robots.txt"] = (200, TEXTO, "User-agent: *\nAllow: /\n")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    if saltos == 5:
+        assert codigo == 0, saida
+        assert servidor.pedidos[:7] == origens + ["/novo/robots.txt", "/busca?q=licitacao"], servidor.pedidos
+    else:
+        assert codigo == 2, saida
+        assert servidor.pedidos == origens, servidor.pedidos
+        assert "Sem resposta" in saida
+
+
 # --- percent-encoding (RFC 9309, 2.2.2) ---------------------------------------------------------
 
 
