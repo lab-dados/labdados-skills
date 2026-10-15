@@ -233,3 +233,51 @@ def test_robots_txt_redirecionado_e_seguido(servidor, reconhecer, monkeypatch, c
     codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
     assert codigo == 2, capsys.readouterr().out
     assert servidor.pedidos == ["/robots.txt", "/novo/robots.txt"]
+
+
+# --- percent-encoding (RFC 9309, 2.2.2) ---------------------------------------------------------
+
+
+def permite(reconhecer, robots, caminho):
+    return reconhecer.RegrasRobots(robots).permite(reconhecer.USER_AGENT, "http://site.gov.br" + caminho)
+
+
+# A tabela de exemplos da seção 2.2.2 (figura 4): a regra escrita como "Path" casa com o endereço
+# "Path to Match". A terceira linha é o caractere U+30C4, que em UTF-8 é E3 83 84.
+TABELA_RFC_9309 = [
+    ("/foo/bar?baz=quz", "/foo/bar?baz=quz"),
+    ("/foo/bar?baz=https://foo.bar", "/foo/bar?baz=https%3A%2F%2Ffoo.bar"),
+    ("/foo/bar/ツ", "/foo/bar/%E3%83%84"),
+    ("/foo/bar/%E3%83%84", "/foo/bar/%E3%83%84"),
+    ("/foo/bar/%62%61%7A", "/foo/bar/baz"),
+]
+
+
+@pytest.mark.parametrize("regra, caminho", TABELA_RFC_9309, ids=[c[0] for c in TABELA_RFC_9309])
+def test_tabela_de_exemplos_da_rfc_9309(reconhecer, regra, caminho):
+    assert not permite(reconhecer, f"User-agent: *\nDisallow: {regra}\n", caminho)
+
+
+# Caractere reservado escrito por extenso de um lado e codificado do outro é o mesmo caractere.
+# Cada caso: (descrição, regra, caminho, permitido?)
+CASOS_RESERVADOS = [
+    ("regra codificada, endereço por extenso", "/%3A", "/:", False),
+    ("regra por extenso, endereço codificado", "/:", "/%3A", False),
+    ("regra por extenso, endereço codificado em minúscula", "/:", "/%3a", False),
+    ("barra na consulta", "/?q=/", "/?q=%2F", False),
+    ("Allow codificado vence Disallow: /", "/%3A", "/:", True),
+    # Na parte do caminho, "/" separa segmentos e "%2F" é uma letra do segmento: não se confundem.
+    ("barra codificada no caminho não é separador", "//", "/%2f", True),
+    ("barra codificada no caminho, os dois codificados", "/a%2fb", "/a%2Fb", False),
+    # Na consulta, "&" e "=" separam os parâmetros; codificados, são parte do valor.
+    ("& codificado na consulta não é separador", "/?a=1&b", "/?a=1%26b", True),
+]
+
+
+@pytest.mark.parametrize("descricao, regra, caminho, permitido", CASOS_RESERVADOS, ids=[c[0] for c in CASOS_RESERVADOS])
+def test_caractere_reservado_codificado_ou_por_extenso(reconhecer, descricao, regra, caminho, permitido):
+    if descricao.startswith("Allow"):
+        robots = f"User-agent: *\nDisallow: /\nAllow: {regra}\n"
+    else:
+        robots = f"User-agent: *\nDisallow: {regra}\n"
+    assert permite(reconhecer, robots, caminho) is permitido

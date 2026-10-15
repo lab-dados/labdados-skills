@@ -57,28 +57,53 @@ PADRAO_CHAMADA = re.compile(r"fetch\(|axios\.|\$\.ajax|\$\.getJSON|XMLHttpReques
 # "Disallow: /*?q=" não proíbe nada; a partir do 3.15 ele segue a RFC. O mesmo site daria respostas
 # diferentes conforme a versão de quem roda o script, então a leitura fica aqui.
 
-# RFC 3986: caracteres "não reservados". Codificados como %XX, são decodificados antes de comparar;
-# qualquer outro %XX fica codificado, porque decodificá-lo mudaria o sentido do endereço.
+# RFC 3986: caracteres "não reservados" e "reservados".
 NAO_RESERVADOS = frozenset(string.ascii_letters + string.digits + "-._~")
+RESERVADOS = frozenset(":/?#[]@!$&'()*+,;=")
 
 
-def normalizar_caminho(caminho):
+def normalizar_caminho(caminho, regra=False):
     """Põe o caminho da regra e o do endereço na mesma grafia antes de comparar (RFC 9309, 2.2.2).
 
-    "/%7Euser" e "/~user" viram "/~user"; "/licitação" vira "/licita%C3%A7%C3%A3o", igual ao que o
-    navegador manda; "%2f" vira "%2F" e continua codificado.
+    A RFC manda decodificar o %XX de caractere não reservado e codificar o caractere reservado,
+    nos dois lados: "/%7Euser" e "/~user" viram "/~user"; "/licitação" vira "/licita%C3%A7%C3%A3o",
+    igual ao que o navegador manda; ":" e "%3a" viram "%3A". Assim a regra
+    "/foo/bar?baz=https://foo.bar" casa com o endereço "/foo/bar?baz=https%3A%2F%2Ffoo.bar", como
+    na tabela de exemplos da seção.
+
+    Ficam por extenso os reservados que dão a estrutura do endereço, porque codificados eles mudam
+    de sentido e não podem casar com a forma por extenso: o "?" que abre a consulta; "/" na parte
+    do caminho, que separa segmentos ("/a%2Fb" é um segmento só); "&" e "=" na consulta, que
+    separam os parâmetros ("a=1%26b" é um parâmetro só). A tabela da RFC os mantém assim.
+
+    Com `regra=True`, `*` e o `$` final continuam sendo curinga e âncora, e não letras.
     """
+    ancora = "$" if regra and caminho.endswith("$") else ""
+    caminho = caminho[: len(caminho) - len(ancora)]
+    parte_caminho, interrogacao, consulta = caminho.partition("?")
+    saida = _normalizar_trecho(parte_caminho, "/", regra)
+    if interrogacao:
+        saida += "?" + _normalizar_trecho(consulta, "&=", regra)
+    return saida + ancora
+
+
+def _normalizar_trecho(trecho, estruturais, regra):
     saida = []
     posicao = 0
-    while posicao < len(caminho):
-        letra = caminho[posicao]
-        codigo = caminho[posicao + 1 : posicao + 3]
+    while posicao < len(trecho):
+        letra = trecho[posicao]
+        codigo = trecho[posicao + 1 : posicao + 3]
         if letra == "%" and len(codigo) == 2 and all(c in string.hexdigits for c in codigo):
             decodificada = chr(int(codigo, 16))
             saida.append(decodificada if decodificada in NAO_RESERVADOS else "%" + codigo.upper())
             posicao += 3
             continue
-        saida.append(quote(letra, safe="") if ord(letra) > 126 or ord(letra) <= 32 else letra)
+        if regra and letra == "*":
+            saida.append(letra)
+        elif (letra in RESERVADOS and letra not in estruturais) or ord(letra) > 126 or ord(letra) <= 32:
+            saida.append(quote(letra, safe=""))
+        else:
+            saida.append(letra)
         posicao += 1
     return "".join(saida)
 
@@ -134,7 +159,7 @@ class RegrasRobots:
                     except ValueError:
                         pass
                 elif valor:  # "Disallow:" vazio não proíbe nada
-                    grupo["regras"].append((normalizar_caminho(valor), chave == "allow"))
+                    grupo["regras"].append((normalizar_caminho(valor, regra=True), chave == "allow"))
 
     def nome_do_grupo(self, agente):
         """O nome do grupo que vale para `agente` ("*" se só o geral), ou None se nenhum vale."""
