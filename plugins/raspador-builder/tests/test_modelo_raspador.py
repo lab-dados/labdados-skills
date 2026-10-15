@@ -92,8 +92,48 @@ def test_site_que_ignora_a_pagina_para_com_erro_e_grava_o_parcial(servidor, mode
     assert codigo != 0
     assert [linha["titulo"] for linha in linhas_do_csv(saida)] == fatia(1)
     erro = capsys.readouterr().err
-    assert "repetiu a anterior" in erro
+    assert "a página 2 só trouxe linhas da página 1" in erro
     assert str(saida) in erro
+
+
+@pytest.mark.parametrize("total", [None, 30, 33], ids=["sem total", "total 30", "total 33"])
+def test_ultima_pagina_cheia_repetida_encerra_a_coleta(servidor, modelo, monkeypatch, tmp_path, capsys, total):
+    """30 resultados, múltiplo de 10: a última página veio cheia, e a página 4 a repete. As páginas
+    1 a 3 diferem, então o parâmetro de página funciona; a repetição é o fim, não erro."""
+    trinta = [f"Contrato {numero:03d}" for numero in range(1, 31)]
+
+    def responder(query):
+        pagina = min(int(query.get("pagina", "1")), 3)
+        return pagina_json(trinta[(pagina - 1) * POR_PAGINA : pagina * POR_PAGINA], total)
+
+    servidor.rotas["/api/busca"] = responder
+    saida = tmp_path / "resultados.csv"
+    codigo = rodar(modelo, monkeypatch, saida)
+    erro = capsys.readouterr().err
+    assert [linha["titulo"] for linha in linhas_do_csv(saida)] == trinta
+    assert codigo == (1 if total == 33 else 0), erro
+    assert "confira o parâmetro" not in erro
+    if total == 33:
+        assert "só trouxe linhas já coletadas" in erro
+
+
+def test_site_que_ignora_a_pagina_e_muda_a_ordem_para_com_erro(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """O site ignora o número da página e devolve a primeira com a ordem girada a cada pedido
+    (ordenação por relevância com empate). A página 2 não repete a 1 na ordem, mas só traz
+    linhas que já vieram: é o parâmetro de página que está errado."""
+    primeira = fatia(1)
+
+    def responder(query):
+        giro = int(query.get("pagina", "1")) % POR_PAGINA
+        return pagina_json(primeira[giro:] + primeira[:giro], total=20)
+
+    servidor.rotas["/api/busca"] = responder
+    saida = tmp_path / "resultados.csv"
+    codigo = rodar(modelo, monkeypatch, saida)
+    assert codigo == 2
+    erro = capsys.readouterr().err
+    assert "confira o parâmetro de paginação" in erro
+    assert sorted(linha["titulo"] for linha in linhas_do_csv(saida)) == sorted(primeira)
 
 
 def test_acesso_negado_no_meio_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):

@@ -133,7 +133,10 @@ def coletar(pesquisa, max_paginas=None):
     """
     sessao = requests.Session()  # guarda os cookies entre um pedido e outro, como um navegador
     sessao.headers["User-Agent"] = USER_AGENT
-    linhas, total_informado, anteriores, tamanho_primeira = [], None, None, None
+    linhas, total_informado = [], None
+    # As linhas já coletadas, para reconhecer página que só repete o que já veio. Cada linha entra
+    # como texto (repr), porque um valor pode ser lista ou dicionário, que não cabem num set.
+    vistas = set()
     pagina = 1
     try:
         while True:
@@ -144,24 +147,31 @@ def coletar(pesquisa, max_paginas=None):
             novos = ler_resultados(dados)
             if pagina == 1:
                 total_informado = ler_total(dados)
-                tamanho_primeira = len(novos)
                 if total_informado is None:
                     print(f"Para {pesquisa!r}, o site não informou o total de resultados.", file=sys.stderr)
                 else:
                     print(f"O site informa {total_informado} resultados para {pesquisa!r}.", file=sys.stderr)
             if not novos:  # página vazia: acabou
                 break
-            if novos == anteriores:
-                # Muitos sites devolvem a última página de novo quando se pede uma além dela. Se a
-                # anterior já veio mais curta que a primeira, ela era a última: acabou. Página cheia
-                # repetida quer dizer que o site ignorou o número da página: parar, senão o laço
-                # não termina e as linhas se repetem.
-                if len(novos) < tamanho_primeira:
-                    break
-                raise RuntimeError(f"a página {pagina} repetiu a anterior; confira o parâmetro de paginação")
+            chaves = [repr(sorted(linha.items())) for linha in novos]
+            if all(chave in vistas for chave in chaves):
+                # A página só trouxe linhas que já vieram (na mesma ordem ou não). Na página 2, o
+                # site ignorou o número da página e devolveu a primeira: parar com erro, senão o
+                # laço não termina e as linhas se repetem. Da 3 em diante, as anteriores já
+                # mostraram que a paginação funciona: muitos sites devolvem a última página de
+                # novo quando se pede uma além dela, e isso é o fim da coleta.
+                if pagina == 2:
+                    raise RuntimeError("a página 2 só trouxe linhas da página 1; confira o parâmetro de paginação")
+                if total_informado is not None and len(linhas) < total_informado:
+                    print(
+                        f"  página {pagina} só trouxe linhas já coletadas: fim da coleta, com {len(linhas)} "
+                        f"dos {total_informado} resultados informados.",
+                        file=sys.stderr,
+                    )
+                break
+            vistas.update(chaves)
             linhas.extend(novos)
             print(f"  página {pagina}: {len(novos)} resultados ({len(linhas)} até agora)", file=sys.stderr)
-            anteriores = novos
             if total_informado is not None and len(linhas) >= total_informado:
                 break
             if max_paginas is not None and pagina >= max_paginas:
