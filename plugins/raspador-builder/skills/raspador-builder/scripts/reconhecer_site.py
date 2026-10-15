@@ -297,16 +297,19 @@ class Visitante:
         self.sessao = requests.Session()
         self.sessao.headers["User-Agent"] = USER_AGENT
         self.pedidos = 0
+        self.barrado = None  # o destino que `conferir` recusou no último `get`, se houve
 
     def get(self, endereco, conferir=None):
         """Pede `endereco` e segue até MAX_SALTOS redirecionamentos, um pedido de cada vez.
 
         O requests seguiria o redirecionamento sozinho, sem perguntar ao robots.txt: uma página
         permitida que redireciona para caminho proibido, ou para outro site, seria pedida. Aqui
-        cada destino passa antes por `conferir` (quando dado); se não passar, nada é pedido e a
-        função devolve None. Devolve None também em erro de rede e depois de saltos demais.
+        cada destino passa antes por `conferir` (quando dado); se não passar, nada é pedido, o
+        destino fica em `self.barrado` e a função devolve None. Devolve None também em erro de
+        rede e depois de saltos demais.
         """
         saltos = []
+        self.barrado = None
         for _ in range(MAX_SALTOS + 1):
             time.sleep(ESPERA)
             self.pedidos += 1
@@ -321,6 +324,7 @@ class Visitante:
             saltos.append(resposta)
             endereco = urljoin(resposta.url, resposta.headers["Location"])
             if conferir is not None and not conferir(endereco):
+                self.barrado = endereco
                 return None
         print(f"  {saltos[0].url}: mais de {MAX_SALTOS} redirecionamentos seguidos, desisti")
         return None
@@ -458,6 +462,13 @@ def main():
         resposta = visitante.get(alvo, conferir=pode_pedir)
         if resposta is not None:
             paginas[alvo] = resposta
+        elif alvo == endereco and visitante.barrado is not None and mesmo_site(visitante.barrado, raiz):
+            # Barrado no mesmo site só pode ter sido pelo robots.txt: a página pedida leva a um
+            # caminho proibido, e isso vale como pedir o caminho proibido. A conclusão sai ainda na
+            # seção 1, antes de qualquer outra.
+            print(f"A página pedida redireciona para {visitante.barrado}, que o robots.txt não permite a este robô.")
+            print("\nPARE: o robots.txt não permite o destino da página pedida. Avise o usuário.")
+            return 2
 
     titulo("2. Termos de uso")
     termos = []

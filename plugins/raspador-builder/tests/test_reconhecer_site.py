@@ -179,7 +179,10 @@ CASOS_REDIRECIONAMENTO = [
 @pytest.mark.parametrize("descricao, origem", CASOS_REDIRECIONAMENTO, ids=[c[0] for c in CASOS_REDIRECIONAMENTO])
 def test_redirecionamento_para_caminho_proibido_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys, descricao,
                                                               origem):
-    """O robots.txt vale para cada salto: Location que cai em caminho proibido não é pedido."""
+    """O robots.txt vale para cada salto: Location que cai em caminho proibido não é pedido.
+
+    Quando é a página pedida que leva ao caminho proibido, o script para como se ela fosse
+    proibida (código 2); nos outros casos só aquele pedido fica de fora."""
     montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
     servidor.rotas["/busca"] = (200, HTML, PAGINA_COM_SCRIPT_E_API)
     servidor.rotas["/js/app.js"] = (200, "application/javascript", "var x = 1;")
@@ -188,9 +191,25 @@ def test_redirecionamento_para_caminho_proibido_nao_e_seguido(servidor, reconhec
     servidor.rotas["/privado/destino"] = (200, HTML, PAGINA_DE_BUSCA)
     codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
     saida = capsys.readouterr().out
-    assert codigo == 0, saida
+    assert codigo == (2 if origem == "/busca" else 0), saida
     assert not [p for p in servidor.pedidos if p.startswith("/privado")], servidor.pedidos
     assert "/privado/destino: proibido pelo robots.txt, não pedido" in saida
+
+
+def test_pagina_pedida_que_redireciona_para_caminho_proibido_para_como_proibida(
+    servidor, reconhecer, monkeypatch, capsys
+):
+    """Sem isso, a seção 1 dizia "permitido: sim", a seção 4 saía vazia e o código era 0: quem lê
+    só a conclusão seguiria para a coleta de uma página que cai em caminho proibido."""
+    montar_site(servidor, "User-agent: *\nDisallow: /privado\n")
+    servidor.rotas["/busca"] = redirecionar("/privado/x")
+    servidor.rotas["/privado/x"] = (200, HTML, PAGINA_DE_BUSCA)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert servidor.pedidos == ["/robots.txt", "/busca?q=licitacao"], servidor.pedidos
+    secao_1 = saida.split("== 2.")[0]
+    assert f"redireciona para {servidor.raiz}/privado/x, que o robots.txt não permite" in secao_1, saida
 
 
 def test_redirecionamento_para_outro_site_nao_e_seguido(servidor, reconhecer, monkeypatch, capsys):
