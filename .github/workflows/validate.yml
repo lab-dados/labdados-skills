@@ -74,3 +74,15 @@ jobs:
               npx --yes @anthropic-ai/claude-code@2.1.126 plugin validate "$plugin"
             fi
           done
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Test raspador-builder scripts (Python 3.10 and 3.12)
+        # O robots.txt e o modelo de raspador têm de dar a mesma resposta em qualquer versão
+        # do Python que o script aceita; por isso a suíte roda em duas.
+        run: |
+          for versao in 3.10 3.12; do
+            uv run --no-project --python "$versao" --with pytest --with requests --with pandas \
+              pytest plugins/raspador-builder/tests -q
+          done
