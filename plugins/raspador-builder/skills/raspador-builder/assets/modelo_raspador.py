@@ -18,6 +18,7 @@ ou, sem uv (no Windows, `python` no lugar de `python3`):
 """
 
 import argparse
+import os
 import sys
 import time
 from datetime import timezone
@@ -228,14 +229,14 @@ def main():
     leitor.add_argument("--saida", default="resultados.csv", help="arquivo CSV de saída")
     leitor.add_argument("--max-paginas", type=int, default=None, help="para depois de N páginas")
     argumentos = leitor.parse_args()
+    # O que veio antes de um erro vai para outro arquivo, "<saida>.parcial.csv", para não apagar o
+    # CSV completo de uma rodada anterior com o mesmo nome.
+    parcial = argumentos.saida.removesuffix(".csv") + ".parcial.csv"
 
     try:
         tabela = coletar(argumentos.pesquisa, argumentos.max_paginas)
     except ColetaInterrompida as erro:
         # Grava o que veio antes do erro: uma coleta longa não se perde por causa da última página.
-        # Vai para outro arquivo, "<saida>.parcial.csv", para não apagar o CSV completo de uma
-        # rodada anterior com o mesmo nome.
-        parcial = argumentos.saida.removesuffix(".csv") + ".parcial.csv"
         erro.tabela.to_csv(parcial, index=False, encoding="utf-8-sig")
         print(f"Coleta interrompida: {erro}", file=sys.stderr)
         print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {parcial}.", file=sys.stderr)
@@ -246,6 +247,14 @@ def main():
     total = tabela.attrs["total_informado"]
     informado = "o site não informou o total" if total is None else f"o site informou {total}"
     print(f"{len(tabela)} linhas salvas em {argumentos.saida}; {informado}.")
+    if os.path.exists(parcial):
+        # O programa não apaga arquivo do usuário, mas o parcial de uma rodada interrompida, ao lado
+        # do CSV completo, pode ser lido no lugar dele.
+        print(
+            f"Atenção: {parcial} é de uma coleta interrompida antes desta e não foi mexido; "
+            f"a coleta completa está em {argumentos.saida}.",
+            file=sys.stderr,
+        )
     if argumentos.max_paginas is None and total is not None and len(tabela) != total:
         print("Atenção: o número de linhas não bate com o total do site.", file=sys.stderr)
         return 1

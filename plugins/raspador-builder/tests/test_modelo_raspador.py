@@ -255,6 +255,24 @@ def test_parcial_nao_sobrescreve_o_csv_completo_anterior(servidor, modelo, monke
     assert f"salvas em {parcial}" in capsys.readouterr().err
 
 
+def test_coleta_completa_avisa_que_ha_parcial_antigo(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """O parcial de uma rodada interrompida fica na pasta, intacto, e a coleta completa avisa dele."""
+    parcial = tmp_path / "resultados.parcial.csv"
+    parcial.write_text("titulo\nresultado parcial de ontem\n", encoding="utf-8-sig")
+    servidor.rotas["/api/busca"] = lambda query: pagina_json(fatia(int(query.get("pagina", "1"))), total=24)
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 0
+    assert len(linhas_do_csv(saida)) == len(TITULOS)
+    assert linhas_do_csv(parcial) == [{"titulo": "resultado parcial de ontem"}]
+    assert f"{parcial} é de uma coleta interrompida antes desta" in capsys.readouterr().err
+
+
+def test_coleta_completa_sem_parcial_antigo_nao_avisa(servidor, modelo, monkeypatch, tmp_path, capsys):
+    servidor.rotas["/api/busca"] = lambda query: pagina_json(fatia(int(query.get("pagina", "1"))), total=24)
+    assert rodar(modelo, monkeypatch, tmp_path / "resultados.csv") == 0
+    assert "coleta interrompida" not in capsys.readouterr().err
+
+
 # --- Retry-After --------------------------------------------------------------------------------
 
 
