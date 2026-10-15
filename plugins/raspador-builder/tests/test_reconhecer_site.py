@@ -406,6 +406,10 @@ CASOS_COMO_ENVIADO = [
     ("% solto dos dois lados", "/a%zz", "/a%zz", False),
     ("%25 não é decodificado duas vezes", "/A", "/%2541", True),
     ("segmento .. resolvido", "/privado", "/publico/../privado/x", False),
+    # O requests manda "%2E%2E" como "..", sem resolver (decodifica depois de resolver os pontos), e o
+    # servidor costuma resolver: o caminho resolvido também tem de ser permitido.
+    ("%2E%2E vai como .. e o servidor resolve", "/privado", "/publico/%2E%2E/privado/x", False),
+    ("%2E%2E no fim sobe um segmento", "/a/$", "/a/b/%2E%2E", False),
     ("* do endereço é letra e casa com %2A", "/a%2A", "/a*", False),
     ("$ no fim do endereço é letra e casa com %24", "/a%24", "/a$", False),
     ("* da regra é curinga e casa com %2A", "/a*b", "/a%2Axb", False),
