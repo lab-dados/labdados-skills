@@ -111,8 +111,8 @@ não rodou.
 
 Responda com o resumo descrito em `references/teste-e-entrega.md`: o que foi
 coletado (linhas, colunas, total do site), de onde (API ou HTML, e por quê), o
-que o `robots.txt` e os termos dizem, os limites da coleta e o comando para
-rodar de novo.
+que o `robots.txt` e os termos dizem, em tribunal o que o segredo de justiça
+deixa de fora, os limites da coleta e o comando para rodar de novo.
 
 ## Quando parar e avisar
 
