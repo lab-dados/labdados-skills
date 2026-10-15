@@ -179,8 +179,11 @@ def coletar(pesquisa, max_paginas=None):
             if max_paginas is not None and pagina >= max_paginas:
                 break
             pagina += 1
-    except Exception as erro:
-        raise ColetaInterrompida(f"{type(erro).__name__}: {erro}", montar_tabela(linhas, total_informado)) from erro
+    except (Exception, KeyboardInterrupt) as erro:
+        # KeyboardInterrupt (Ctrl+C) não é Exception, e sem ele aqui quem interrompe a coleta perde
+        # tudo o que já veio.
+        motivo = "Ctrl+C" if isinstance(erro, KeyboardInterrupt) else f"{type(erro).__name__}: {erro}"
+        raise ColetaInterrompida(motivo, montar_tabela(linhas, total_informado)) from erro
     return montar_tabela(linhas, total_informado)
 
 

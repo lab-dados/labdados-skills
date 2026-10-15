@@ -244,3 +244,25 @@ def test_com_total_informa_uma_vez(servidor, modelo, monkeypatch, tmp_path, caps
     saida = capsys.readouterr()
     assert saida.err.count("24 resultados") == 1
     assert "o site informou 24" in saida.out
+
+
+# --- interrupção e última tentativa -------------------------------------------------------------
+
+
+def test_ctrl_c_grava_o_parcial(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """KeyboardInterrupt não é Exception: sem tratá-lo, Ctrl+C no meio perdia o que já tinha vindo."""
+    servidor.rotas["/api/busca"] = lambda query: pagina_json(fatia(int(query.get("pagina", "1"))), total=24)
+    pedir_original = modelo.pedir
+    chamadas = []
+
+    def pedir_e_interromper(*argumentos):
+        chamadas.append(argumentos)
+        if len(chamadas) == 3:
+            raise KeyboardInterrupt
+        return pedir_original(*argumentos)
+
+    monkeypatch.setattr(modelo, "pedir", pedir_e_interromper)
+    saida = tmp_path / "resultados.csv"
+    assert rodar(modelo, monkeypatch, saida) == 2
+    assert [linha["titulo"] for linha in linhas_do_csv(tmp_path / "resultados.parcial.csv")] == TITULOS[:20]
+    assert "Ctrl+C" in capsys.readouterr().err
