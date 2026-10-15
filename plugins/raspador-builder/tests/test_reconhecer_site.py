@@ -407,8 +407,9 @@ def test_robots_txt_redirecionado_para_outro_host_e_seguido(servidor, reconhecer
     """A RFC 9309 (2.3.1.2) manda seguir o redirecionamento do robots.txt, mesmo para outro host, por
     ao menos cinco saltos; a regra de não sair do site vale para os pedidos de depois. Aqui os saltos
     alternam entre localhost e 127.0.0.1, e o destino final permite: se ele não fosse lido, o
-    robots.txt ficaria sem resposta e tudo seria proibido. Com seis saltos, o robots.txt vale como
-    sem resposta."""
+    robots.txt ficaria sem resposta e tudo seria proibido. Com seis saltos, o script desiste e trata
+    o robots.txt como proibição, por cautela: a RFC permitiria tratá-lo como indisponível, e a
+    mensagem não atribui a proibição a ela."""
     montar_site(servidor, "")
     porta = servidor.raiz.rsplit(":", 1)[1]
     hosts = [f"http://localhost:{porta}", servidor.raiz]
@@ -425,7 +426,11 @@ def test_robots_txt_redirecionado_para_outro_host_e_seguido(servidor, reconhecer
     else:
         assert codigo == 2, saida
         assert servidor.pedidos == origens, servidor.pedidos
-        assert "Sem resposta" in saida
+        assert "Sem resposta" not in saida
+        secao_1 = saida.split("== 1. robots.txt ==")[1]
+        assert "Mais de 5 redirecionamentos seguidos" in secao_1, saida
+        assert "este script trata como proibição, por cautela" in secao_1, saida
+        assert "(RFC 9309)" not in secao_1, saida
 
 
 # --- percent-encoding (RFC 9309, 2.2.2) ---------------------------------------------------------

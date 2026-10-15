@@ -367,6 +367,7 @@ class Visitante:
         self.sessao.headers["User-Agent"] = USER_AGENT
         self.pedidos = 0
         self.barrado = None  # o destino que `conferir` recusou no último `get`, se houve
+        self.saltos_demais = False  # o último `get` desistiu depois de MAX_SALTOS redirecionamentos
 
     def get(self, endereco, conferir=None):
         """Pede `endereco` e segue até MAX_SALTOS redirecionamentos, um pedido de cada vez.
@@ -379,6 +380,7 @@ class Visitante:
         """
         saltos = []
         self.barrado = None
+        self.saltos_demais = False
         for _ in range(MAX_SALTOS + 1):
             time.sleep(ESPERA)
             self.pedidos += 1
@@ -403,6 +405,7 @@ class Visitante:
                 self.barrado = endereco
                 return None
         print(f"  {saltos[0].url}: mais de {MAX_SALTOS} redirecionamentos seguidos, desisti")
+        self.saltos_demais = True
         return None
 
 
@@ -417,6 +420,15 @@ def conferir_robots(visitante, endereco):
     titulo("1. robots.txt")
     print(f"Endereço: {endereco_robots}")
     proibe_tudo = RegrasRobots("User-agent: *\nDisallow: /")
+    if resposta is None and visitante.saltos_demais:
+        # A RFC 9309 (2.3.1.2) deixa tratar esse robots.txt como indisponível, o que liberaria tudo,
+        # como o 404. A proibição aqui é escolha deste script, e a mensagem não a atribui à RFC.
+        print(
+            f"Mais de {MAX_SALTOS} redirecionamentos seguidos, sem chegar ao arquivo. A RFC 9309 permite tratar o "
+            "robots.txt como indisponível nesse caso; este script trata como proibição, por cautela. Abra o "
+            "endereço no navegador para ver aonde ele leva. Não colete agora."
+        )
+        return proibe_tudo, False
     if resposta is None:
         print("Sem resposta: trate como proibição enquanto durar (RFC 9309). Não colete agora.")
         return proibe_tudo, False
@@ -553,7 +565,7 @@ def main():
 
     robots, permitido = conferir_robots(visitante, endereco)
     if not permitido:
-        print("\nPARE: o robots.txt não permite este caminho (ou o servidor não respondeu). Avise o usuário.")
+        print("\nPARE: o robots.txt não permite este caminho (ou não foi possível lê-lo). Avise o usuário.")
         return 2
 
     def pode_pedir(alvo):
