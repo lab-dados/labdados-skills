@@ -94,6 +94,8 @@ def pedir(sessao, endereco, parametros):
                     f"{resposta.status_code} em {resposta.url}: o site pediu {espera:.0f} s de espera, mais que "
                     f"o teto de {TETO_ESPERA} s (TETO_ESPERA). Rode de novo mais tarde."
                 )
+            if tentativa == TENTATIVAS:  # não há outra tentativa: esperar só atrasaria o erro
+                break
             print(f"  {resposta.status_code}: esperando {espera:.0f} s (tentativa {tentativa})", file=sys.stderr)
             time.sleep(espera)
             continue

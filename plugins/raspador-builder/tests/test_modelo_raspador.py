@@ -196,6 +196,18 @@ def test_retry_after_dentro_do_teto_espera_e_tenta_de_novo(servidor, modelo, mon
     assert 3.0 in esperas
 
 
+def test_ultima_tentativa_nao_dorme_antes_de_desistir(servidor, modelo, monkeypatch):
+    """Depois da última tentativa não há outra: esperar o Retry-After só atrasaria o erro."""
+    esperas = []
+    monkeypatch.setattr(modelo.time, "sleep", esperas.append)
+    servidor.rotas["/api/busca"] = (503, "text/plain", "fora do ar", {"Retry-After": "7"})
+
+    with pytest.raises(RuntimeError, match="503"):
+        modelo.pedir(requests.Session(), modelo.ENDERECO_BUSCA, {"pagina": 1})
+    assert esperas.count(7.0) == modelo.TENTATIVAS - 1
+    assert esperas[-1] == modelo.ESPERA  # a última espera é a de antes do último pedido
+
+
 @pytest.fixture
 def fuso_de_brasilia(monkeypatch):
     """Põe o processo em UTC-3 (string POSIX, não depende de tzdata) e restaura no fim."""
