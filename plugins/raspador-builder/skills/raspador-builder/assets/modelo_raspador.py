@@ -18,6 +18,7 @@ ou, sem uv (no Windows, `python` no lugar de `python3`):
 """
 
 import argparse
+import glob
 import os
 import sys
 import time
@@ -223,6 +224,30 @@ def montar_tabela(linhas, total_informado):
     return tabela
 
 
+def parciais_existentes(parcial):
+    """Os parciais de rodadas anteriores na pasta: `parcial` e os numerados ao lado dele
+    (`<saida>.parcial.2.csv`, `.3`, ...), em ordem."""
+    raiz = parcial.removesuffix(".csv")
+    numerados = []
+    for caminho in glob.glob(glob.escape(raiz) + ".*.csv"):
+        numero = caminho[len(raiz) + 1 : -len(".csv")]
+        if numero.isdigit():
+            numerados.append((int(numero), caminho))
+    return ([parcial] if os.path.exists(parcial) else []) + [caminho for _, caminho in sorted(numerados)]
+
+
+def proximo_parcial(parcial):
+    """`parcial`, se ainda não existe; senão o primeiro `<saida>.parcial.N.csv` livre, de N = 2 em
+    diante. O parcial de uma rodada anterior não é sobrescrito: ele pode ter mais linhas que o novo."""
+    if not os.path.exists(parcial):
+        return parcial
+    raiz = parcial.removesuffix(".csv")
+    numero = 2
+    while os.path.exists(f"{raiz}.{numero}.csv"):
+        numero += 1
+    return f"{raiz}.{numero}.csv"
+
+
 def main():
     leitor = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     leitor.add_argument("--pesquisa", required=True, help="termo de busca")
@@ -230,7 +255,8 @@ def main():
     leitor.add_argument("--max-paginas", type=int, default=None, help="para depois de N páginas")
     argumentos = leitor.parse_args()
     # O que veio antes de um erro vai para outro arquivo, "<saida>.parcial.csv", para não apagar o
-    # CSV completo de uma rodada anterior com o mesmo nome.
+    # CSV completo de uma rodada anterior com o mesmo nome. Se esse parcial já existe, o novo vai
+    # para o próximo nome livre (ver `proximo_parcial`).
     parcial = argumentos.saida.removesuffix(".csv") + ".parcial.csv"
 
     try:
@@ -242,8 +268,11 @@ def main():
             print(f"Nenhuma linha foi coletada antes da interrupção; {parcial} não foi gravado.", file=sys.stderr)
             return 2
         # Grava o que veio antes do erro: uma coleta longa não se perde por causa da última página.
-        erro.tabela.to_csv(parcial, index=False, encoding="utf-8-sig")
-        print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {parcial}.", file=sys.stderr)
+        destino = proximo_parcial(parcial)
+        erro.tabela.to_csv(destino, index=False, encoding="utf-8-sig")
+        print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {destino}.", file=sys.stderr)
+        if destino != parcial:
+            print(f"{parcial}, de uma coleta interrompida antes desta, ficou como estava.", file=sys.stderr)
         return 2
     # utf-8-sig: o Excel reconhece a codificação e mostra os acentos certos.
     tabela.to_csv(argumentos.saida, index=False, encoding="utf-8-sig")
@@ -251,14 +280,15 @@ def main():
     total = tabela.attrs["total_informado"]
     informado = "o site não informou o total" if total is None else f"o site informou {total}"
     print(f"{len(tabela)} linhas salvas em {argumentos.saida}; {informado}.")
-    if os.path.exists(parcial):
+    antigos = parciais_existentes(parcial)
+    if antigos:
         # O programa não apaga arquivo do usuário, mas o parcial de uma rodada interrompida, ao lado
         # do CSV completo, pode ser lido no lugar dele.
-        print(
-            f"Atenção: {parcial} é de uma coleta interrompida antes desta e não foi mexido; "
-            f"a coleta completa está em {argumentos.saida}.",
-            file=sys.stderr,
-        )
+        if len(antigos) == 1:
+            sobre_os_antigos = f"{antigos[0]} é de uma coleta interrompida antes desta e não foi mexido"
+        else:
+            sobre_os_antigos = f"{', '.join(antigos)} são de coletas interrompidas antes desta e não foram mexidos"
+        print(f"Atenção: {sobre_os_antigos}; a coleta completa está em {argumentos.saida}.", file=sys.stderr)
     if argumentos.max_paginas is None and total is not None and len(tabela) != total:
         print("Atenção: o número de linhas não bate com o total do site.", file=sys.stderr)
         return 1

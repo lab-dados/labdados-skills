@@ -273,6 +273,59 @@ def test_coleta_completa_sem_parcial_antigo_nao_avisa(servidor, modelo, monkeypa
     assert "coleta interrompida" not in capsys.readouterr().err
 
 
+def acesso_negado_na_pagina_2(query):
+    if query.get("pagina") == "2":
+        return (403, "text/html", "<html>proibido</html>")
+    return pagina_json(fatia(1), total=24)
+
+
+def test_parcial_novo_nao_sobrescreve_parcial_antigo(servidor, modelo, monkeypatch, tmp_path, capsys):
+    """Um parcial de 500 linhas de uma rodada anterior virava as 10 linhas da rodada que caiu na
+    página 2, sem aviso. O novo vai para o próximo nome livre, e o antigo fica como estava."""
+    parcial = tmp_path / "resultados.parcial.csv"
+    parcial.write_text("titulo\n" + "".join(f"antigo {numero}\n" for numero in range(500)), encoding="utf-8-sig")
+    servidor.rotas["/api/busca"] = acesso_negado_na_pagina_2
+    assert rodar(modelo, monkeypatch, tmp_path / "resultados.csv") == 2
+    assert [linha["titulo"] for linha in linhas_do_csv(parcial)] == [f"antigo {numero}" for numero in range(500)]
+    novo = tmp_path / "resultados.parcial.2.csv"
+    assert [linha["titulo"] for linha in linhas_do_csv(novo)] == fatia(1)
+    erro = capsys.readouterr().err
+    assert f"salvas em {novo}" in erro
+    assert f"{parcial}, de uma coleta interrompida antes desta, ficou como estava" in erro
+
+
+def test_parcial_novo_vai_para_o_primeiro_numero_livre(servidor, modelo, monkeypatch, tmp_path):
+    for nome in ("resultados.parcial.csv", "resultados.parcial.2.csv"):
+        (tmp_path / nome).write_text("titulo\nde outra rodada\n", encoding="utf-8-sig")
+    servidor.rotas["/api/busca"] = acesso_negado_na_pagina_2
+    assert rodar(modelo, monkeypatch, tmp_path / "resultados.csv") == 2
+    for nome in ("resultados.parcial.csv", "resultados.parcial.2.csv"):
+        assert linhas_do_csv(tmp_path / nome) == [{"titulo": "de outra rodada"}]
+    assert [linha["titulo"] for linha in linhas_do_csv(tmp_path / "resultados.parcial.3.csv")] == fatia(1)
+
+
+@pytest.mark.parametrize(
+    "nomes, aviso",
+    [
+        (["resultados.parcial.2.csv"], "{0} é de uma coleta interrompida antes desta"),
+        (
+            ["resultados.parcial.10.csv", "resultados.parcial.csv", "resultados.parcial.2.csv"],
+            "{1}, {2}, {0} são de coletas interrompidas antes desta",
+        ),
+    ],
+    ids=["só o numerado", "o original e dois numerados"],
+)
+def test_coleta_completa_avisa_dos_parciais_numerados(servidor, modelo, monkeypatch, tmp_path, capsys, nomes, aviso):
+    """O aviso de parcial antigo enxerga também os numerados, em ordem, e não pega outros CSV."""
+    for nome in nomes + ["resultados.parcial.velho.csv"]:
+        (tmp_path / nome).write_text("titulo\nde outra rodada\n", encoding="utf-8-sig")
+    servidor.rotas["/api/busca"] = lambda query: pagina_json(fatia(int(query.get("pagina", "1"))), total=24)
+    assert rodar(modelo, monkeypatch, tmp_path / "resultados.csv") == 0
+    erro = capsys.readouterr().err
+    assert "Atenção: " + aviso.format(*(tmp_path / nome for nome in nomes)) in erro
+    assert "velho" not in erro
+
+
 # --- Retry-After --------------------------------------------------------------------------------
 
 
