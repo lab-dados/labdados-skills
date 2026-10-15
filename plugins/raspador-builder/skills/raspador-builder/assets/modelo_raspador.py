@@ -20,6 +20,7 @@ ou, sem uv:
 import argparse
 import sys
 import time
+from datetime import timezone
 from email.utils import parsedate_to_datetime
 
 import pandas as pd
@@ -33,10 +34,22 @@ USER_AGENT = "raspador-de-pesquisa/1.0 (coleta academica; contato: SEU-EMAIL)"
 ESPERA = 1.0
 # Quantas vezes repetir um pedido que voltou 429 (pedidos demais) ou 5xx (erro do servidor).
 TENTATIVAS = 4
+# Maior espera, em segundos, que o programa aceita quando o site pede para esperar (Retry-After).
+# Se o site pedir mais, a coleta para com o que já tem: melhor rodar de novo mais tarde do que
+# deixar o programa parado por horas sem dizer nada.
+TETO_ESPERA = 120
 
 
 class AcessoNegado(Exception):
     """O site respondeu 401 ou 403: o dado pede login ou o site recusou o robô."""
+
+
+class ColetaInterrompida(Exception):
+    """A coleta parou no meio; `tabela` guarda o que veio até ali, para ser gravado mesmo assim."""
+
+    def __init__(self, motivo, tabela):
+        super().__init__(motivo)
+        self.tabela = tabela
 
 
 def segundos_para_esperar(resposta, padrao):
@@ -47,9 +60,15 @@ def segundos_para_esperar(resposta, padrao):
     if valor.strip().isdigit():
         return float(valor)
     try:
-        return max(0.0, parsedate_to_datetime(valor).timestamp() - time.time())
+        data = parsedate_to_datetime(valor)
     except (TypeError, ValueError):
         return padrao
+    if data.tzinfo is None:
+        # Data de HTTP é sempre em GMT. Sem fuso (ou com "-0000"), o Python a devolve sem fuso, e
+        # `timestamp()` a leria como hora local: no Brasil, três horas a mais de espera.
+        # (`datetime.UTC`, que o ruff sugere, só existe a partir do Python 3.11.)
+        data = data.replace(tzinfo=timezone.utc)  # noqa: UP017
+    return max(0.0, data.timestamp() - time.time())
 
 
 def pedir(sessao, endereco, parametros):
@@ -70,6 +89,11 @@ def pedir(sessao, endereco, parametros):
             raise AcessoNegado(f"{resposta.status_code} em {resposta.url}: {resposta.text[:200]}")
         if resposta.status_code == 429 or resposta.status_code >= 500:
             espera = segundos_para_esperar(resposta, padrao=ESPERA * 2**tentativa)
+            if espera > TETO_ESPERA:
+                raise RuntimeError(
+                    f"{resposta.status_code} em {resposta.url}: o site pediu {espera:.0f} s de espera, mais que "
+                    f"o teto de {TETO_ESPERA} s (TETO_ESPERA). Rode de novo mais tarde."
+                )
             print(f"  {resposta.status_code}: esperando {espera:.0f} s (tentativa {tentativa})", file=sys.stderr)
             time.sleep(espera)
             continue
@@ -83,6 +107,7 @@ def parametros_da_pagina(pesquisa, pagina):
 
 
 # ADAPTAR: onde o site informa o total de resultados (para saber quando parar e para conferir).
+# Se o site não informa, devolva None.
 def ler_total(dados):
     return dados["total"]
 
@@ -100,34 +125,54 @@ def coletar(pesquisa, max_paginas=None):
         max_paginas: para depois desta página (útil para testar); None coleta todas.
 
     Returns:
-        Um DataFrame com uma linha por resultado. O total que o site informou fica em
+        Um DataFrame com uma linha por resultado. O total que o site informou (ou None) fica em
         `tabela.attrs["total_informado"]`.
+
+    Raises:
+        ColetaInterrompida: algo deu errado no meio; o que já foi coletado está em `erro.tabela`.
     """
     sessao = requests.Session()  # guarda os cookies entre um pedido e outro, como um navegador
     sessao.headers["User-Agent"] = USER_AGENT
-    linhas, total_informado, anteriores = [], None, None
+    linhas, total_informado, anteriores, tamanho_primeira = [], None, None, None
     pagina = 1
-    while True:
-        resposta = pedir(sessao, ENDERECO_BUSCA, parametros_da_pagina(pesquisa, pagina))
-        if resposta is None:  # 404: não há esta página
-            break
-        dados = resposta.json()
-        if total_informado is None:
-            total_informado = ler_total(dados)
-            print(f"O site informa {total_informado} resultados para {pesquisa!r}.", file=sys.stderr)
-        novos = ler_resultados(dados)
-        if not novos:  # página vazia: acabou
-            break
-        if novos == anteriores:  # o site ignorou o número da página e devolveu a mesma de novo
-            raise RuntimeError(f"a página {pagina} repetiu a anterior; confira o parâmetro de paginação")
-        linhas.extend(novos)
-        print(f"  página {pagina}: {len(novos)} resultados ({len(linhas)} até agora)", file=sys.stderr)
-        anteriores = novos
-        if total_informado is not None and len(linhas) >= total_informado:
-            break
-        if max_paginas is not None and pagina >= max_paginas:
-            break
-        pagina += 1
+    try:
+        while True:
+            resposta = pedir(sessao, ENDERECO_BUSCA, parametros_da_pagina(pesquisa, pagina))
+            if resposta is None:  # 404: não há esta página
+                break
+            dados = resposta.json()
+            novos = ler_resultados(dados)
+            if pagina == 1:
+                total_informado = ler_total(dados)
+                tamanho_primeira = len(novos)
+                if total_informado is None:
+                    print(f"Para {pesquisa!r}, o site não informou o total de resultados.", file=sys.stderr)
+                else:
+                    print(f"O site informa {total_informado} resultados para {pesquisa!r}.", file=sys.stderr)
+            if not novos:  # página vazia: acabou
+                break
+            if novos == anteriores:
+                # Muitos sites devolvem a última página de novo quando se pede uma além dela. Se a
+                # anterior já veio mais curta que a primeira, ela era a última: acabou. Página cheia
+                # repetida quer dizer que o site ignorou o número da página: parar, senão o laço
+                # não termina e as linhas se repetem.
+                if len(novos) < tamanho_primeira:
+                    break
+                raise RuntimeError(f"a página {pagina} repetiu a anterior; confira o parâmetro de paginação")
+            linhas.extend(novos)
+            print(f"  página {pagina}: {len(novos)} resultados ({len(linhas)} até agora)", file=sys.stderr)
+            anteriores = novos
+            if total_informado is not None and len(linhas) >= total_informado:
+                break
+            if max_paginas is not None and pagina >= max_paginas:
+                break
+            pagina += 1
+    except Exception as erro:
+        raise ColetaInterrompida(f"{type(erro).__name__}: {erro}", montar_tabela(linhas, total_informado)) from erro
+    return montar_tabela(linhas, total_informado)
+
+
+def montar_tabela(linhas, total_informado):
     tabela = pd.DataFrame(linhas)
     tabela.attrs["total_informado"] = total_informado
     return tabela
@@ -140,12 +185,20 @@ def main():
     leitor.add_argument("--max-paginas", type=int, default=None, help="para depois de N páginas")
     argumentos = leitor.parse_args()
 
-    tabela = coletar(argumentos.pesquisa, argumentos.max_paginas)
+    try:
+        tabela = coletar(argumentos.pesquisa, argumentos.max_paginas)
+    except ColetaInterrompida as erro:
+        # Grava o que veio antes do erro: uma coleta longa não se perde por causa da última página.
+        erro.tabela.to_csv(argumentos.saida, index=False, encoding="utf-8-sig")
+        print(f"Coleta interrompida: {erro}", file=sys.stderr)
+        print(f"As {len(erro.tabela)} linhas coletadas até aí foram salvas em {argumentos.saida}.", file=sys.stderr)
+        return 2
     # utf-8-sig: o Excel reconhece a codificação e mostra os acentos certos.
     tabela.to_csv(argumentos.saida, index=False, encoding="utf-8-sig")
 
     total = tabela.attrs["total_informado"]
-    print(f"{len(tabela)} linhas salvas em {argumentos.saida}; o site informou {total}.")
+    informado = "o site não informou o total" if total is None else f"o site informou {total}"
+    print(f"{len(tabela)} linhas salvas em {argumentos.saida}; {informado}.")
     if argumentos.max_paginas is None and total is not None and len(tabela) != total:
         print("Atenção: o número de linhas não bate com o total do site.", file=sys.stderr)
         return 1
