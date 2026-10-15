@@ -118,6 +118,43 @@ def test_nenhum_pedido_a_endereco_proibido(servidor, reconhecer, monkeypatch, ca
     assert "proibido pelo robots.txt" in saida
 
 
+def test_script_https_do_mesmo_host_em_pagina_http_e_pedido_pelo_http(servidor, reconhecer, monkeypatch, capsys):
+    """O script escrito com https numa página servida por http é do mesmo site atrás de proxy: ele
+    é listado e pedido pelo esquema da página, como o API candidato. Antes ele sumia do relatório,
+    sem ser contado, pedido nem mencionado, e a API que só ele chamava não aparecia."""
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    https = servidor.raiz.replace("http://", "https://")
+    servidor.rotas["/busca"] = (
+        200, HTML, PAGINA_DE_BUSCA.replace("</body>", f'<script src="{https}/js/app.js"></script></body>')
+    )
+    servidor.rotas["/js/app.js"] = (200, "application/javascript", 'fetch("/api/dados.json")')
+    servidor.rotas["/api/dados.json"] = (200, "application/json", '{"total": 0}')
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "Scripts do mesmo site: 1;" in saida
+    assert f"    {servidor.raiz}/js/app.js\n" in saida
+    assert servidor.pedidos[-2:] == ["/js/app.js", "/api/dados.json"], servidor.pedidos
+    assert "troca de http para https" not in saida
+
+
+def test_api_candidato_https_do_mesmo_host_e_testado_pelo_http(servidor, reconhecer, monkeypatch, capsys):
+    """O endereço de API escrito com https numa página http é testado pelo http, com que o site
+    respondeu; sem a troca de esquema, ele seria recusado como troca de http para https."""
+    montar_site(servidor, "User-agent: *\nAllow: /\n")
+    https = servidor.raiz.replace("http://", "https://")
+    servidor.rotas["/busca"] = (
+        200, HTML, PAGINA_DE_BUSCA.replace("</body>", f'<script>fetch("{https}/api/dados.json")</script></body>')
+    )
+    servidor.rotas["/api/dados.json"] = (200, "application/json", '{"total": 0}')
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca")
+    saida = capsys.readouterr().out
+    assert codigo == 0, saida
+    assert "/api/dados.json" in servidor.pedidos, saida
+    assert f"  {servidor.raiz}/api/dados.json\n    -> 200 application/json chaves: ['total']" in saida
+    assert "troca de http para https" not in saida
+
+
 def test_crawl_delay_do_grupo_que_vale_para_o_robo(servidor, reconhecer, monkeypatch, capsys):
     robots = (
         "User-agent: *\nCrawl-delay: 2\n\n"

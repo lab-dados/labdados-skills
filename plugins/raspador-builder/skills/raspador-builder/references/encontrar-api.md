@@ -40,7 +40,7 @@ O Playwright serve só para investigar. O raspador entregue não abre navegador.
 3. Se a página mostra "Carregando..." ou uma lista vazia e os resultados não estão no HTML, é quase certo que um script os busca; o endereço está nesse script.
 4. Teste cada candidato com um pedido só, com um segundo de espera entre eles, e veja o código de resposta e o `content-type`.
 
-A seção "API candidatos" do `reconhecer_site.py` faz os passos 2 e 4 de forma automática e limitada (no máximo cinco endereços testados). O que ela não acha, procure lendo os scripts.
+A seção "API candidatos" do `reconhecer_site.py` faz os passos 2 e 4 de forma automática e limitada (no máximo cinco endereços testados). Script e endereço do mesmo host escritos com `https` numa página servida por `http` (site atrás de proxy) entram na lista e são pedidos pelo `http`, o esquema do `robots.txt` lido. O que ela não acha, procure lendo os scripts.
 
 ## Confirmar o candidato antes de escrever o raspador
 

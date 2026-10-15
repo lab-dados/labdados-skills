@@ -478,19 +478,26 @@ def mesmo_host(endereco, base):
     return origem(endereco)[1:] == origem(base)[1:]
 
 
+def no_esquema_da_base(endereco, base):
+    """O endereço do mesmo host que `base` (ver `mesmo_host`), com o esquema e o host da base; ou
+    None, se for de outro host.
+
+    A página pode escrever o próprio endereço com outro esquema (https atrás de proxy); o pedido
+    usa o esquema pelo qual o site respondeu, que é o do robots.txt lido. O host vai na grafia da
+    base: "https://site.gov.br:443" trocado só de esquema seria "http://site.gov.br:443".
+    """
+    if not mesmo_host(endereco, base):
+        return None
+    partes_base = urlsplit(base)
+    return urlsplit(endereco)._replace(scheme=partes_base.scheme, netloc=partes_base.netloc).geturl()
+
+
 def candidatos_de_api(textos, base):
     vistos = []
     for texto in textos:
         for achado in filter(PARECE_API.search, PADRAO_ENDERECO.findall(html.unescape(texto))):
-            completo = urljoin(base, achado.rstrip(".,;"))
-            if not mesmo_host(completo, base):
-                continue
-            # A página pode escrever o próprio endereço com outro esquema (https atrás de proxy);
-            # o teste usa o esquema pelo qual o site respondeu. O host vai na grafia da base:
-            # "https://site.gov.br:443" trocado só de esquema seria "http://site.gov.br:443".
-            partes_base = urlsplit(base)
-            completo = urlsplit(completo)._replace(scheme=partes_base.scheme, netloc=partes_base.netloc).geturl()
-            if completo not in vistos:
+            completo = no_esquema_da_base(urljoin(base, achado.rstrip(".,;")), base)
+            if completo is not None and completo not in vistos:
                 vistos.append(completo)
     return vistos
 
@@ -583,11 +590,15 @@ def main():
             print("  A página parece ser preenchida por script: procure a API (seção 5 e scripts).")
         for pagina in paginas.values():
             for src in re.findall(r"<script[^>]+src=[\"']([^\"']+)[\"']", pagina.text, re.IGNORECASE):
-                completo = urljoin(pagina.url, html.unescape(src))
-                if mesmo_site(completo, raiz) and completo not in scripts_externos:
+                # Mesmo tratamento do API candidato: o script "https://" do mesmo host numa página
+                # http é pedido pelo http, e não some do relatório.
+                completo = no_esquema_da_base(urljoin(pagina.url, html.unescape(src)), raiz)
+                if completo is not None and completo not in scripts_externos:
                     scripts_externos.append(completo)
         chamadas = sum(len(PADRAO_CHAMADA.findall(p.text)) for p in paginas.values())
         print(f"  Scripts do mesmo site: {len(scripts_externos)}; chamadas fetch/axios/ajax no HTML: {chamadas}")
+        for src in scripts_externos:
+            print(f"    {src}")
 
     titulo("5. API candidatos")
     textos = [p.text for p in paginas.values()]
