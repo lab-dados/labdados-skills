@@ -7,6 +7,7 @@ A decisão sobre o robots.txt tem de ser a mesma em qualquer versão do Python: 
 nem `$`, e a RFC 9309 manda aplicar a regra de caminho mais longo.
 """
 
+import socket
 import sys
 
 import pytest
@@ -281,3 +282,56 @@ def test_caractere_reservado_codificado_ou_por_extenso(reconhecer, descricao, re
     else:
         robots = f"User-agent: *\nDisallow: {regra}\n"
     assert permite(reconhecer, robots, caminho) is permitido
+
+
+# --- casos da RFC 9309 que nenhum teste acima prendia -------------------------------------------
+
+CASOS_GRUPOS = [
+    # RFC 9309, 2.2.1: o nome do robô se compara sem diferença de caixa.
+    ("nome do robô sem diferença de caixa",
+     "User-agent: *\nAllow: /\n\nUser-agent: Raspador-De-Pesquisa\nDisallow: /busca\n", False),
+    # RFC 9309, 2.2.2: "Disallow:" sem caminho não proíbe nada.
+    ("Disallow vazio não proíbe", "User-agent: *\nDisallow:\n", True),
+    # RFC 9309, 2.2.1: grupos com o mesmo nome de robô se somam.
+    ("grupos com o mesmo nome se somam", "User-agent: *\nDisallow: /outra\n\nUser-agent: *\nDisallow: /busca\n", False),
+]
+
+
+@pytest.mark.parametrize("descricao, robots, permitido", CASOS_GRUPOS, ids=[c[0] for c in CASOS_GRUPOS])
+def test_grupos_e_regras_do_robots(servidor, reconhecer, monkeypatch, capsys, descricao, robots, permitido):
+    montar_site(servidor, robots)
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == (0 if permitido else 2), saida
+    assert ("/busca?q=licitacao" in servidor.pedidos) is permitido
+
+
+def test_robots_com_erro_do_servidor_proibe_tudo(servidor, reconhecer, monkeypatch, capsys):
+    """RFC 9309, 2.3.1.4: 5xx no robots.txt quer dizer "inalcançável", e aí tudo é proibido."""
+    montar_site(servidor, "")
+    servidor.rotas["/robots.txt"] = (503, "text/plain", "manutenção")
+    codigo = rodar(reconhecer, monkeypatch, servidor.raiz + "/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert servidor.pedidos == ["/robots.txt"]
+    assert "Erro do servidor" in saida
+
+
+def test_robots_sem_resposta_proibe_tudo(reconhecer, monkeypatch, capsys):
+    """Sem resposta (erro de rede) o robots.txt também é inalcançável: nada se pede depois."""
+    with socket.socket() as soquete:  # porta que acabou de ficar livre: ninguém atende nela
+        soquete.bind(("127.0.0.1", 0))
+        porta = soquete.getsockname()[1]
+    pedidos = []
+    original = reconhecer.Visitante.get
+
+    def registrar(visitante, endereco, conferir=None):
+        pedidos.append(endereco)
+        return original(visitante, endereco, conferir)
+
+    monkeypatch.setattr(reconhecer.Visitante, "get", registrar)
+    codigo = rodar(reconhecer, monkeypatch, f"http://127.0.0.1:{porta}/busca?q=licitacao")
+    saida = capsys.readouterr().out
+    assert codigo == 2, saida
+    assert pedidos == [f"http://127.0.0.1:{porta}/robots.txt"]
+    assert "Sem resposta" in saida
