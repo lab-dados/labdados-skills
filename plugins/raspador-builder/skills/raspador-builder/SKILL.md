@@ -1,19 +1,6 @@
 ---
 name: raspador-builder
-description: >
-  Constrói do zero um programa Python autônomo que coleta os dados de um site
-  (raspador, scraper, web scraping, robô de coleta) e salva em CSV. Use quando
-  pedirem um programa ou script que colete, raspe, baixe ou extraia resultados
-  de uma busca, uma lista ou uma tabela de um site, em todas as páginas, para
-  pesquisa ou planilha, inclusive de tribunal, órgão público, diário oficial ou
-  portal de transparência que nenhuma biblioteca cobre. Confere robots.txt e
-  termos antes de coletar, procura a API por baixo da página antes de raspar o
-  HTML, usa só requests com pausa entre pedidos e testa a contagem contra o
-  total que o site informa. Não exige repositório clonado nem Playwright. Não
-  confundir com juscraper e raspe (usar o que essas bibliotecas já coletam;
-  prefira-as quando cobrem o site), juscraper-builder (adicionar tribunal novo à
-  biblioteca juscraper) e raspe-builder (adicionar fonte oficial ou de imprensa
-  à biblioteca raspe), que exigem o repositório da biblioteca clonado.
+description: "Usar quando pedirem um programa que colete, raspe ou baixe para CSV os resultados de busca, lista ou tabela de um site, em todas as páginas, quando nenhuma biblioteca cobre o site. Não confundir com juscraper e raspe (preferir quando cobrem o site), juscraper-builder e raspe-builder (adicionar fonte a essas bibliotecas)."
 ---
 
 # Raspador Builder

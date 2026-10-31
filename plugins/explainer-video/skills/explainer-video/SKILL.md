@@ -1,6 +1,6 @@
 ---
 name: explainer-video
-description: 'Cria vídeos explicativos curtos de plataformas web/ferramentas a partir de um repositório de código ou URL ao vivo. Use sempre que o usuário pedir "vídeo explicativo", "demo em vídeo", "screencast", "tutorial em vídeo", "vídeo de onboarding", "explainer video", "video walkthrough", "gravar uma demo", "fazer um vídeo da minha ferramenta", "mostrar como funciona em vídeo", ou quando mencionar gerar narração + gravação de tela de uma aplicação. Também use se o usuário descrever o objetivo (por exemplo "preciso mostrar essa feature pro time" ou "quero um vídeo curto pro README") mesmo sem dizer a palavra "vídeo". A skill analisa a documentação do repo, escreve roteiro narrado, grava o navegador via Playwright, gera áudio TTS sincronizado e oferece upload no YouTube como não-listado.'
+description: "Usar quando pedirem vídeo explicativo, demo em vídeo, screencast, tutorial ou onboarding em vídeo de uma ferramenta web, a partir de um repositório ou URL, mesmo sem a palavra \"vídeo\" (\"mostrar essa feature pro time\", \"vídeo curto pro README\")."
 ---
 
 # Explainer Video

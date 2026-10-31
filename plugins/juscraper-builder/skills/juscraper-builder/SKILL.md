@@ -1,22 +1,6 @@
 ---
 name: juscraper-builder
-description: >
-  Gera raspadores Python para tribunais brasileiros dentro da biblioteca
-  juscraper, seguindo as convenções do próprio repositório (CLAUDE.md e
-  CONTRIBUTING.md do juscraper, que vencem esta skill quando divergirem).
-  Use sempre que o usuário pedir para criar um raspador ou scraper para um
-  tribunal novo, implementar cjsg/cjpg/cpopg/cposg num tribunal, adicionar
-  um tribunal ou agregador ao juscraper, mapear o formulário de busca de um
-  tribunal, ou fazer engenharia reversa de uma página de consulta de
-  jurisprudência ou de processos para virar código. Também acionar com
-  "raspagem de tribunal", "scraping judicial", "novo tribunal no juscraper",
-  "descobrir a API do TJXX", mesmo que o usuário não cite a skill. A
-  engenharia reversa usa o navegador automatizado que a sessão tiver ou
-  curl/requests lendo o HTML e o JavaScript do formulário; o código final
-  usa só requests. Não confundir com juscraper-builder-captcha (o
-  formulário tem captcha; esta skill encaminha para ela), com juscraper
-  (usar a biblioteca para coletar dados, sem escrever raspador) nem com
-  raspe-builder (fontes governamentais não judiciais, na biblioteca raspe).
+description: "Usar quando pedirem raspador de tribunal ou agregador novo no juscraper, cjsg, cjpg, cpopg ou cposg num tribunal, ou engenharia reversa de página de consulta judicial para virar código. Não confundir com juscraper-builder-captcha (formulário com captcha), juscraper (só usar a biblioteca) nem raspe-builder (fonte não judicial)."
 ---
 
 # Juscraper Builder

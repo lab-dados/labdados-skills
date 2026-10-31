@@ -32,12 +32,7 @@ A plugin can contain multiple skills (e.g. `juscraper-builder` ships both
 
 ## How skills work (the core architecture)
 
-- **`SKILL.md` frontmatter** has `name` and `description`. The `description` is
-  the *trigger*: Claude reads it to decide when to invoke the skill, so it must
-  enumerate concrete trigger phrases (the existing descriptions are long on
-  purpose — they list user intents, synonyms, and "não confundir com" disambiguation
-  against sibling skills). When adding/editing a skill, keep the description
-  trigger-rich and explicitly distinguish it from neighboring skills.
+- **`SKILL.md` frontmatter** has `name` and `description`. The `description` is the *trigger*: Claude reads it in every session to decide when to invoke the skill, so it says only when to use it ("Usar quando…"), with the concrete intents and an explicit "não confundir com" against sibling skills. What the skill does and how belongs in the body, not in the description, because the description costs context in every session of everyone who installed the plugin. The `juscraper` description must also name every scraper (`juscraper-cobertura` checks it).
 - **`references/*.md`** implement progressive disclosure: SKILL.md tells Claude to
   read a specific reference only when needed (e.g. "antes de qualquer coisa, leia
   `references/estilo.md`"), keeping the always-loaded context small. Put detail in
