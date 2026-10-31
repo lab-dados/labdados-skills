@@ -1,0 +1,14 @@
+# Atualiza as actions dos workflows, fixadas por SHA com a versão no comentário.
+# O cooldown espera 7 dias antes de propor uma release nova, janela para que
+# uma versão maliciosa seja detectada antes de entrar aqui.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
