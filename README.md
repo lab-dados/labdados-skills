@@ -14,18 +14,33 @@ em direito no Brasil. Agrupa ferramentas para **coleta de dados judiciais**,
 
 ## Instalacao
 
-Dentro do Claude Code, rode:
+Dentro do Claude Code, rode **um comando por vez**, esperando cada um terminar antes do próximo. Colar os comandos juntos faz o Claude Code ler tudo como um argumento só e a instalação falha.
+
+Primeiro, adicione o marketplace:
 
 ```
-/plugin marketplace add lab-dados/labdados-skills
-/plugin install juscraper@labdados-skills
-/plugin install dataframeit@labdados-skills
-/plugin install openalex@labdados-skills
-/plugin install raspe@labdados-skills
-/plugin install juscraper-builder@labdados-skills
-/plugin install raspe-builder@labdados-skills
-/plugin install raspador-builder@labdados-skills
-/plugin install explainer-video@labdados-skills
+/plugin marketplace add https://github.com/lab-dados/labdados-skills.git
+```
+
+Depois, instale só os plugins que for usar, um comando de cada vez:
+
+| Plugin | Comando |
+|--------|---------|
+| juscraper | `/plugin install juscraper@labdados-skills` |
+| dataframeit | `/plugin install dataframeit@labdados-skills` |
+| openalex | `/plugin install openalex@labdados-skills` |
+| raspe | `/plugin install raspe@labdados-skills` |
+| juscraper-builder | `/plugin install juscraper-builder@labdados-skills` |
+| raspe-builder | `/plugin install raspe-builder@labdados-skills` |
+| raspador-builder | `/plugin install raspador-builder@labdados-skills` |
+| explainer-video | `/plugin install explainer-video@labdados-skills` |
+
+### Se a instalação falhar
+
+Se a mensagem de erro cita um diretório com nome parecido com `lab-dados-labdados-skills--plugin-install-juscraper`, os comandos foram colados juntos. Se cita `Host key verification failed`, o Claude Code tentou clonar por SSH, que exige chave configurada no GitHub; a URL `https://` acima não depende disso. Nos dois casos, remova o marketplace quebrado, se ele chegou a ser registrado, e repita os passos acima um comando por vez:
+
+```
+/plugin marketplace remove labdados-skills
 ```
 
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
