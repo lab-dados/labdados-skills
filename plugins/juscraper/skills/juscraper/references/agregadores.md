@@ -1,6 +1,6 @@
-# Agregadores — Datajud, JusBR, ComunicaCNJ, PDPJ
+# Agregadores — Datajud, JusBR, ComunicaCNJ, PDPJ, Falcao
 
-Quatro fontes nacionais que cobrem multiplos tribunais a partir de um unico endpoint. Cada uma resolve um problema diferente — escolha pela tabela abaixo.
+Cinco fontes nacionais que cobrem multiplos tribunais a partir de um unico endpoint. Cada uma resolve um problema diferente — escolha pela tabela abaixo.
 
 ## Quando usar cada agregador
 
@@ -10,6 +10,7 @@ Quatro fontes nacionais que cobrem multiplos tribunais a partir de um unico endp
 | **JusBR** | Consultar processo por CNJ em **qualquer tribunal** e **baixar texto das pecas** (`download_documents`). Para texto integral em processos da Justica Estadual ou Federal. | Obrigatoria (JWT do gov.br) | Estavel desde v0.1.x |
 | **ComunicaCNJ** | Coletar **comunicacoes processuais** publicadas pelos tribunais no PJe (DJe digital, intimacoes publicas). Util para acompanhar publicacoes em determinado tema sem percorrer Diarios Oficiais. | Nenhuma | `[v0.3.0+]` |
 | **PDPJ** | Consulta unificada via API DATALAKE do PDPJ (mesmo SSO do PJe). Substitui parcialmente JusBR e oferece endpoints granulares: existe, cpopg, documentos, movimentos, partes, pesquisa, contar, download_documents. | Obrigatoria (JWT do PDPJ via SSO PJe) | `[v0.4.0+]` |
+| **Falcao** | Jurisprudencia Nacional da Justica do Trabalho (CSJT): acordaos, sentencas, decisoes monocraticas, precedentes e recursos de revista do TST e dos 24 TRTs numa so busca (`listar_decisoes`). | Nenhuma | `[v0.5.0+]` |
 
 Comparativo de capacidade:
 
@@ -22,6 +23,22 @@ Comparativo de capacidade:
 | Filtro por tipo de movimentacao | sim (`tipos_movimentacao`) | nao | nao | nao |
 | Consultar varios tribunais numa chamada | sim (multi-alias) | um por vez | sim | um por vez |
 | Auth | nenhuma | JWT gov.br | nenhuma | JWT PDPJ |
+
+## Metodos por agregador
+
+<!-- cobertura-juscraper:agregadores:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
+
+| Agregador | Metodos |
+|---|---|
+| **ComunicaCNJ** | `listar_comunicacoes` |
+| **Datajud** | `contar_processos`, `listar_processos` |
+| **Falcao** | `listar_decisoes` |
+| **JusBR** | `cpopg`, `download_documents` |
+| **PDPJ** | `cpopg`, `contar`, `documentos`, `download_documents`, `existe`, `movimentos`, `partes`, `pesquisa` |
+
+<!-- cobertura-juscraper:agregadores:fim -->
+
+Gerado do codigo da `main` do juscraper; a versao em que cada recurso entrou esta na coluna Status acima e nas secoes abaixo.
 
 ## Datajud — API publica do CNJ
 
@@ -376,7 +393,32 @@ Se ja esta implementado com JusBR, nao ha necessidade de migrar. Para casos novo
 
 ### Gotchas
 
-- **Token expirado:** `auth()` aceita token vencido sem erro; a falha so aparece na primeira chamada a API. Se a coleta falhar logo no inicio com erro de autenticacao, peca um token novo ao usuario.
+- **Token expirado:** desde a `[v0.5.0+]`, `auth()` (e o construtor com `token=`) recusa JWT vencido com `ValueError("Token JWT expirado.")`. Nas versoes anteriores o token vencido passava e a falha so aparecia na primeira chamada a API. Nos dois casos, peca um token novo ao usuario.
 - **`existe` retorna tipos diferentes** conforme o input: `bool` quando recebe `str`, `DataFrame` quando recebe `list[str]`. Pense duas vezes antes de usar em codigo generico.
 - **Cursor `searchAfter` em `pesquisa`** e forwards-only — `paginas=[3, 5]` baixa as paginas 3, 4 e 5 contiguamente (nao pula a 4).
 - **Validacao `extra="forbid"`** em todos os endpoints: kwarg desconhecido vira `TypeError` com sugestao de typo via difflib (ex: `data_juglamento` -> "voce quis dizer 'data_julgamento'?").
+
+## Falcao — Jurisprudencia Nacional da Justica do Trabalho `[v0.5.0+]`
+
+Sistema do CSJT em `jurisprudencia.jt.jus.br` (endpoint publico `/no-auth/pesquisa`). Uma busca cobre o TST e os 24 TRTs. Sem autenticacao.
+
+```python
+falcao = jus.scraper('falcao')
+df = falcao.listar_decisoes(
+    pesquisa='horas extras',          # obrigatorio
+    paginas=range(1, 4),              # 1-based; None = todas, ate o teto de 10000 resultados
+    colecao='acordaos',               # acordaos | sentencas | decisoesmonocraticas | precedentes | recursorevista
+    tribunais=['TST', 'TRT2'],        # str ou list[str]
+    classe='ROT',                     # sigla, igual a coluna classe_sigla; o nome por extenso devolve zero sem erro
+    data_juntada_inicio='01/01/2025', # cada limite pode ser usado sozinho
+)
+```
+
+Outros filtros: `relator`, `orgao_julgador`, `fase_processual`, `prioridade`, `tem_ementa`, `somente_ementa`, `ordenacao` (`mais_relevante`, `mais_recente`, `menos_recente`), `tamanho_pagina` (so `5` ou `10`). Colunas canonicas: `processo`, `colecao`, `tribunal`, `relator`, `classe`, `classe_sigla`, `ementa`, `data_julgamento`, `data_juntada`. Para guardar as paginas cruas, `listar_decisoes_download` + `listar_decisoes_parse`.
+
+**Gotchas:**
+
+- A busca para em 10000 resultados; `paginas=None` emite `UserWarning` ao atingir o teto. Fatie por `data_juntada_*` ou por `tribunais`.
+- Bloqueio do WAF levanta `BotChallengeBlockedError`; bloqueio de IP por excesso de requisicoes (dura horas) levanta `requests.HTTPError` sem retry.
+- Na colecao `precedentes`, `processo` e uma chave como `TST-SUM-392`, nao um CNJ.
+- Se a coleta falhar no meio, as paginas recebidas ficam num diretorio temporario citado na excecao; recupere com `listar_decisoes_parse`.

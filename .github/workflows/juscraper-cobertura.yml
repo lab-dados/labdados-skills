@@ -1,0 +1,79 @@
+name: juscraper-cobertura
+
+# Confere a cobertura descrita na skill juscraper contra o codigo da main do
+# juscraper. Em PR, reprova a mudanca que deixa a skill fora de sincronia. No
+# agendamento semanal, pega o caso inverso: o juscraper ganhou ou perdeu um
+# metodo e a skill nao acompanhou; ai abre (ou comenta) uma issue aqui.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugins/juscraper/**"
+      - "scripts/cobertura_juscraper.py"
+      - "tests/test_cobertura_juscraper.py"
+      - ".github/workflows/juscraper-cobertura.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/juscraper/**"
+      - "scripts/cobertura_juscraper.py"
+      - "tests/test_cobertura_juscraper.py"
+      - ".github/workflows/juscraper-cobertura.yml"
+  schedule:
+    - cron: "0 11 * * 1" # segunda, 08h em Brasilia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cobertura:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: jtrecenti/juscraper
+          ref: main
+          path: juscraper
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Testes do sincronizador
+        run: uv run --no-project --python 3.12 --with pytest pytest tests/test_cobertura_juscraper.py -q
+
+      - name: Cobertura a partir do codigo do juscraper
+        run: |
+          uv run --directory juscraper --python 3.12 --no-dev \
+            python scripts/tabela_cobertura.py --json > "$RUNNER_TEMP/cobertura.json"
+          echo "juscraper main em $(git -C juscraper rev-parse --short HEAD)"
+
+      - name: Skill em sincronia com o juscraper
+        run: python scripts/cobertura_juscraper.py "$RUNNER_TEMP/cobertura.json" --check
+
+      - name: Avisar em issue quando o agendamento achar divergencia
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITULO: "Skill juscraper fora de sincronia com o codigo do juscraper"
+          EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          corpo="A execucao agendada de juscraper-cobertura reprovou: $EXECUCAO
+
+          Para corrigir, com um checkout do juscraper em ../juscraper:
+
+              uv run --directory ../juscraper --python 3.12 python scripts/tabela_cobertura.py --json > /tmp/cobertura.json
+              python scripts/cobertura_juscraper.py /tmp/cobertura.json
+
+          Depois revise a description da SKILL.md e as tags de versao das references."
+          numero=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number --jq '.[0].number')
+          if [ -n "$numero" ]; then
+            gh issue comment "$numero" --body "$corpo"
+          else
+            gh issue create --title "$TITULO" --body "$corpo"
+          fi

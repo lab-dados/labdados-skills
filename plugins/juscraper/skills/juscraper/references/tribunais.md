@@ -6,40 +6,79 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 
 ### Tribunais com scraper direto (30)
 
-| Tribunal | cjsg | cjpg | cpopg | cposg | Plataforma | Tag |
-|----------|:----:|:----:|:-----:|:-----:|------------|---|
-| **TJSP** | sim | sim | sim | sim | eSAJ + API REST | |
-| **TJES** | sim | sim | - | - | PJe/Solr API | |
-| **TJTO** | sim | sim | - | - | Custom HTML | |
-| **TJAC** | sim | - | - | - | eSAJ | |
-| **TJAL** | sim | - | - | - | eSAJ | |
-| **TJAM** | sim | - | - | - | eSAJ | |
-| **TJAP** | sim | - | - | - | Tucujuris REST | |
-| **TJBA** | sim | - | - | - | GraphQL | |
-| **TJCE** | sim | - | - | - | eSAJ | |
-| **TJDFT** | sim | - | - | - | REST API | |
-| **TJGO** | sim | - | - | - | Projudi HTML | |
-| **TJMG** | sim | - | - | - | Custom HTML + captcha | `[v0.3.0+, requer extra tjmg]` |
-| **TJMS** | sim | - | - | - | eSAJ | |
-| **TJMT** | sim | - | - | - | REST API | |
-| **TJPA** | sim | - | - | - | BFF REST API | |
-| **TJPB** | sim | - | - | - | PJe/Elasticsearch | |
-| **TJPE** | sim | - | - | - | HTML form | |
-| **TJPI** | sim | - | - | - | HTML server-rendered | |
-| **TJPR** | sim | - | - | - | HTML form + sessao | |
-| **TJRJ** | sim | - | - | - | ASPX + JSON | |
-| **TJRN** | sim | - | - | - | PJe/Elasticsearch | |
-| **TJRO** | sim | - | - | - | JURIS/Elasticsearch | |
-| **TJRR** | sim | - | - | - | JSF/PrimeFaces | |
-| **TJRS** | sim | - | - | - | Google Search (GSA) | |
-| **TJSC** | sim | - | - | - | eproc HTML | |
-| **TRF1** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
-| **TRF3** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
-| **TRF5** | - | - | sim | - | PJe ConsultaPublica | `[v0.4.0+]` |
-| **TRF6** | - | - | sim | - | eproc/SJMG + captcha textual | `[v0.4.0+]`, requer `txtcaptcha` |
-| **STF** | `listar_decisoes` | - | - | - | API do portal + AWS WAF | `[v0.4.0+]`, requer extra `stf` ou `waf_token` |
+<!-- cobertura-juscraper:tribunais:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
 
-**Legenda:** `sim` = implementado | `-` = nao implementado. O STF nao tem `cjsg`: a busca de jurisprudencia e `listar_decisoes`, e a contagem, `contar_decisoes`.
+| Tribunal | cjsg | cjpg | cpopg | cposg | Outros metodos |
+|---|:---:|:---:|:---:|:---:|---|
+| **STF** | - | - | - | - | `contar_decisoes`, `listar_decisoes` |
+| **TJAC** | sim | - | - | - | - |
+| **TJAL** | sim | - | - | - | - |
+| **TJAM** | sim | - | - | - | - |
+| **TJAP** | sim | - | - | - | - |
+| **TJBA** | sim | - | - | - | - |
+| **TJCE** | sim | - | - | - | - |
+| **TJDFT** | sim | - | - | - | - |
+| **TJES** | sim | sim | - | - | - |
+| **TJGO** | sim | - | - | - | - |
+| **TJMG** | sim | - | - | sim | - |
+| **TJMS** | sim | - | - | - | - |
+| **TJMT** | sim | - | - | - | - |
+| **TJPA** | sim | - | - | - | - |
+| **TJPB** | sim | - | - | - | - |
+| **TJPE** | sim | - | sim | - | - |
+| **TJPI** | sim | - | - | - | - |
+| **TJPR** | sim | - | - | - | - |
+| **TJRJ** | sim | - | - | - | - |
+| **TJRN** | sim | - | - | - | - |
+| **TJRO** | sim | - | - | - | - |
+| **TJRR** | sim | - | - | - | - |
+| **TJRS** | sim | - | - | - | - |
+| **TJSC** | sim | - | - | - | - |
+| **TJSP** | sim | sim | sim | sim | - |
+| **TJTO** | sim | sim | - | - | `cjsg_ementa` |
+| **TRF1** | - | - | sim | - | - |
+| **TRF3** | sim | - | sim | - | - |
+| **TRF5** | - | - | sim | - | - |
+| **TRF6** | - | - | sim | - | - |
+
+<!-- cobertura-juscraper:tribunais:fim -->
+
+**Legenda:** `sim` = implementado | `-` = nao implementado ou so stub que levanta `NotImplementedError`. A matriz e gerada do codigo da `main` do juscraper; a versao em que cada recurso entrou esta na tabela seguinte. O STF nao tem `cjsg`: a busca de jurisprudencia e `listar_decisoes`, e a contagem, `contar_decisoes`. O `cjsg_ementa(uuid)` do TJTO baixa a ementa de um documento pelo `uuid` que o `cjsg`/`cjpg` devolvem.
+
+#### Plataforma e requisitos
+
+| Tribunal | Plataforma | Tag |
+|---|---|---|
+| **TJSP** | eSAJ + API REST |  |
+| **TJES** | PJe/Solr API |  |
+| **TJTO** | Custom HTML |  |
+| **TJAC** | eSAJ |  |
+| **TJAL** | eSAJ |  |
+| **TJAM** | eSAJ |  |
+| **TJAP** | Tucujuris REST |  |
+| **TJBA** | GraphQL |  |
+| **TJCE** | eSAJ |  |
+| **TJDFT** | REST API |  |
+| **TJGO** | Projudi HTML |  |
+| **TJMG** | Custom HTML + captcha | `[v0.3.0+, requer extra tjmg]`; `cposg` `[v0.5.0+]`, sem captcha |
+| **TJMS** | eSAJ |  |
+| **TJMT** | REST API |  |
+| **TJPA** | BFF REST API |  |
+| **TJPB** | PJe/Elasticsearch |  |
+| **TJPE** | HTML form; `cpopg` na consulta publica do PJe | `cpopg` `[v0.5.0+]` |
+| **TJPI** | HTML server-rendered |  |
+| **TJPR** | HTML form + sessao |  |
+| **TJRJ** | ASPX + JSON |  |
+| **TJRN** | PJe/Elasticsearch |  |
+| **TJRO** | JURIS/Elasticsearch |  |
+| **TJRR** | JSF/PrimeFaces |  |
+| **TJRS** | Google Search (GSA) |  |
+| **TJSC** | eproc HTML |  |
+| **TRF1** | PJe ConsultaPublica | `[v0.4.0+]` |
+| **TRF3** | PJe ConsultaPublica; `cjsg` no portal web.trf3 | `[v0.4.0+]`; `cjsg` `[v0.5.0+]` |
+| **TRF5** | PJe ConsultaPublica | `[v0.4.0+]` |
+| **TRF6** | eproc/SJMG + captcha textual | `[v0.4.0+]`, requer `txtcaptcha` |
+| **STF** | API do portal + AWS WAF | `[v0.4.0+]`, requer extra `stf` ou `waf_token` |
 
 Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
 

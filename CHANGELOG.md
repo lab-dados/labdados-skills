@@ -4,6 +4,23 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.17.0] - 2026-10-30
+
+Alterado:
+
+- `juscraper` (plugin 1.4.0): a cobertura da skill (quais metodos cada tribunal e agregador tem) passa
+  a ser gerada do codigo do juscraper. `scripts/cobertura_juscraper.py` le a saida de
+  `scripts/tabela_cobertura.py --json` do juscraper e reescreve tres blocos: a matriz de
+  `references/tribunais.md`, os metodos de `references/agregadores.md` e a lista "Quem tem cada
+  metodo" da `SKILL.md`. O workflow `juscraper-cobertura` confere os blocos e a `description` contra
+  a `main` do juscraper em todo PR que toca a skill e toda segunda-feira; no agendamento, a
+  divergencia abre ou comenta uma issue.
+- Entram na skill os recursos de cobertura da 0.5.0 do juscraper, que a matriz escrita a mao nao
+  tinha: `cposg` do TJMG, `cpopg` do TJPE (com `download_pecas`), `cjsg` do TRF3 e o agregador
+  Falcao (jurisprudencia trabalhista do TST e dos TRTs). A `description` passa a citar o Falcao.
+- PDPJ: o gotcha de token vencido passa a dizer que, desde a 0.5.0, `auth()` o recusa com
+  `ValueError`.
+
 ## [1.16.0] - 2026-10-15
 
 Adicionado:
