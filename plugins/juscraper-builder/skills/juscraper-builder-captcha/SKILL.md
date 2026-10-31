@@ -1,22 +1,6 @@
 ---
 name: juscraper-builder-captcha
-description: >
-  Desvio de captcha da skill juscraper-builder: decide o que fazer quando a
-  página de consulta de um tribunal brasileiro mostra captcha e o raspador
-  vai para a biblioteca juscraper. Use quando o usuário pedir um raspador
-  para tribunal com captcha (imagem com texto, reCAPTCHA, hCaptcha,
-  Cloudflare Turnstile) ou quando a checagem inicial da juscraper-builder
-  encontrar captcha. Sempre testa primeiro se o backend valida o captcha,
-  porque muitos tribunais exibem o widget e não conferem o token; captcha
-  de imagem validado se resolve com o pacote txtcaptcha; captcha interativo
-  validado encerra o trabalho com o registro em docs/captcha/. Também
-  acionar quando um raspador existente do juscraper passar a receber
-  captcha, ou com "não sou um robô", "código da imagem", "digite os
-  caracteres", "verificação de segurança falhou". Fora do captcha, o fluxo
-  inteiro é o da juscraper-builder, que esta skill usa.
-  Não confundir com a juscraper-builder (formulário sem captcha) nem com
-  desafio JavaScript de WAF sem captcha (STF, TJPE), que a juscraper-builder
-  trata pelo extra juscraper[waf].
+description: "Usar quando o raspador de tribunal para o juscraper esbarrar em captcha (imagem, reCAPTCHA, hCaptcha, Turnstile, \"não sou um robô\"), num tribunal novo ou num raspador existente que passou a receber captcha. Não confundir com a juscraper-builder (formulário sem captcha) nem com desafio JavaScript de WAF sem captcha (STF, TJPE)."
 ---
 
 # Juscraper Builder (desvio de captcha)

@@ -1,6 +1,6 @@
 ---
 name: dataframeit
-description: "Use esta skill para aplicar um LLM linha a linha em um DataFrame (pandas ou polars) com a biblioteca dataframeit: defina um modelo Pydantic com os campos desejados, escreva um prompt com placeholder {texto} e obtenha saída validada em escala. Cobre classificação e extração estruturada, preenchimento de campos faltantes, anotação automática para pesquisa empírica, categorização de respostas abertas, enriquecimento com busca web (Tavily/Exa), campos condicionais (condition), paralelismo com rate limit, checkpointing retomável em runs longos e escolha de provedor (OpenAI, Gemini, Anthropic, Groq, Mistral, Cohere, Claude Code, Codex). Acione sempre que o usuário falar em processar cada linha de um DataFrame com IA, enriquecer dados com LLM, extrair informação estruturada de texto, classificar respostas abertas, codificar decisões judiciais com LLM ou dataframeit, mesmo que não nomeie a biblioteca. Não use para raspagem de dados, revisão de literatura acadêmica ou chamadas LLM avulsas fora de um DataFrame."
+description: "Usar quando a tarefa for aplicar um LLM a cada linha de um DataFrame: classificar ou extrair informação de texto, codificar decisões judiciais, categorizar respostas abertas, preencher campos ou enriquecer dados com busca web, mesmo sem citar a biblioteca. Não usar para raspagem, revisão de literatura ou chamada de LLM avulsa fora de DataFrame."
 ---
 
 # DataFrameIt

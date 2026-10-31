@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: Raspar dados de fontes oficiais brasileiras, bases acadêmicas e imprensa com a biblioteca raspe. Cobre legislação federal (Presidência, Câmara, Senado), agências reguladoras (ANS, ANVISA, SaudeLegis, CFM), órgão de pesquisa (IPEA), base bibliográfica acadêmica (CAPES Periódicos), e imprensa (Folha de São Paulo, New York Times). Use esta skill sempre que o usuário mencionar coleta/raspagem de leis, decretos, portarias, resoluções, projetos de lei, atos normativos, diário oficial, agenda regulatória, normas sanitárias, normas médicas, publicações do IPEA, artigos acadêmicos, revisão de literatura via CAPES, periódicos científicos, notícias de jornal, "baixar legislação", "atos da ANVISA", "resoluções da ANS", "portarias do Ministério da Saúde", "buscador da CAPES", "Portal de Periódicos", "matérias da Folha", "artigos do NYT sobre Brasil", ou qualquer tarefa que envolva DataFrame a partir de sites oficiais brasileiros, da CAPES e do NYT — mesmo que não mencione explicitamente "raspe".
+description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\"."
 ---
 
 # Raspe Skill

@@ -1,6 +1,6 @@
 ---
 name: openalex
-description: Search, filter, and download scholarly works, authors, and full-text content from OpenAlex (460M+ academic works). Use for literature search, systematic reviews, bibliometric analysis, citation networks, downloading research papers/PDFs, or any academic database task.
+description: "Use for literature search, systematic reviews, bibliometrics, citation networks, or downloading papers and PDFs from OpenAlex."
 ---
 
 # OpenAlex Skill

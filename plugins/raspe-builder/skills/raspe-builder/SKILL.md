@@ -1,21 +1,6 @@
 ---
 name: raspe-builder
-description: >
-  Gera scrapers Python para a biblioteca raspe (https://github.com/bdcdo/raspe)
-  via engenharia reversa com Playwright MCP. Use sempre que o usuário pedir
-  para adicionar uma fonte nova ao raspe, criar um scraper que retorne
-  pandas.DataFrame seguindo a arquitetura `raspe.<fonte>().raspar(...)`, ou
-  fazer engenharia reversa de um site governamental brasileiro / imprensa /
-  agência reguladora para coleta empírica. Também use quando o usuário
-  mencionar "novo scraper para o raspe", "extender BaseScraper",
-  "PlaywrightScraper", "novo módulo em src/raspe/scrapers", ou pedir para
-  contribuir uma fonte ao repositório bdcdo/raspe. Cobre os três caminhos
-  da arquitetura: HTTP/HTML (BaseScraper+HTMLScraper), HTTP/JSON
-  (BaseScraper), e Playwright/stealth (PlaywrightScraper). Não confundir
-  com a skill `raspe` (que ensina a usar fontes já existentes) nem com a
-  skill `juscraper-builder` (que cria scrapers de tribunais para o pacote
-  juscraper). Mesmo que o usuário não diga "raspe-builder", use esta skill
-  se a tarefa é construir um novo scraper compatível com a arquitetura raspe.
+description: "Usar quando pedirem para adicionar fonte nova à biblioteca raspe ou fazer engenharia reversa de site governamental, de agência reguladora ou de imprensa para virar scraper do raspe. Não confundir com raspe (usar fontes existentes) nem com juscraper-builder (tribunais)."
 ---
 
 # Raspe Builder
