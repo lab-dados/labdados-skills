@@ -21,7 +21,7 @@ import juscraper as jus
 scraper = jus.scraper(sigla, **kwargs)
 ```
 
-**Siglas validas (30 tribunais: 25 estaduais + 4 TRFs + STF; e 4 agregadores):**
+**Siglas validas (30 tribunais: 25 estaduais + 4 TRFs + STF; e 5 agregadores):**
 
 | Categoria | Siglas |
 |---|---|
@@ -30,6 +30,7 @@ scraper = jus.scraper(sigla, **kwargs)
 | Superior `[v0.4.0+]` | `stf` (busca de jurisprudencia; requer extra `stf` ou `waf_token`) |
 | Agregadores estaveis | `datajud`, `jusbr`, `comunica_cnj` (`[v0.3.0+]`) |
 | Agregador `[v0.4.0+]` | `pdpj` |
+| Agregador `[v0.5.0+]` | `falcao` (jurisprudencia trabalhista do TST e dos TRTs) |
 
 A factory retorna a instancia do scraper correspondente. Qualquer `**kwargs` e passado ao construtor.
 
@@ -177,13 +178,13 @@ df = trf6.cpopg(id_cnj='1000149-71.2024.4.06.3800')  # str ou list[str]
 
 **Retorna:** `pd.DataFrame` com uma linha por processo. Colunas: `id_cnj`, `processo`, `classe`, `data_autuacao`, `situacao`, `magistrado`, `orgao_julgador`, `assuntos`, `polo_ativo`, `polo_passivo`, `mpf`, `perito`, `movimentacoes`. O portal e eproc da Seção Judiciaria de Minas Gerais (`eproc1g.trf6.jus.br/eproc/`) e exige captcha textual validado server-side; o scraper resolve via `txtcaptcha`, com `max_captcha_attempts=3` por default. `txtcaptcha` e dependencia opcional: instale com `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`.
 
-**Sem `download_pecas`:** o `download_pecas=True` documentado acima e apenas para TRF1/TRF3/TRF5. Nao prometa download de pecas no TRF6.
+**Sem `download_pecas`:** o `download_pecas=True` documentado acima vale para TRF1/TRF3/TRF5 e para o `cpopg` do TJPE `[v0.5.0+]`. Nao prometa download de pecas no TRF6.
 
 Para JusBR e PDPJ, ver `references/agregadores.md`.
 
 ### cposg — Consulta de processo (2o grau)
 
-**Disponivel em:** TJSP.
+**Disponivel em:** TJSP; TJMG `[v0.5.0+]`, que devolve DataFrame com uma linha por recurso (ver `references/tribunais.md` §TJMG).
 
 ```python
 result = tjsp.cposg(
@@ -196,7 +197,7 @@ Mesmo padrao de retorno e variantes do `cpopg` do TJSP.
 
 ### cjsg — Busca de jurisprudencia (2o grau)
 
-**Disponivel em:** Todos os 25 tribunais estaduais (com parametros diferentes por tribunal). Consulte `references/tribunais.md` para os parametros especificos de cada um. Abaixo apenas os exemplos principais — TJSP, TJRS, TJPR, TJDFT.
+**Disponivel em:** Todos os 25 tribunais estaduais e o TRF3 `[v0.5.0+]` (com parametros diferentes por tribunal). Consulte `references/tribunais.md` para os parametros especificos de cada um. Abaixo apenas os exemplos principais — TJSP, TJRS, TJPR, TJDFT.
 
 #### TJSP
 

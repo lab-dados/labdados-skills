@@ -4,7 +4,7 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.3.1** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15). O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
+A skill **v1.4.0** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15), e a cobertura (quem tem cada metodo) com a **0.5.0** (PyPI, 2026-10-21): a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md` sao gerados do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py`, conferido no CI. O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto. O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
@@ -12,6 +12,7 @@ Para confirmar a versao instalada no ambiente do usuario: `python -c "import jus
 
 | Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
+| 1.4.0 | 0.5.0 (2026-10-21), so cobertura | `main` | Cobertura gerada do codigo e travada no CI. Da 0.5.0: TJMG `cposg`, TJPE `cpopg`, TRF3 `cjsg`, agregador Falcao; PDPJ recusa token vencido |
 | 1.3.1 | 0.4.0 (2026-09-15) + `main` | `5ebde28` (main) | Correcao: `comarca`, `tipo_decisao` e `count_only` valem para toda a familia eSAJ, e nao so para o TJSP |
 | 1.3.0 | 0.4.0 (2026-09-15) + `main` | `5ebde28` (main) | Primeira publicacao depois da 1.1.0 (a 1.2.0 ficou so em branch, nunca publicada, e foi fundida aqui). Da 0.4.0: +TRF1/TRF3/TRF5/TRF6 (`cpopg`; TRF6 via eproc/`txtcaptcha`), `download_pecas`/`diretorio` em TRF1/TRF3/TRF5, +PDPJ, +STF (`listar_decisoes`/`contar_decisoes`, extra `stf`); `count_only=True` em eSAJ/TJSP; `listar_classes`/`listar_assuntos`/`listar_orgaos`/`listar_varas`; migracao para `HTTPScraper` + `RetryExhaustedError`; singulares `classe`/`assunto`/`vara`; JusBR com `auth(exp)`, coluna `processo` e validacao em `download_documents`; excecoes anti-bot (`BotChallengeBlockedError`, `TJAPSecurityCheckError`); `pyarrow` fora das dependencias base; contrato de `paginas` validado antes do HTTP; Datajud respeita `range(3, 6)`. `[unreleased]`: STF com `checkpoint_dir`/`resume` e coleta integral acima de 10.000 registros |
 | 1.1.0 | 0.3.0 (2026-05-03) + `main` | `6c5703d` (2026-05-13) | Na skill: +TJGO, +TJMG, +TJRJ (na biblioteca desde a 0.2.1). Da 0.3.0: extra `[tjmg]` (`[v0.3.0+, requer extra tjmg]`), +ComunicaCNJ; `tamanho_pagina` canonico; pydantic `extra="forbid"` nos endpoints wired; auto-chunk eSAJ. Da `main` em `6c5703d`, publicados so na 0.4.0: +TRF1/TRF3/TRF5, +PDPJ, migracao para `HTTPScraper` + `RetryExhaustedError`, singulares `classe`/`assunto`/`vara` (TJSP `cjpg`, TJBA, Datajud) |
@@ -27,6 +28,7 @@ Ao longo das references, recursos novos ganham tags inline:
 | `[v0.3.0+]` | Adicionado na v0.3.0 (estavel no PyPI hoje) | `pip install juscraper>=0.3.0` |
 | `[v0.3.0+, requer extra tjmg]` | Estavel no PyPI, mas requer dependencia extra | `pip install 'juscraper[tjmg]>=0.3.0'` |
 | `[v0.4.0+]` | Adicionado na v0.4.0 (PyPI, 2026-09-15) | `pip install -U 'juscraper>=0.4.0'` |
+| `[v0.5.0+]` | Adicionado na v0.5.0 (PyPI, 2026-10-21) | `pip install -U 'juscraper>=0.5.0'` |
 | `[unreleased]` | So na `main` do repositorio (snapshot `5ebde28`), ainda sem release no PyPI | `pip install "git+https://github.com/jtrecenti/juscraper.git"` (com extra: `pip install "juscraper[stf] @ git+https://github.com/jtrecenti/juscraper.git"`) |
 
 Quando aparecer nova release oficial, atualizar a tabela acima com nova linha de bump.

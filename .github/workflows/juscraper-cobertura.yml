@@ -1,0 +1,116 @@
+name: juscraper-cobertura
+
+# Confere a cobertura descrita na skill juscraper contra o codigo da main do
+# juscraper. Em PR, reprova a mudanca que deixa a skill fora de sincronia. No
+# agendamento semanal, pega o caso inverso: o juscraper ganhou ou perdeu um
+# metodo e a skill nao acompanhou; ai abre (ou comenta) uma issue aqui.
+#
+# Sao dois jobs porque o primeiro executa codigo de outro repositorio
+# (jtrecenti/juscraper). Ele roda sem permissao de escrita e sem credencial
+# gravada no checkout, e so entrega o JSON como artefato. O segundo, o unico
+# que pode escrever issue, nao executa nada do juscraper: le o JSON como dado.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugins/juscraper/**"
+      - "scripts/cobertura_juscraper.py"
+      - "tests/test_cobertura_juscraper.py"
+      - ".github/workflows/juscraper-cobertura.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/juscraper/**"
+      - "scripts/cobertura_juscraper.py"
+      - "tests/test_cobertura_juscraper.py"
+      - ".github/workflows/juscraper-cobertura.yml"
+  schedule:
+    - cron: "0 11 * * 1" # segunda, 08h em Brasilia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: jtrecenti/juscraper
+          ref: main
+          path: juscraper
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Cobertura a partir do codigo do juscraper
+        run: |
+          mkdir -p saida
+          uv run --directory juscraper --python 3.12 --no-dev \
+            python scripts/tabela_cobertura.py --json > saida/cobertura.json
+          echo "juscraper main em $(git -C juscraper rev-parse --short HEAD)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-juscraper
+          path: saida/cobertura.json
+          retention-days: 7
+
+  conferir:
+    needs: gerar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: cobertura-juscraper
+          path: ${{ runner.temp }}
+
+      - name: Testes do sincronizador
+        run: uv run --no-project --python 3.12 --with pytest pytest tests/test_cobertura_juscraper.py -q
+
+      - name: Skill em sincronia com o juscraper
+        run: python scripts/cobertura_juscraper.py "$RUNNER_TEMP/cobertura.json" --check
+
+  # Job proprio, para avisar tambem quando quem falha e o `gerar` (main do
+  # juscraper quebrada ou sem o script), caso em que o `conferir` nem roda.
+  avisar:
+    needs: [gerar, conferir]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Abrir ou comentar a issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITULO: "juscraper-cobertura reprovou no agendamento"
+          EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          corpo="A execucao agendada de juscraper-cobertura reprovou: $EXECUCAO
+
+          Se o job que falhou foi o conferir, a skill ficou fora de sincronia com o juscraper. Para corrigir, com um checkout do juscraper em ../juscraper:
+
+              uv run --directory ../juscraper --python 3.12 --no-dev python scripts/tabela_cobertura.py --json > /tmp/cobertura.json
+              python scripts/cobertura_juscraper.py /tmp/cobertura.json
+
+          Depois revise a description da SKILL.md e as tags de versao das references. Se o job que falhou foi o gerar, o problema esta no juscraper (main quebrada ou scripts/tabela_cobertura.py ausente)."
+          numero=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number --jq '.[0].number')
+          if [ -n "$numero" ]; then
+            gh issue comment "$numero" --body "$corpo"
+          else
+            gh issue create --title "$TITULO" --body "$corpo"
+          fi

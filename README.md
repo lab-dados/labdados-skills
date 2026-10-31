@@ -35,7 +35,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 
 | Skill | O que faz | Trigger tipico |
 |-------|-----------|----------------|
-| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 4 TRFs + STF + Datajud, JusBR, ComunicaCNJ e PDPJ) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, STF, cjpg por CNJ |
+| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 4 TRFs + STF + Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, STF, cjpg por CNJ |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, IPEA, CAPES, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
@@ -50,7 +50,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 ### juscraper
 
 - Python >= 3.11
-- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0
+- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0, e a cobertura (quem tem cada metodo), a v0.5.0
 - Para TJMG e TRF6 (captcha): `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`
 - Para STF: `pip install 'juscraper[stf]'` e `playwright install chromium` (ou um cookie `waf_token` ja obtido)
 - Para salvar em parquet: `pip install pyarrow`, que saiu das dependencias base na v0.4.0
