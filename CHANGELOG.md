@@ -8,7 +8,7 @@ segue [Semantic Versioning](https://semver.org/).
 
 Alterado:
 
-- Todas as skills (patch em cada plugin): a `description` passa a dizer so quando usar a skill, com os gatilhos e o "nao confundir com" das vizinhas, sem resumir o que a skill faz, que fica no corpo. As nove descricoes somadas caem de 8.635 para cerca de 2.800 caracteres, que entram em toda sessao de quem tem os plugins instalados. A do `juscraper` continua citando todo tribunal e agregador, porque o `juscraper-cobertura` exige.
+- Todas as skills (patch em cada plugin): a `description` passa a dizer so quando usar a skill, com os gatilhos e o "nao confundir com" das vizinhas, sem resumir o que a skill faz, que fica no corpo. As nove descricoes somadas caem de 8.390 para 2.674 caracteres, que entram em toda sessao de quem tem os plugins instalados. A do `juscraper` continua citando todo tribunal e agregador, porque o `juscraper-cobertura` exige.
 
 ## [1.17.0] - 2026-10-30
 
