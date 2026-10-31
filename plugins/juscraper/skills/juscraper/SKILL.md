@@ -35,7 +35,7 @@ Verifique se `juscraper` esta instalado:
 |---|---|
 | Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` (default, recomendado) | `pip install -U juscraper` ou `uv add juscraper` |
 | TJMG e TRF6 (captcha automatico via `txtcaptcha`) | `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha` |
-| STF `[v0.4.0+]` (cookie do AWS WAF via Playwright) | `pip install 'juscraper[stf]'` e depois `playwright install chromium` |
+| STF `[v0.4.0+]` e TJPE `cpopg` `[v0.5.0+]` (cookie do AWS WAF via Playwright) | `pip install 'juscraper[waf]'` (ou `[stf]`, mesmo conteudo) e depois `playwright install chromium` |
 | Salvar em parquet (`df.to_parquet`) | `pip install pyarrow` (saiu das dependencias base na 0.4.0) |
 | Recursos `[unreleased]` (so na `main`) | `pip install "git+https://github.com/jtrecenti/juscraper.git"` |
 
@@ -43,7 +43,7 @@ Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependenc
 
 ### 2. Autenticacao (condicional)
 
-- **Todos os 25 tribunais estaduais e 4 TRFs federais:** Nenhuma autenticacao necessaria. TRF6 tem captcha textual validado server-side, mas o scraper resolve via `txtcaptcha` (instalar a parte, ver acima).
+- **Todos os 25 tribunais estaduais e 4 TRFs federais:** Nenhuma autenticacao necessaria. TRF6 tem captcha textual validado server-side, mas o scraper resolve via `txtcaptcha` (instalar a parte, ver acima). O `cpopg` do TJPE `[v0.5.0+]` fica atras de um AWS WAF que desafia de forma intermitente: sem o Playwright (extra `waf`), funciona enquanto o WAF nao desafia e levanta `ImportError` quando desafia.
 - **STF** `[v0.4.0+]`: sem login, mas o portal fica atras de um desafio JavaScript do AWS WAF. O scraper obtem o cookie `aws-waf-token` com Playwright na primeira busca (extra `stf` + `playwright install chromium`) ou usa um cookie ja obtido em `jus.scraper('stf', waf_token=...)`. Sem nenhum dos dois, a primeira busca levanta `ImportError`.
 - **Datajud:** Tem API key publica embutida. Funciona sem configuracao.
 - **ComunicaCNJ:** API publica, sem autenticacao.
@@ -276,7 +276,7 @@ Utilitarios para manipulacao: `from juscraper.utils.cnj import clean_cnj, split_
 `paginas=None` = todas (usar com cautela).
 
 **Tipos de retorno**:
-- `cpopg()`/`cposg()`: retorna `dict` com DataFrames (chaves: dados, partes, movimentacoes, etc.)
+- `cpopg()`/`cposg()` do TJSP: retorna `dict` com DataFrames (chaves: dados, partes, movimentacoes, etc.). Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
 - `cjsg()`/`cjpg()`: retorna um unico `pandas.DataFrame`
 - `listar_processos()`: retorna `pandas.DataFrame`
 - `download_documents()`: retorna `pandas.DataFrame` com coluna `texto`
@@ -330,7 +330,7 @@ Apos a coleta:
   `df.to_parquet('resultados.parquet')` (parquet e melhor para DataFrames grandes). Desde a
   0.4.0 o juscraper nao instala `pyarrow`: rode `pip install pyarrow` antes do `to_parquet`.
 - **Para combinar tribunais:** colete separadamente e concatene com `pd.concat([df1, df2])`
-- **cpopg/cposg retornam dict:** itere com `for tabela, df in resultado.items():`
+- **cpopg/cposg do TJSP retornam dict:** itere com `for tabela, df in resultado.items():`. TRFs, TJPE e TJMG devolvem DataFrame direto.
 
 ## Workflow tipico do agente
 
@@ -414,6 +414,6 @@ O total de tokens por linha e `_input_tokens + _output_tokens`; a coluna
 `_total_tokens` nao existe desde o dataframeit 0.6.0, e `_reasoning_tokens`
 ja esta contido em `_output_tokens` (nao somar de novo).
 
-O mesmo vale para `cpopg`/`cposg`, que retornam um dict de DataFrames —
+O mesmo vale para `cpopg`/`cposg` do TJSP, que retornam um dict de DataFrames —
 extraia o DataFrame relevante (ex: `dados["movimentacoes"]`) e confirme
 qual coluna contem o texto antes de passar.

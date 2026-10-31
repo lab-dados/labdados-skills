@@ -414,7 +414,7 @@ df = falcao.listar_decisoes(
 )
 ```
 
-Outros filtros: `relator`, `orgao_julgador`, `fase_processual`, `prioridade`, `tem_ementa`, `somente_ementa`, `ordenacao` (`mais_relevante`, `mais_recente`, `menos_recente`), `tamanho_pagina` (so `5` ou `10`). Colunas canonicas: `processo`, `colecao`, `tribunal`, `relator`, `classe`, `classe_sigla`, `ementa`, `data_julgamento`, `data_juntada`. Para guardar as paginas cruas, `listar_decisoes_download` + `listar_decisoes_parse`.
+Outros filtros: `relator`, `orgao_julgador`, `fase_processual`, `prioridade`, `tem_ementa`, `somente_ementa`, `ordenacao` (`mais_relevante`, `mais_recente`, `menos_recente`), `tamanho_pagina` (so `5` ou `10`). Colunas canonicas: `processo`, `colecao`, `tribunal`, `relator`, `classe`, `classe_sigla`; `ementa`, `data_julgamento` e `data_juntada` aparecem quando a colecao os expoe. Para guardar as paginas cruas, `listar_decisoes_download` + `listar_decisoes_parse`.
 
 **Gotchas:**
 

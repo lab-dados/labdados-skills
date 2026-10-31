@@ -1,6 +1,6 @@
 # Tribunais — Matriz de Capacidades e Parametros
 
-Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TRFs + STF). Para Datajud, JusBR, ComunicaCNJ e PDPJ, veja `references/agregadores.md`.
+Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TRFs + STF). Para Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao, veja `references/agregadores.md`.
 
 ## Matriz de capacidades
 
@@ -65,7 +65,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 | **TJMT** | REST API |  |
 | **TJPA** | BFF REST API |  |
 | **TJPB** | PJe/Elasticsearch |  |
-| **TJPE** | HTML form; `cpopg` na consulta publica do PJe | `cpopg` `[v0.5.0+]` |
+| **TJPE** | HTML form; `cpopg` na consulta publica do PJe, atras de AWS WAF | `cpopg` `[v0.5.0+]`, Playwright via extra `waf` quando o WAF desafia |
 | **TJPI** | HTML server-rendered |  |
 | **TJPR** | HTML form + sessao |  |
 | **TJRJ** | ASPX + JSON |  |
@@ -80,7 +80,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 | **TRF6** | eproc/SJMG + captcha textual | `[v0.4.0+]`, requer `txtcaptcha` |
 | **STF** | API do portal + AWS WAF | `[v0.4.0+]`, requer extra `stf` ou `waf_token` |
 
-Para Datajud, JusBR, ComunicaCNJ e PDPJ, ver `references/agregadores.md`.
+Para Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao, ver `references/agregadores.md`.
 
 ### Tribunais documentados como nao-suportados
 
@@ -357,6 +357,10 @@ tjpb.cjsg(
 
 ### TJPE
 
+**`cpopg` `[v0.5.0+]`:** consulta publica do PJe de 1o grau (`pje.cloud.tjpe.jus.br/1g/`), com o mesmo retorno do `cpopg` dos TRFs (DataFrame, uma linha por processo), inclusive `download_pecas=True` e `diretorio=...`. Processo sob segredo de justica nao aparece e sai como linha so com `id_cnj`. O site fica atras de AWS WAF intermitente: o cookie `aws-waf-token` e obtido com Playwright (extra `waf` + `playwright install chromium`) so quando o desafio aparece; sem Playwright, `ImportError` quando o WAF desafia. Desafio repetido ou cookie nao obtido levanta `WafChallengeError` (subclasse de `BotChallengeBlockedError`) e interrompe o lote.
+
+`cjsg`:
+
 ```python
 tjpe.cjsg(
     pesquisa='...',
@@ -479,6 +483,8 @@ tjgo.cjsg(
 
 Captcha numerico de 5 digitos resolvido automaticamente via `txtcaptcha`. Requer `pip install 'juscraper[tjmg]'`.
 
+**`cposg` `[v0.5.0+]`:** consulta processual de 2o grau, sem captcha. Aceita CNJ (20 digitos) ou o numero TJMG de 17 digitos (`processo_interno` do `cjsg`) e devolve DataFrame com uma linha por recurso: classe, assunto, camara, situacao, datas e a coluna `partes` (lista de `{tipo, nome, baixa, advogados}`, com nome e OAB). Recurso em segredo de justica vem com `segredo_justica=True` e sem partes.
+
 ```python
 tjmg.cjsg(
     pesquisa='...',
@@ -517,6 +523,10 @@ tjrj.cjsg(
 **Construtor:** `(sleep_time=1.0)`.
 
 **Gotcha BREAKING `[v0.3.0]`:** **rejeita `data_julgamento_*` e `data_publicacao_*` com `TypeError`** — o backend ASPX so expoe granularidade anual via `ano_inicio`/`ano_fim` (campos `cmbAnoInicio`/`cmbAnoFim` do form). Sem `ano_inicio`/`ano_fim`, o scraper preenche os dois com o ano corrente `[v0.4.0+]`, entao o resultado cobre so o ano corrente, nao "todos os anos". Antes da 0.4.0, a chamada sem ano recebia HTTP 500 do backend e abortava com `RetryExhaustedError`. `test_release_date_filter.py` marca o TJRJ como `xfail` estrito por limitacao server-side.
+
+### TRF3 — `cjsg` `[v0.5.0+]`
+
+Portal `web.trf3.jus.br/jurisprudencia`. Filtros: `base` (`acordaos`, default; `turmas_recursais`; `monocraticas`; `monocraticas_turmas_recursais`), `numero_processo`, `relator` e `classe` (texto na grafia do portal, como `"NERY JUNIOR"` ou `"AI - AGRAVO DE INSTRUMENTO"`), `orgao_julgador`, `ementa`, `indexacao`, `tamanho_pagina` (`10`, `30` ou `50`) e **um** par de datas: `data_julgamento_*` ou `data_publicacao_*`. Passar os dois pares levanta `ValueError`, assim como `orgao_julgador`, `ementa` ou `indexacao` nas bases de monocraticas. A lista ja traz `ementa` e `inteiro_teor`.
 
 ### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[v0.4.0+]`
 
@@ -637,7 +647,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 2. **`sleep_time=0` causa bloqueio** — os tribunais detectam acesso agressivo.
 
-3. **cpopg/cposg retornam dict, cjsg/cjpg retornam DataFrame** — nao trate todos igual. Excecao: `cpopg` dos TRFs retorna DataFrame (uma linha por processo), nao dict.
+3. **cpopg/cposg do TJSP retornam dict, cjsg/cjpg retornam DataFrame** — nao trate todos igual. Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
 
 4. **Numero CNJ: separadores opcionais mas zeros a esquerda importam** — `1000149-71.2024.8.26.0346` e `10001497120248260346` sao aceitos.
 

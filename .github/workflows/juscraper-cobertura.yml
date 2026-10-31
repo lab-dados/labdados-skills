@@ -84,22 +84,30 @@ jobs:
       - name: Skill em sincronia com o juscraper
         run: python scripts/cobertura_juscraper.py "$RUNNER_TEMP/cobertura.json" --check
 
-      - name: Avisar em issue quando o agendamento achar divergencia
-        if: failure() && github.event_name == 'schedule'
+  # Job proprio, para avisar tambem quando quem falha e o `gerar` (main do
+  # juscraper quebrada ou sem o script), caso em que o `conferir` nem roda.
+  avisar:
+    needs: [gerar, conferir]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Abrir ou comentar a issue
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TITULO: "Skill juscraper fora de sincronia com o codigo do juscraper"
+          TITULO: "juscraper-cobertura reprovou no agendamento"
           EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           corpo="A execucao agendada de juscraper-cobertura reprovou: $EXECUCAO
 
-          Para corrigir, com um checkout do juscraper em ../juscraper:
+          Se o job que falhou foi o conferir, a skill ficou fora de sincronia com o juscraper. Para corrigir, com um checkout do juscraper em ../juscraper:
 
-              uv run --directory ../juscraper --python 3.12 python scripts/tabela_cobertura.py --json > /tmp/cobertura.json
+              uv run --directory ../juscraper --python 3.12 --no-dev python scripts/tabela_cobertura.py --json > /tmp/cobertura.json
               python scripts/cobertura_juscraper.py /tmp/cobertura.json
 
-          Depois revise a description da SKILL.md e as tags de versao das references."
+          Depois revise a description da SKILL.md e as tags de versao das references. Se o job que falhou foi o gerar, o problema esta no juscraper (main quebrada ou scripts/tabela_cobertura.py ausente)."
           numero=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number --jq '.[0].number')
           if [ -n "$numero" ]; then
             gh issue comment "$numero" --body "$corpo"
