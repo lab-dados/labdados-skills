@@ -1,6 +1,6 @@
 ---
 name: dataframeit
-description: "Usar quando a tarefa for aplicar um LLM a cada linha de um DataFrame: classificar ou extrair informação de texto, codificar decisões judiciais, categorizar respostas abertas, preencher campos ou enriquecer dados com busca web, mesmo sem citar a biblioteca. Não usar para raspagem, revisão de literatura ou chamada de LLM avulsa fora de DataFrame."
+description: "Usar quando a entrada é uma base de centenas de linhas ou mais, a saída é uma base e cada linha pede um LLM: classificar ou extrair informação de texto, codificar decisões judiciais, categorizar respostas abertas, preencher campos ou enriquecer com busca web, mesmo sem citar a biblioteca. Não usar para relatório ou documento longo (subagentes bastam), raspagem, revisão de literatura ou chamada de LLM avulsa."
 ---
 
 # DataFrameIt

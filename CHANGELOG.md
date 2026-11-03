@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.17.2] - 2026-11-03
+
+Alterado:
+
+- `dataframeit` (plugin 1.3.2): a `description` passa a exigir as três condições juntas, entrada em base de centenas de linhas ou mais, saída em base e um LLM por linha, e manda relatório ou documento longo para subagentes. A versão anterior disparava a skill para qualquer extração de texto, e um agente montou pipeline do `dataframeit` para julgar trechos de relatório contra um catálogo de 142 variáveis, revisão única em que subagentes bastavam. Parte da revisão das descrições pedida em #24.
+
 ## [1.17.1] - 2026-10-30
 
 Alterado:
