@@ -6,6 +6,8 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 A skill **v1.4.0** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15), e a cobertura (quem tem cada metodo) com a **0.5.0** (PyPI, 2026-10-21): a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md` sao gerados do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py`, conferido no CI. O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto. O que so existe na `main` ate o snapshot `5ebde28` (fixes e recursos do STF posteriores a release) aparece com a tag `[unreleased]`.
 
+Na atualizacao de cobertura do plugin **1.4.2**, os blocos foram regenerados contra `1b657e7` (2026-11-04). Entram `baixar_acordao`/`baixar_acordaos` em TJAC/TJSP e `baixar_sentenca`/`baixar_sentencas` em TJSP, todos `[unreleased]`. Esta conferência nao amplia a revisao dos demais recursos da biblioteca descrita acima.
+
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
 ## Tabela de bumps
