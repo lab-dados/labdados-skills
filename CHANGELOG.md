@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.17.3] - 2026-11-04
+
+Corrigido:
+
+- `juscraper` (plugin 1.4.2): cobertura regenerada contra o snapshot `1b657e7` da biblioteca. Entram `baixar_acordao` e `baixar_acordaos` em TJAC/TJSP e `baixar_sentenca` e `baixar_sentencas` em TJSP, ainda `[unreleased]`. A descricao ja cita os dois tribunais e permanece igual. Corrige a divergencia do check `juscraper-cobertura` sem alterar o workflow.
+
 ## [1.17.2] - 2026-11-03
 
 Alterado:

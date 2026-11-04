@@ -20,6 +20,10 @@ jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do
 - Repositorio: https://github.com/jtrecenti/juscraper
 - Documentacao: https://jtrecenti.github.io/juscraper/
 
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e
+`baixar_sentenca`/`baixar_sentencas` (TJSP) da cobertura abaixo sao `[unreleased]`,
+verificados no snapshot `1b657e7` da `main`; nao fazem parte da 0.5.0 do PyPI.
+
 ## Antes de comecar
 
 Complete este checklist antes de qualquer chamada.
@@ -102,6 +106,10 @@ Lista gerada do codigo da `main` do juscraper. Na duvida entre esta lista e algu
 - `cjpg`: TJES, TJSP, TJTO
 - `cpopg`: TJPE, TJSP, TRF1, TRF3, TRF5, TRF6, JusBR, PDPJ
 - `cposg`: TJMG, TJSP
+- `baixar_acordao`: TJAC, TJSP
+- `baixar_acordaos`: TJAC, TJSP
+- `baixar_sentenca`: TJSP
+- `baixar_sentencas`: TJSP
 - `cjsg_ementa`: TJTO
 - `contar`: PDPJ
 - `contar_decisoes`: STF
