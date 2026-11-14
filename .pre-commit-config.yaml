@@ -1,0 +1,32 @@
+# Checagens rápidas antes do commit (~15 s), espelhando o CI (validate.yml).
+# Instalar: uvx pre-commit install. Rodar tudo: uvx pre-commit run --all-files.
+# Precisa de uv e de npx (Node) no PATH.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+      - id: check-merge-conflict
+
+  - repo: local
+    hooks:
+      - id: plugin-validate
+        name: claude plugin validate (marketplace e plugins)
+        language: system
+        entry: >-
+          bash -c 'set -e;
+          for alvo in . plugins/*; do
+          npx --yes @anthropic-ai/claude-code@2.1.126 plugin validate "$alvo";
+          done'
+        files: ^(\.claude-plugin|plugins)/
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest (raspador-builder e cobertura juscraper)
+        language: system
+        entry: >-
+          uv run --no-project --python 3.12 --with pytest --with requests --with pandas
+          pytest plugins/raspador-builder/tests tests -q
+        files: ^(plugins|scripts|tests)/
+        pass_filenames: false
