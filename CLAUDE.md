@@ -78,9 +78,10 @@ uvx pre-commit install           # once per clone: runs the hooks below on every
 uvx pre-commit run --all-files   # everything, ~15 s
 ```
 
-`.pre-commit-config.yaml` mirrors `validate.yml`: `check-json`/`check-yaml`, then
-`claude plugin validate` on the marketplace (`.`) and on every plugin, then the offline
-pytest suites. To run a piece directly:
+`.pre-commit-config.yaml` mirrors `validate.yml`: `check-json`/`check-yaml`,
+`scripts/conferir_marketplace.py` (every local `source` exists and has a SKILL.md, which
+`plugin validate` does not check), `claude plugin validate` on the marketplace (`.`) and
+on every plugin, then the offline pytest suites. To run a piece directly:
 
 ```bash
 npx --yes @anthropic-ai/claude-code@2.1.126 plugin validate plugins/<plugin>   # "lint" of a plugin

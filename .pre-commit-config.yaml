@@ -11,6 +11,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: conferir-marketplace
+        name: source de cada plugin existe e tem SKILL.md
+        language: system
+        entry: python3 scripts/conferir_marketplace.py
+        files: ^(\.claude-plugin|plugins|scripts)/
+        pass_filenames: false
+
       - id: plugin-validate
         name: claude plugin validate (marketplace e plugins)
         language: system
