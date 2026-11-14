@@ -15,7 +15,7 @@ repos:
         name: source de cada plugin existe e tem SKILL.md
         language: system
         entry: python3 scripts/conferir_marketplace.py
-        files: ^(\.claude-plugin|plugins|scripts)/
+        always_run: true # commit que só apaga o SKILL.md não passa nome de arquivo ao hook
         pass_filenames: false
 
       - id: plugin-validate
