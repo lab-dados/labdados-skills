@@ -23,7 +23,6 @@ jobs:
           done
 
       - name: Verify each plugin source exists and has a SKILL.md
-        # O mesmo script roda no hook do pre-commit (.pre-commit-config.yaml).
         run: python3 scripts/conferir_marketplace.py
 
       - name: Validate plugins with Claude Code
