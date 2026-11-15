@@ -83,8 +83,8 @@ O usuário raramente diz "presidência" ou "câmara" diretamente. Traduza termos
 | "RDC", "resoluções da ANVISA", "portarias ANVISA", "registro sanitário" | `anvisa` |
 | "código de ética médica", "resolução CFM", "parecer CFM" | `cfm` |
 | "estudo do IPEA", "texto para discussão", "publicação do IPEA" | `ipea` |
-| "artigo acadêmico", "paper", "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos científicos" | `capes` |
-| "revisão de literatura", "revisão sistemática", "bibliometria" | não é raspe: use `openalex-skill` |
+| "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos da CAPES" | `capes` |
+| "artigo acadêmico", "paper", "periódicos científicos", "revisão de literatura", "revisão sistemática", "bibliometria", sem citar a CAPES | não é raspe: use `openalex-skill` |
 | "intimação processual", "comunicado oficial do tribunal", "comunicações do CNJ" | não é raspe: a fonte CNJ saiu da biblioteca. Use `juscraper-skill` (ComunicaCNJ, `juscraper.scraper("comunica_cnj")`) |
 | "matéria da Folha", "Folha de São Paulo escreveu sobre" | `folha` |
 | "NYT sobre Brasil", "matéria do New York Times" | `nyt` |

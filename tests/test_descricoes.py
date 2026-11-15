@@ -32,6 +32,9 @@ def _description(skill: str) -> str:
 
 @pytest.mark.parametrize(("skill", "irma"), [(s, i) for s, irmas in IRMAS.items() for i in irmas])
 def test_description_nomeia_a_irma(skill, irma):
-    assert re.search(rf"(?<![\w-]){re.escape(irma)}(?![\w-])", _description(skill)), (
+    # Só conta o nome depois do aviso: "raspe" também é verbo ("colete, raspe ou baixe").
+    aviso = re.search(r"(?:Não confundir com|Do not confuse with|usar a) (.*)", _description(skill))
+    assert aviso, f"a description de {skill} não tem \"Não confundir com\""
+    assert re.search(rf"(?<![\w-]){re.escape(irma)}(?![\w-])", aviso.group(1)), (
         f"a description de {skill} não diz quando usar {irma} no lugar dela"
     )
