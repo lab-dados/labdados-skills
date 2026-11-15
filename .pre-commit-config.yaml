@@ -1,4 +1,5 @@
-# Checagens rápidas antes do commit (~15 s), espelhando o CI (validate.yml).
+# Checagens antes do commit (~20 s). O CI (validate.yml) roda estes mesmos hooks: checagem nova
+# entra aqui, não no workflow.
 # Instalar: uvx pre-commit install. Rodar tudo: uvx pre-commit run --all-files.
 # Precisa de uv e de npx (Node) no PATH.
 repos:
@@ -30,10 +31,13 @@ repos:
         pass_filenames: false
 
       - id: pytest
-        name: pytest (raspador-builder e scripts do repo)
+        name: pytest em 3.10 e 3.12 (raspador-builder e scripts do repo)
         language: system
+        # O robots.txt e o modelo de raspador têm de dar a mesma resposta em 3.10 e 3.12.
         entry: >-
-          uv run --no-project --python 3.12 --with pytest --with requests --with pandas
-          pytest plugins/raspador-builder/tests tests -q
+          bash -c 'set -e; for versao in 3.10 3.12; do
+          uv run --no-project --python "$versao" --with pytest --with requests --with pandas
+          pytest plugins/raspador-builder/tests tests -q;
+          done'
         files: ^(plugins|scripts|tests)/
         pass_filenames: false
