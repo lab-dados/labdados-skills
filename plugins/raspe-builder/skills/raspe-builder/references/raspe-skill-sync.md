@@ -84,7 +84,7 @@ No final do `SKILL.md`, há uma tabela mapeando arquivos em
 
 ## 2. `plugins/raspe/skills/raspe/references/fontes.md`
 
-Quatro matrizes para atualizar (na ordem em que aparecem no arquivo):
+Matrizes para atualizar, na ordem em que aparecem no arquivo (a de colunas é gerada):
 
 ### Matriz geral
 
@@ -228,7 +228,7 @@ quando juntar várias mudanças.
 - [ ] Linha adicionada em `SKILL.md` → tabela "Arquivos de referência"
 - [ ] `frontmatter > description` em `SKILL.md` menciona a nova fonte
 - [ ] Linha adicionada em `references/fontes.md` → matriz geral
-- [ ] Linha adicionada em `references/fontes.md` → colunas retornadas
+- [ ] `python scripts/colunas_raspe.py <raspe>/docs/colunas.md` rodado (tabela da fonte e matriz de colunas da `fontes.md`)
 - [ ] Linha adicionada em `references/fontes.md` → limites
 - [ ] Parágrafo em `references/fontes.md` → cobertura e volume típico
 - [ ] Linha adicionada em `references/fontes.md` → text_column para dataframeit

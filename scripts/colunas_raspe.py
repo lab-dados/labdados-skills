@@ -22,7 +22,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from itertools import takewhile
+from itertools import dropwhile, takewhile
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -34,23 +34,25 @@ Tabelas = dict[str, list[str]]
 _FONTE = re.compile(r"`raspe\.(\w+)\(\)`")
 
 
+def _e_linha(linha: str) -> bool:
+    return linha.startswith("|")
+
+
 def ler_tabelas(documento: str) -> Tabelas:
     """Tabela de cada fonte do ``docs/colunas.md``, na ordem do documento.
 
-    A secao com tabela cita as fontes no titulo e so a primeira tabela conta; a
-    secao sem tabela cita no corpo as fontes sem schema, sem apagar a tabela de
-    uma fonte ja lida.
+    A secao com tabela cita as fontes no titulo e so a primeira tabela conta. A
+    secao "Raspadores ainda sem schema de saida" cita no corpo as fontes sem
+    tabela; outra secao sem tabela nao conta.
     """
     tabelas: Tabelas = {}
     for secao in re.split(r"^## ", documento, flags=re.MULTILINE)[1:]:
         titulo, _, corpo = secao.partition("\n")
-        linhas = corpo.splitlines()
-        inicio = next((i for i, linha in enumerate(linhas) if linha.startswith("|")), len(linhas))
-        tabela = list(takewhile(lambda linha: linha.startswith("|"), linhas[inicio:]))
-        for fonte in _FONTE.findall(titulo if tabela else corpo):
-            if tabela:
-                tabelas[fonte] = tabela
-            else:
+        tabela = list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), corpo.splitlines())))
+        if tabela:
+            tabelas.update(dict.fromkeys(_FONTE.findall(titulo), tabela))
+        elif "sem schema" in titulo:
+            for fonte in _FONTE.findall(corpo):
                 tabelas.setdefault(fonte, [])
     if not any(tabelas.values()):
         raise SystemExit("docs/colunas.md sem secao com tabela de colunas: o formato do documento mudou?")
@@ -81,7 +83,10 @@ def marcadores(nome: str) -> tuple[str, str]:
 
 
 def substituir(texto: str, nome: str, conteudo: list[str], caminho: Path) -> str:
-    """Troca o trecho entre os marcadores de ``nome`` (inclusive) pelo bloco novo."""
+    """Troca o trecho entre os marcadores de ``nome`` (inclusive) pelo bloco novo.
+
+    Mesmo formato de bloco do ``cobertura_juscraper.substituir``: mudou um, mude o outro.
+    """
     inicio, fim = marcadores(nome)
     if texto.count(inicio) != 1 or texto.count(fim) != 1:
         raise SystemExit(f"{caminho}: os marcadores do bloco {nome!r} devem aparecer uma vez cada.")

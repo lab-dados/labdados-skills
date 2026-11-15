@@ -20,7 +20,7 @@ Visão comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando
 
 ## Colunas retornadas
 
-A coluna `termo_busca` repete o termo pesquisado. Nas fontes com schema de saída, uma busca sem resultado devolve DataFrame vazio com estas mesmas colunas; a descrição de cada coluna está na reference da fonte.
+Nas fontes com schema de saída, uma busca sem resultado devolve DataFrame vazio com estas mesmas colunas. A descrição de cada coluna está na reference da fonte.
 
 <!-- colunas-raspe:matriz:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
 

@@ -41,8 +41,7 @@ raspe.presidencia().raspar(
 import raspe
 
 df = raspe.presidencia().raspar(pesquisa="meio ambiente", paginas=range(1, 4))
-print(df.columns.tolist())
-# ['nome', 'link', 'ficha', 'revogacao', 'descricao', 'rotulo', 'termo_busca']
+print(df[["nome", "descricao"]].head())
 
 # Múltiplos temas
 df = raspe.presidencia().raspar(pesquisa=["saúde", "educação"])

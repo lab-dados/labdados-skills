@@ -66,9 +66,5 @@ Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abr
 import raspe
 
 df = raspe.ans().raspar(pesquisa="doença rara")
-print(df.columns.tolist())
-# ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
-
-# Rótulos de situação, antes de filtrar
-print(df["situacao"].value_counts(dropna=False))
+print(df[["titulo", "situacao"]].head())
 ```

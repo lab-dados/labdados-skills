@@ -6,20 +6,14 @@ name: colunas-raspe
 # skill nao acompanhou. A falha do agendamento chega por e-mail a quem mexeu por
 # ultimo no cron. O docs/colunas.md e lido como texto: nada do raspe e executado.
 
+# Sem `push` na main: ela so recebe o que um PR ja conferiu, e o agendamento pega
+# a mudanca do raspe. Os testes do script rodam no validate.yml (pre-commit).
 on:
   pull_request:
     branches: [main]
     paths:
       - "plugins/raspe/**"
       - "scripts/colunas_raspe.py"
-      - "tests/test_colunas_raspe.py"
-      - ".github/workflows/colunas-raspe.yml"
-  push:
-    branches: [main]
-    paths:
-      - "plugins/raspe/**"
-      - "scripts/colunas_raspe.py"
-      - "tests/test_colunas_raspe.py"
       - ".github/workflows/colunas-raspe.yml"
   schedule:
     - cron: "15 11 * * 1" # segunda, 08h15 em Brasilia

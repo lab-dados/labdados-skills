@@ -135,7 +135,8 @@ Conforme `references/raspe-skill-sync.md`:
   de referência"
 - [ ] `frontmatter > description` em `SKILL.md` menciona a nova fonte
 - [ ] Linhas adicionadas em `plugins/raspe/skills/raspe/references/fontes.md`
-  (matriz geral, colunas, limites, text_column)
+  (matriz geral, limites, text_column); a de colunas sai do
+  `scripts/colunas_raspe.py`
 - [ ] (*) Arquivo novo `plugins/raspe/skills/raspe/references/<fonte>.md`
   criado
 

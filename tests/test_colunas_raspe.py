@@ -43,17 +43,13 @@ def test_ler_tabelas():
     assert tabelas["camara"] == tabelas["senado"] == []
 
 
-def test_secao_sem_tabela_nao_apaga_tabela_lida():
-    documento = DOCUMENTO + "\n## Observações\n\n`raspe.cfm()` aceita filtros por UF.\n"
-    assert colunas_raspe.ler_tabelas(documento)["cfm"] == colunas_raspe.ler_tabelas(DOCUMENTO)["cfm"]
+def test_so_a_secao_sem_schema_lista_fontes_sem_tabela():
+    documento = DOCUMENTO + "\n## Observações\n\n`raspe.cfm()` e `raspe.folha()` aceitam filtros.\n"
+    assert colunas_raspe.ler_tabelas(documento) == colunas_raspe.ler_tabelas(DOCUMENTO)
 
 
 def test_so_a_primeira_tabela_da_secao_conta():
-    documento = DOCUMENTO.replace(
-        "| `tipo` | texto | Tipo da norma. | Resolução |\n| `termo_busca` | texto | Termo de busca. | natjus |\n",
-        "| `tipo` | texto | Tipo da norma. | Resolução |\n| `termo_busca` | texto | Termo de busca. | natjus |\n"
-        "\nValores de `tipo`:\n\n| Valor |\n| --- |\n| Parecer |\n",
-    )
+    documento = DOCUMENTO.replace("## Raspadores", "Valores de `tipo`:\n\n| Valor |\n| --- |\n| Parecer |\n\n## Raspadores")
     assert colunas_raspe.colunas(colunas_raspe.ler_tabelas(documento)["cfm"]) == ["`tipo`", "`termo_busca`"]
 
 
@@ -88,7 +84,9 @@ def _preparar(tmp_path, monkeypatch, fontes=("fontes", "ans", "anvisa", "cfm")):
 
 def test_grava_e_depois_confere(tmp_path, monkeypatch):
     documento = _preparar(tmp_path, monkeypatch)
+    antes = (tmp_path / "cfm.md").read_text(encoding="utf-8")
     assert colunas_raspe.main([documento, "--check"]) == 1
+    assert (tmp_path / "cfm.md").read_text(encoding="utf-8") == antes  # --check nao grava
 
     assert colunas_raspe.main([documento]) == 0
     cfm = (tmp_path / "cfm.md").read_text(encoding="utf-8")
@@ -96,13 +94,6 @@ def test_grava_e_depois_confere(tmp_path, monkeypatch):
     assert cfm.startswith("# cfm\n\n<!-- colunas-raspe:tabela:inicio") and cfm.endswith("fim -->\n\nfim\n")
     assert "| `camara` | sem schema" in (tmp_path / "fontes.md").read_text(encoding="utf-8")
     assert colunas_raspe.main([documento, "--check"]) == 0
-
-
-def test_check_nao_grava(tmp_path, monkeypatch):
-    documento = _preparar(tmp_path, monkeypatch)
-    antes = (tmp_path / "cfm.md").read_text(encoding="utf-8")
-    colunas_raspe.main([documento, "--check"])
-    assert (tmp_path / "cfm.md").read_text(encoding="utf-8") == antes
 
 
 def test_fonte_sem_reference(tmp_path, monkeypatch, capsys):
