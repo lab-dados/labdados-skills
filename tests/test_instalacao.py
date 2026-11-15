@@ -8,7 +8,8 @@ import pytest
 RAIZ = Path(__file__).resolve().parents[1]
 SKILLS = sorted(RAIZ.glob("plugins/*/skills/*/SKILL.md"))
 PIP = re.compile(r"(?<!uv )pip install")
-UV = re.compile(r"\buv (add|pip install|tool install)\b")
+# `uv pip install` serve com ou sem projeto; `uv tool install`, para CLI (openalex).
+UV = re.compile(r"\buv (pip|tool) install\b")
 COM_PIP = [s for s in SKILLS if PIP.search(s.read_text(encoding="utf-8"))]
 
 

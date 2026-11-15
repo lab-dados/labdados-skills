@@ -114,13 +114,21 @@ Em seguida, **ofereça** upload no YouTube como não-listado. Não suba sem perm
 
 Sempre verifique e instale as dependências em uma única passada antes da Etapa 5:
 
+Com o [uv](https://docs.astral.sh/uv/) disponível, prefira-o ao pip, num ambiente fora do repo do app, para não mexer no ambiente do usuário (o comando imprime o caminho criado):
+
 ```bash
-pip install --break-system-packages playwright edge-tts google-api-python-client google-auth-oauthlib
-python -m playwright install chromium
+VENV="$(mktemp -d)/venv" && uv venv "$VENV" && echo "$VENV"
+uv pip install --python "$VENV/bin/python" playwright edge-tts google-api-python-client google-auth-oauthlib
+"$VENV/bin/python" -m playwright install chromium
 # ffmpeg geralmente já está instalado; se não: apt-get install -y ffmpeg
 ```
 
-Com o [uv](https://docs.astral.sh/uv/) disponível, prefira-o ao pip: `uv venv` numa pasta de trabalho, `uv pip install playwright edge-tts google-api-python-client google-auth-oauthlib` e `uv run python -m playwright install chromium`; daí em diante, rode os scripts com `uv run python <script>` a partir dessa pasta. Sem o uv, use o pip acima.
+Daí em diante, rode os scripts com `"$VENV/bin/python" scripts/...`, e os `pip install --break-system-packages` das references e do `upload_youtube.py` viram `uv pip install --python "$VENV/bin/python" ...`. Sem o uv, use o pip:
+
+```bash
+pip install --break-system-packages playwright edge-tts google-api-python-client google-auth-oauthlib
+python -m playwright install chromium
+```
 
 Faça isso em background enquanto escreve o roteiro (Etapa 4) para economizar tempo.
 

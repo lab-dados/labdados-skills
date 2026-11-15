@@ -45,7 +45,7 @@ Verifique se `juscraper` esta instalado:
 
 Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependencias base: sem ele, o `cpopg` do TRF6 levanta `ImportError`. O extra `tjmg` declara `txtcaptcha`, entao `pip install 'juscraper[tjmg]'` resolve os dois tribunais.
 
-Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add 'juscraper[tjmg]'` instala e grava a dependencia (o Chromium do extra `waf` sai de `uv run playwright install chromium`); fora de projeto, `uv venv` e depois `uv pip install 'juscraper[tjmg]'`. Os comandos da tabela valem com o uv trocando `pip install` por um desses. Se o usuario nao tem o uv, sugira instala-lo; se ele preferir o pip, siga com o pip.
+Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add juscraper` (ou `uv add 'juscraper[tjmg]'` etc.) instala e grava a dependencia; fora de projeto, `uv venv` e depois `uv pip install juscraper`. Os comandos `pip install` desta skill, aqui e nas references, valem com o uv trocando `pip install` por um desses. Instalado pelo uv, o pacote fica no `.venv`: confira com `uv pip show juscraper`, rode o Python com `uv run python` e baixe o Chromium do extra `waf` com `uv run playwright install chromium`. Se o usuario nao tem o uv, sugira instala-lo; se ele preferir o pip, siga com o pip.
 
 ### 2. Autenticacao (condicional)
 
