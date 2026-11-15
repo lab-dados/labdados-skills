@@ -4,6 +4,13 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.14] - 2026-11-15
+
+Corrigido:
+
+- `raspe` (plugin 1.1.4): as tabelas de colunas das references eram digitadas e estavam desatualizadas em relacao a `main` do raspe. O CFM devolve `tipo`, `uf`, `numero_ano`, `situacao`, `ementa` e `link` (a `fontes.md` listava `Tipo`, `UF`, `Nº/Ano`...), a Presidencia ganhou `rotulo`, e toda fonte com schema de saida termina em `termo_busca`, inclusive na busca sem resultado, que devolve DataFrame vazio com as colunas do schema (a skill dizia que a coluna faltava em `cfm` e `nyt` e que a busca vazia das fontes Playwright nao tinha coluna nenhuma). Agora a tabela de cada reference e a matriz da `fontes.md` sao geradas do `docs/colunas.md` do raspe pelo `scripts/colunas_raspe.py`, entre marcadores `colunas-raspe`, e o workflow `colunas-raspe` confere os blocos contra a `main` do raspe em todo PR que toca a skill e uma vez por semana. A skill tambem passa a ensinar `pesquisa` como parametro de busca de toda fonte (`texto`, `assunto` e `termo` ficam como nomes antigos, com `DeprecationWarning`), que `paginas` e lista em `saudelegis`, `ans` e `anvisa` levantam `ValidationError` em vez de serem ignorados, que o teto `_max_pages` emite `UserWarning` e que a `situacao` de ANS e ANVISA traz o rotulo do portal (`Vigente`, `Revogado`) e nao `None` para ato vigente.
+- `raspe-builder` (plugin 1.0.9): no sync com a skill `raspe`, a reference da fonte nova leva os marcadores vazios do bloco de colunas, e a tabela e a matriz da `fontes.md` saem do `scripts/colunas_raspe.py`, em vez de copiadas a mao.
+
 ## [1.18.13] - 2026-11-15
 
 Corrigido:

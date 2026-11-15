@@ -18,13 +18,17 @@ raspe.folha().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Conteúdo |
-|---|---|
-| `link` | URL da matéria. |
-| `titulo` | Título da reportagem. |
-| `resumo` | Lead/resumo. |
-| `data` | Data de publicação (formato amigável — varia por matéria). |
-| `termo_busca` | Adicionada automaticamente. |
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `link` | texto | Endereço da notícia. | https://www1.folha.uol.com.br/equilibrioesaude/2026/08/anvisa-aprova-novo-remedio-para-distrofia-muscular-de-duchenne.shtml |
+| `titulo` | texto | Título da notícia. | Anvisa aprova novo remédio para distrofia muscular de Duchenne |
+| `resumo` | texto | Resumo que a busca mostra abaixo do título. | Em 2024, a Anvisa também aprovou o Elevidys, uma terapia gênica para o tratamento da distrofia muscular de Duchenne. ... |
+| `data` | texto | Data e hora de publicação, como a busca as mostra. | 13.ago.2026 às 14h20 |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
+<!-- colunas-raspe:tabela:fim -->
 
 ## Parâmetros específicos
 

@@ -20,25 +20,29 @@ raspe.ans(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    termo: str,
+    pesquisa: str,
 ) -> pd.DataFrame
 ```
 
-Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
+Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abrir o navegador. O nome antigo do parâmetro de busca, `termo`, ainda é aceito com `DeprecationWarning`. O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 ## Colunas retornadas
 
-| Coluna | Conteúdo |
-|---|---|
-| `url` | URL absoluta para o ato. |
-| `titulo` | Tipo + número + ano (ex.: "Resolução Normativa Nº 465/2021"). |
-| `descricao` | Ementa/descrição do ato. |
-| `situacao` | Status (ex.: "Revogado", "Revogado Tacitamente", etc.). **Vem como `None` quando o ato está vigente** — filtre com `df[df["situacao"].isna()]`. |
-| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `url` | texto | Endereço do texto do ato, no domínio do portal do órgão. | https://anslegis.datalegis.net/acao/abrirTextoAto.php?id=12345 |
+| `titulo` | texto | Tipo e número do ato. | RESOLUÇÃO NORMATIVA Nº 500/2024 |
+| `descricao` | texto ou nulo | Ementa do ato, ou nulo quando o portal não a traz. | Define diretrizes para cobertura de doenças raras. |
+| `situacao` | texto ou nulo | Situação do ato (vigente, revogado etc.), ou nulo quando o portal não a traz. | Em vigor |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
+<!-- colunas-raspe:tabela:fim -->
 
 ## Parâmetros específicos
 
-- **`termo`** (não `pesquisa` ou `assunto`): texto no campo de busca do portal.
+- **`pesquisa`**: texto no campo de busca do portal. Vazia, levanta `ValidationError`.
 - `headless=False` para ver o navegador (debug).
 - `debug=True` mantém HTMLs brutos.
 
@@ -46,12 +50,12 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 
 - **Cloudflare**: o domínio `datalegis.net` tem bot detection. `playwright-stealth` é aplicado automaticamente pela classe base `ScraperDatalegis`. Se a stealth falhar (IP bloqueado, padrão de comportamento detectado), aparece `BrowserError: Timeout`. Veja `references/playwright.md` para diagnóstico.
 - **Paginação via SELECT dropdown**: a navegação usa um `<select id="fieldPage">` com `onchange="openPage()"`. Você não interage com isso — só saiba que aparece em logs.
-- **Limite de 100 páginas** (`_max_pages=100`). Coleta completa de um termo genérico pode atingir esse teto.
-- **Situação vigente = `None`**: não é um bug, é como a biblioteca reconhece a ausência de rótulo. Filtre explicitamente:
+- **Limite de 100 páginas** (`_max_pages=100`). Coleta completa de um termo genérico pode atingir esse teto; nesse caso sai um `UserWarning`.
+- **`situacao` traz o rótulo do portal** (por exemplo, `Vigente` ou `Revogado`) e só vem nula quando o ato não tem rótulo. Confira os valores antes de filtrar:
 
   ```python
-  vigentes = df[df["situacao"].isna()]
-  revogados = df[df["situacao"].notna()]
+  print(df["situacao"].value_counts(dropna=False))
+  vigentes = df[df["situacao"] == "Vigente"]
   ```
 
 - Tempo típico: ~15-30s por página. 100 páginas = ~30-60 min.
@@ -61,10 +65,10 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 ```python
 import raspe
 
-df = raspe.ans().raspar(termo="doença rara")
+df = raspe.ans().raspar(pesquisa="doença rara")
 print(df.columns.tolist())
 # ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
 
-# Vigentes
-vigentes = df[df["situacao"].isna()]
+# Rótulos de situação, antes de filtrar
+print(df["situacao"].value_counts(dropna=False))
 ```

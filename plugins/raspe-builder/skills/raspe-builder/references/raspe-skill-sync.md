@@ -94,12 +94,8 @@ Quatro matrizes para atualizar (na ordem em que aparecem no arquivo):
 
 ### Colunas retornadas
 
-```
-| `{fonte}` | `{coluna1}`, `{coluna2}`, ... |
-```
-
-Liste as colunas na ordem da tabela da fonte em `docs/colunas.md` do
-raspe (a mesma que o item 3 copia), sem `termo_busca`, que é implícita.
+Não edite: a matriz fica entre marcadores `colunas-raspe:matriz` e sai
+do `docs/colunas.md` do raspe pelo script do fim do item 3.
 
 ### Limites de coleta
 
@@ -158,7 +154,8 @@ raspe.{fonte}().raspar(
 
 ## Colunas retornadas
 
-{tabela da fonte em `docs/colunas.md`, copiada sem editar}
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+<!-- colunas-raspe:tabela:fim -->
 
 ## Exemplos
 
@@ -192,15 +189,23 @@ df = raspe.{fonte}().raspar(...)
 `text_column = "{coluna_recomendada}"`
 ```
 
-A tabela de colunas vem da seção do `docs/colunas.md` (regerado na
-Etapa 7 do `SKILL.md`, item 1) cujo título traz `raspe.{fonte}()`;
+Deixe os dois marcadores vazios e, em `<MARKETPLACE_ROOT>`, preencha a
+tabela da fonte e a matriz da `fontes.md` com o `docs/colunas.md`
+regerado na Etapa 7 do `SKILL.md`, item 1:
+
+```bash
+python scripts/colunas_raspe.py <raspe>/docs/colunas.md   # <raspe>: o clone do raspe
+```
+
+O script copia a seção do documento cujo título traz `raspe.{fonte}()`;
 fontes com o mesmo schema dividem a seção, como `raspe.ans()` e
 `raspe.anvisa()`. Descrição errada se corrige no `Output{Fonte}` do
-raspe, regerando o documento, e não na cópia.
+raspe, regerando o documento, e não na cópia. O workflow
+`colunas-raspe` confere os blocos contra a `main` do raspe, então este
+PR só passa depois que o PR da fonte for mergeado lá.
 
 Use as references existentes (`references/presidencia.md` etc.) como
-modelo de tom, formato e profundidade, menos na tabela de colunas: as
-antigas ainda têm a tabela digitada de duas colunas.
+modelo de tom, formato e profundidade.
 
 ## 4. Atualizar `marketplace.json` da skill `raspe`?
 

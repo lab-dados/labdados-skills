@@ -1,0 +1,55 @@
+name: colunas-raspe
+
+# Confere as tabelas de colunas da skill raspe contra o docs/colunas.md da main
+# do raspe. Em PR, reprova a mudanca que deixa a skill fora de sincronia. No
+# agendamento semanal, pega o caso inverso: o raspe mudou um schema de saida e a
+# skill nao acompanhou. A falha do agendamento chega por e-mail a quem mexeu por
+# ultimo no cron. O docs/colunas.md e lido como texto: nada do raspe e executado.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugins/raspe/**"
+      - "scripts/colunas_raspe.py"
+      - "tests/test_colunas_raspe.py"
+      - ".github/workflows/colunas-raspe.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/raspe/**"
+      - "scripts/colunas_raspe.py"
+      - "tests/test_colunas_raspe.py"
+      - ".github/workflows/colunas-raspe.yml"
+  schedule:
+    - cron: "15 11 * * 1" # segunda, 08h15 em Brasilia
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bdcdo/raspe
+          ref: main
+          path: raspe
+          persist-credentials: false
+          sparse-checkout: docs/colunas.md
+          sparse-checkout-cone-mode: false
+
+      - name: Skill em sincronia com o raspe
+        run: |
+          echo "raspe main em $(git -C raspe rev-parse --short HEAD)"
+          python3 scripts/colunas_raspe.py raspe/docs/colunas.md --check

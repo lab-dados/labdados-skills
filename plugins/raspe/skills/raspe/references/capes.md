@@ -15,24 +15,28 @@ raspe.capes().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Conteúdo |
-|---|---|
-| `id` | Work ID do OpenAlex (ex.: `W4387465478`). Útil para cruzar com a `openalex-skill`. |
-| `tipo` | `Artigo`, `Editorial`, `Capítulo`, `Livro`, etc. |
-| `titulo` | Título do trabalho. |
-| `link` | URL absoluta da página de detalhamento no portal CAPES. |
-| `autores` | String com autores separados por `; `. |
-| `ano` | Ano de publicação (string com 4 dígitos quando disponível). |
-| `revista` | Nome do periódico/journal (vazio para livros e capítulos). |
-| `instituicao` | Instituição editora/publicadora. |
-| `topicos` | Tópico temático atribuído pelo OpenAlex (em inglês). |
-| `resumo` | Snippet do abstract destacando o termo buscado (curto, não é o abstract completo). |
-| `doi` | DOI sem prefixo `https://doi.org/`. |
-| `link_editor` | URL externa com prefixo `https://doi.org/...` (mesma origem do DOI). |
-| `acesso_aberto` | `True` se marcado como acesso aberto. |
-| `producao_nacional` | `True` se o trabalho é classificado como produção brasileira. |
-| `revisado_por_pares` | `True` se passou por peer review. |
-| `termo_busca` | Adicionada automaticamente. |
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `id` | texto | Identificador do registro, o mesmo do OpenAlex. | W4387465478 |
+| `tipo` | texto | Tipo do registro. | Artigo |
+| `titulo` | texto | Título do registro. | Judicialização de produtos à base de canabidiol no Brasil: uma análise de 2019 a 2022 |
+| `link` | texto | Endereço da página de detalhes no portal da CAPES. | https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html?task=detalhes&source=digital&id=W4387465478 |
+| `autores` | texto | Autores separados por `; `. | Ronaldo Portela; Daniel Marques Mota; Paulo José Gonçalves Ferreira |
+| `ano` | texto | Ano de publicação, com quatro dígitos, ou vazio. | 2023 |
+| `revista` | texto | Periódico em que o registro saiu. | Cadernos de Saúde Pública |
+| `instituicao` | texto | Instituição informada no card, ou vazio quando o card não traz instituição. | Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz |
+| `topicos` | texto | Tópico de pesquisa atribuído ao registro. | Cannabis and Cannabinoid Research |
+| `resumo` | texto | Trechos do resumo que o buscador destaca, não o resumo inteiro. | ... the Center for Technical Support of the Judiciary |
+| `doi` | texto | DOI, sem o prefixo `https://doi.org/`. | 10.1590/0102-311xpt024723 |
+| `link_editor` | texto | Endereço do DOI na editora. | https://doi.org/10.1590/0102-311xpt024723 |
+| `acesso_aberto` | booleano | O card traz o selo de acesso aberto. | True |
+| `producao_nacional` | booleano | O card traz o selo de produção nacional. | True |
+| `revisado_por_pares` | booleano | O card traz o selo de revisão por pares. | True |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
+<!-- colunas-raspe:tabela:fim -->
 
 ## Gotchas
 

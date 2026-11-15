@@ -20,36 +20,40 @@ raspe.anvisa(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    termo: str,
+    pesquisa: str,
 ) -> pd.DataFrame
 ```
 
-Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
+Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abrir o navegador. O nome antigo do parâmetro de busca, `termo`, ainda é aceito com `DeprecationWarning`. O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDatalegis`.
 
 ## Colunas retornadas
 
-| Coluna | Conteúdo |
-|---|---|
-| `url` | URL absoluta para o ato. |
-| `titulo` | Tipo + número + ano (ex.: "Resolução Nº 34, de 25/02/2021"). |
-| `descricao` | Ementa do ato. |
-| `situacao` | Status. **`None` = vigente**, caso contrário mostra "Revogado", "Revogado Tacitamente", etc. |
-| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `url` | texto | Endereço do texto do ato, no domínio do portal do órgão. | https://anslegis.datalegis.net/acao/abrirTextoAto.php?id=12345 |
+| `titulo` | texto | Tipo e número do ato. | RESOLUÇÃO NORMATIVA Nº 500/2024 |
+| `descricao` | texto ou nulo | Ementa do ato, ou nulo quando o portal não a traz. | Define diretrizes para cobertura de doenças raras. |
+| `situacao` | texto ou nulo | Situação do ato (vigente, revogado etc.), ou nulo quando o portal não a traz. | Em vigor |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
+<!-- colunas-raspe:tabela:fim -->
 
 ## Parâmetros específicos
 
 Iguais aos de `raspe.ans()`:
 
-- **`termo`**: texto do campo de busca.
+- **`pesquisa`**: texto do campo de busca.
 - `headless=False` e `debug=True` para diagnósticos.
 
 ## Gotchas
 
 - **Cloudflare + stealth**: igual à ANS. Sintomas de bloqueio: timeout em cima do campo de busca, página travada em challenge. Veja `references/playwright.md`.
 - **Paginação via SELECT dropdown** (estratégia `SELECT_DROPDOWN`, `_max_pages=100`).
-- **Situação vigente = `None`**: filtre explicitamente com `df[df["situacao"].isna()]`.
+- **`situacao` traz o rótulo do portal** (`Vigente`, `Revogado` etc.) e só vem nula quando o ato não tem rótulo. Confira com `df["situacao"].value_counts(dropna=False)` antes de filtrar.
 - Tempo típico: 15-30s por página.
 
 ## Exemplo
@@ -57,11 +61,11 @@ Iguais aos de `raspe.ans()`:
 ```python
 import raspe
 
-df = raspe.anvisa().raspar(termo="dispositivo médico")
+df = raspe.anvisa().raspar(pesquisa="dispositivo médico")
 print(df.columns.tolist())
 
-# Concentrar em vigentes
-vigentes = df[df["situacao"].isna()]
+# Concentrar em vigentes (confira antes os rótulos com value_counts)
+vigentes = df[df["situacao"] == "Vigente"]
 print(f"{len(vigentes)} atos vigentes")
 
 # Exportar
