@@ -4,9 +4,9 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.5.2** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15) e, com a **0.5.0** (PyPI, 2026-10-21, a ultima release publicada), na cobertura (quem tem cada metodo), na coleta integral e no checkpoint do STF e nos trechos revistos nas versoes 1.5.0 e 1.5.1 (`cpopg`/`cposg` do TJSP). O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto.
+A skill **v1.5.2** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15) e, com a **0.5.0** (PyPI, 2026-10-21), na cobertura (quem tem cada metodo), na coleta integral e no checkpoint do STF e nos trechos revistos nas versoes 1.5.0 e 1.5.1 (`cpopg`/`cposg` do TJSP). O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto.
 
-A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI em todo PR que toca a skill e toda segunda-feira. A ultima conferencia foi contra o snapshot `a2a3421` (2026-11-15). O que so existe na `main`, sem release no PyPI, aparece com a tag `[unreleased]`: `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/`baixar_sentencas` (TJSP), que entraram na cobertura em `1b657e7` (plugin 1.4.2), e as correcoes do `cpopg`/`cposg` do TJSP citadas em `references/tjsp.md` e `references/decisoes-e-processos.md`.
+A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI (`.github/workflows/juscraper-cobertura.yml`). A ultima conferencia foi contra o snapshot `a2a3421` (2026-11-15). O que so existe na `main`, sem release no PyPI, aparece inline com a tag `[unreleased]` (`grep -rn 'unreleased\]' SKILL.md references` lista todos).
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
@@ -14,7 +14,7 @@ Para confirmar a versao instalada no ambiente do usuario: `python -c "import jus
 
 | Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
-| 1.5.2 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | Correcao: a tabela de alinhamento e a tag `[unreleased]` deixam o snapshot `5ebde28`, que ja esta na 0.5.0; os recursos do STF que ele trazia (coleta integral acima de 10.000 registros, `checkpoint_dir`/`resume`) passam a `[v0.5.0+]` |
+| 1.5.2 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | STF com coleta integral acima de 10.000 registros e `checkpoint_dir`/`resume` passa a `[v0.5.0+]` (o snapshot `5ebde28` ja esta na 0.5.0) |
 | 1.5.1 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | `cposg` do TJSP devolve DataFrame, vazio no 0.5.0 (corrigido na `main`, `[unreleased]`); limites do `cpopg` no 0.5.0 reunidos em `references/tjsp.md`; `method='api'` deixa de ser oferecido |
 | 1.5.0 | 0.5.0 (2026-10-21) + `main` | nao registrado | Nova `references/decisoes-e-processos.md`: juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ, conferido ao vivo no 0.5.0; correcoes do `cpopg` so na `main` (#473, #476) com `[unreleased]` |
 | 1.4.2 | 0.5.0 (2026-10-21), so cobertura | `1b657e7` (main) | Cobertura regenerada: `baixar_acordao`/`baixar_acordaos` em TJAC/TJSP e `baixar_sentenca`/`baixar_sentencas` em TJSP, `[unreleased]` |
@@ -101,5 +101,5 @@ grep -hoE "'(tj[a-z]+|trf[0-9]+|stf|datajud|jusbr|pdpj|comunica_cnj)'" \
 ## Decisoes de escopo registradas
 
 - A skill cobre a ultima release publicada do `juscraper` (hoje a 0.5.0, revista em parte; ver §Alinhamento atual); o default e `pip install -U juscraper` ou `uv add -U juscraper`. O que so existe na `main` entra com `[unreleased]` e instalacao via `git+https://github.com/jtrecenti/juscraper.git`; ao sair nova release, essas tags viram `[v0.X.0+]`.
-- TRF1/TRF3/TRF5/TRF6, PDPJ e STF sao `[v0.4.0+]`; a coleta integral e o checkpoint do STF, `[v0.5.0+]`.
+- TRF1/TRF3/TRF5/TRF6, PDPJ e STF sao `[v0.4.0+]`.
 - A arvore de assuntos do TJSP (`references/assuntos-tjsp.json`) foi coletada em 2026-04-16 e nao precisa ser re-coletada a cada bump da skill — a Tabela Processual Unificada do CNJ muda lentamente. Re-coletar so quando aparecer divergencia reportada por usuario ou pesquisa que use codigo desconhecido.

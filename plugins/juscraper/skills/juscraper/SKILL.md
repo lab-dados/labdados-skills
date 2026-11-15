@@ -10,7 +10,7 @@ Cobre **25 tribunais estaduais**, **4 tribunais regionais federais** (TRF1, TRF3
 o **STF** (busca de jurisprudencia) e **5 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao), permitindo buscar
 jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
 
-> **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15); a cobertura (quem tem cada metodo), o STF e o `cpopg`/`cposg` do TJSP acompanham a 0.5.0 (PyPI, 2026-10-21).**
+> **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15), com partes revistas contra a 0.5.0 (PyPI, 2026-10-21), entre elas a cobertura (quem tem cada metodo).**
 > Recursos marcados `[v0.5.0+]` exigem `pip install -U 'juscraper>=0.5.0'`; `[v0.4.0+]` exigem
 > `pip install -U 'juscraper>=0.4.0'`; `[v0.3.0+]` exigem `juscraper>=0.3.0`. Recursos marcados
 > `[unreleased]` existem so na `main` do repositorio (posteriores a ultima release do PyPI) e exigem
