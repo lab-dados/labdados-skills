@@ -120,6 +120,8 @@ python -m playwright install chromium
 # ffmpeg geralmente já está instalado; se não: apt-get install -y ffmpeg
 ```
 
+Com o [uv](https://docs.astral.sh/uv/) disponível, prefira-o ao pip: `uv venv` numa pasta de trabalho, `uv pip install playwright edge-tts google-api-python-client google-auth-oauthlib` e `uv run python -m playwright install chromium`; daí em diante, rode os scripts com `uv run python <script>` a partir dessa pasta. Sem o uv, use o pip acima.
+
 Faça isso em background enquanto escreve o roteiro (Etapa 4) para economizar tempo.
 
 ## Escolhas pequenas mas importantes

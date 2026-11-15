@@ -45,6 +45,8 @@ Verifique se `juscraper` esta instalado:
 
 Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependencias base: sem ele, o `cpopg` do TRF6 levanta `ImportError`. O extra `tjmg` declara `txtcaptcha`, entao `pip install 'juscraper[tjmg]'` resolve os dois tribunais.
 
+Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add 'juscraper[tjmg]'` instala e grava a dependencia (o Chromium do extra `waf` sai de `uv run playwright install chromium`); fora de projeto, `uv venv` e depois `uv pip install 'juscraper[tjmg]'`. Os comandos da tabela valem com o uv trocando `pip install` por um desses. Se o usuario nao tem o uv, sugira instala-lo; se ele preferir o pip, siga com o pip.
+
 ### 2. Autenticacao (condicional)
 
 - **Todos os 25 tribunais estaduais e 4 TRFs federais:** Nenhuma autenticacao necessaria. TRF6 tem captcha textual validado server-side, mas o scraper resolve via `txtcaptcha` (instalar a parte, ver acima). O `cpopg` do TJPE `[v0.5.0+]` fica atras de um AWS WAF que desafia de forma intermitente: sem o Playwright (extra `waf`), funciona enquanto o WAF nao desafia e levanta `ImportError` quando desafia.

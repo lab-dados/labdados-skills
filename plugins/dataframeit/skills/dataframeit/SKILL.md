@@ -49,6 +49,8 @@ Complete este checklist antes de qualquer chamada.
 2. Se não estiver instalado, instale com o extra do provedor desejado.
 3. Python >= 3.10 obrigatório.
 
+Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add 'dataframeit[openai]'` instala e grava a dependência; fora de projeto, `uv venv` e depois `uv pip install 'dataframeit[openai]'`. Os comandos da tabela valem com o uv trocando `pip install` por um desses. Se o usuário não tem o uv, sugira instalá-lo; se ele preferir o pip, siga com o pip.
+
 | Extra | Comando | Quando usar |
 |---|---|---|
 | `[openai]` | `pip install dataframeit[openai]` | Padrão, OpenAI (GPT) |

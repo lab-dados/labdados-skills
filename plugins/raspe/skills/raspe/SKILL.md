@@ -29,6 +29,8 @@ Python >= 3.10. Verifique com `python -c "import raspe; print(raspe.__version__)
 
 Cobre: `presidencia`, `camara`, `senado`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
 
+Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add git+https://github.com/bdcdo/raspe.git` instala e grava a dependência; fora de projeto, `uv venv` e depois `uv pip install git+https://github.com/bdcdo/raspe.git`. Os dois comandos de instalação deste checklist valem com o uv trocando `pip install` por um desses, e o Chromium sai de `uv run python -m playwright install chromium`. Se o usuário não tem o uv, sugira instalá-lo; se ele preferir o pip, siga com o pip.
+
 ### 2. Instalação com navegador (3 fontes Playwright)
 
 Para ANS, ANVISA e SaudeLegis (sites dinâmicos com JavaScript e/ou Cloudflare):
