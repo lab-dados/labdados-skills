@@ -63,7 +63,8 @@ Antes de iniciar, verifique:
    ```
 
 4. **Ler primeiro**. Antes de gerar qualquer código, leia:
-   - `CLAUDE.md` do raspe (convenções do projeto).
+   - `CLAUDE.md` do raspe (convenções do projeto). Se esta skill e ele
+     divergirem, vale o `CLAUDE.md`.
    - Pelo menos dois scrapers existentes do mesmo tipo que você vai criar:
      - Para HTTP/HTML: `src/raspe/scrapers/ipea.py` (modelo enxuto, 5 colunas) e `src/raspe/scrapers/capes.py` (modelo rico, 15 colunas, parsing condicional de campos por card).
      - Para HTTP/JSON: `src/raspe/scrapers/nyt.py`.
@@ -202,8 +203,10 @@ PARÂMETROS DA QUERY:
   - {param}: {valor, descrição, obrigatório?}
   - ...
 
-NOME DO PARÂMETRO DE PESQUISA NO RASPAR(): {pesquisa | termo | texto | assunto}
-  (escolha que case com sites análogos no raspe; default: "pesquisa")
+PARÂMETROS DO RASPAR() (viram o schema de entrada):
+  - pesquisa: sempre este nome (mixin de pesquisa)
+  - {paginas (só HTTP), data_inicio/data_fim, ano: se a fonte aceita}
+  - {parâmetro próprio: tipo, default, valores aceitos}
 
 PAGINAÇÃO:
   - query_page_name: {nome do param}
@@ -232,8 +235,9 @@ PARA PLAYWRIGHT (se aplicável):
   - selector de paginação: {CSS}
   - tem Cloudflare? {sim/não}
 
-COLUNAS EXTRAÍDAS DO PARSE:
-  - {coluna1, coluna2, ...}
+COLUNAS EXTRAÍDAS DO PARSE (viram o schema de saída, nesta ordem):
+  - {coluna1: descrição, exemplo tirado do site}
+  - ...
 ```
 
 ### Etapa 4 — Geração de código
@@ -241,7 +245,45 @@ COLUNAS EXTRAÍDAS DO PARSE:
 Antes de escrever, leia novamente os scrapers de referência (item 4 da
 seção Pré-requisitos) — o código real é a verdade canônica.
 
-Localização: `src/raspe/scrapers/<fonte>.py`.
+Localização: `src/raspe/scrapers/<fonte>.py`, com os schemas em
+`src/raspe/schemas/<fonte>.py`.
+
+#### 4.0 — Schemas de entrada e saída
+
+Toda fonte nova declara `schema_entrada` e `schema_saida` (regra do
+`CLAUDE.md` do raspe). Modelo: `src/raspe/schemas/ipea.py`; detalhes em
+`references/raspe-architecture.md` (seção "Schemas").
+
+```python
+"""Schemas de ``raspe.{fonte}().raspar()``: {descrição da fonte}."""
+
+from pydantic import Field
+
+from .base import OutputBase, PaginasMixin, PesquisaObrigatoriaMixin
+
+
+class Input{Fonte}(PaginasMixin, PesquisaObrigatoriaMixin):
+    """Parâmetros de ``Scraper{Fonte}.raspar()``."""
+
+
+class Output{Fonte}(OutputBase):
+    """{O que cada linha representa}."""
+
+    titulo: str = Field(description="Título.", examples=["{valor real de um sample}"])
+    link: str = Field(description="Endereço no portal.", examples=["{valor real de um sample}"])
+    # ... uma coluna por campo, na ordem em que o _parse_page as monta
+```
+
+- Escolha os mixins de `schemas/base.py` pelos parâmetros da Etapa 3
+  (lista na seção "Schemas" da reference). `PaginasMixin` só em fonte
+  HTTP: quem lê `paginas` é o `BaseScraper`.
+- Cada campo do `Input` tem de ser lido no código do raspador (ou da
+  base) com o nome literal, `kwargs['x']` ou `kwargs.get('x')`, e nada
+  além deles: `tests/schemas/test_signature_parity.py` confere as duas
+  direções.
+- Os `examples` do `Output` têm de aparecer nos samples da Etapa 6
+  (`tests/schemas/test_output_parity.py` confere).
+- Exportar os dois em `src/raspe/schemas/__init__.py` (import e `__all__`).
 
 #### 4.A — Template HTTP/HTML
 
@@ -254,9 +296,13 @@ import pandas as pd
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.{fonte} import Input{Fonte}, Output{Fonte}
 
 
 class Scraper{Fonte}(BaseScraper, HTMLScraper):
+    schema_entrada = Input{Fonte}
+    schema_saida = Output{Fonte}
+
     def __init__(self):
         super().__init__("{nome_buscador}")
 
@@ -292,31 +338,28 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
         return self._api_method
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
-        pesquisa = kwargs.get('pesquisa')
-        data_inicio = kwargs.get('data_inicio', '')
-        data_fim = kwargs.get('data_fim', '')
+        pesquisa = kwargs['pesquisa']
 
         return {
             '{nome_param_busca_no_site}': pesquisa,
-            '{nome_param_data_inicio}': data_inicio,
-            '{nome_param_data_fim}': data_fim,
-            # ... demais params; coloque defaults vazios para campos não-obrigatórios
+            # Com IntervaloDatasMixin, a data ausente chega como None (o schema
+            # preenche os defaults): '{nome_param_data_inicio}': kwargs['data_inicio'] or '',
+            # ... demais params do Input{Fonte}
         }
 
     def _find_n_pags(self, r0) -> int:
         r0.raise_for_status()
         soup = self.soup_it(r0.content)
-        # Localize o elemento com a contagem total
-        # Calcule: pages = (total + itens_por_pagina - 1) // itens_por_pagina
-        total = 0
-        # ... extração via soup.find / select
+        marcador = soup.select_one('{seletor da contagem total}')
+        if not marcador:
+            # Aviso de busca vazia → 0; manutenção ou anti-robô → ScraperError
+            return self._confirmar_busca_vazia(soup)
+        total = int(marcador.get_text(strip=True))  # ajustar a extração
         itens_por_pagina = 10
         return (total + itens_por_pagina - 1) // itens_por_pagina
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         from bs4 import BeautifulSoup
-
-        columns = ['titulo', 'link', 'data', '...']  # ajustar
 
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -335,11 +378,11 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro parseando item: {e}")
                     continue
 
-            return pd.DataFrame(registros, columns=columns)
+            return pd.DataFrame(registros, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro parseando {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 ```
 
 Regras obrigatórias HTTP/HTML:
@@ -350,8 +393,12 @@ Regras obrigatórias HTTP/HTML:
 - `nome_buscador` em minúsculas curtas (ex: `"ipea"`, `"folha"`, `"nyt"`).
 - Headers `User-Agent` real (Firefox/Chrome) — sites brasileiros bloqueiam
   User-Agents genéricos.
-- `_parse_page` tem que retornar `pd.DataFrame` com colunas consistentes
-  mesmo no caminho de erro (`pd.DataFrame(columns=columns)`).
+- `_parse_page` usa `columns=self.colunas`, também no caminho de erro.
+  Não declare `colunas` na classe: com `schema_saida`, a base as tira do
+  schema.
+- Sem o marcador de contagem, `_find_n_pags` devolve
+  `self._confirmar_busca_vazia(soup)`, nunca 0 (item 6 de "Estrutura de
+  Scrapers" no `CLAUDE.md` do raspe).
 - Nunca tocar em `sleep_time` para reduzir (o default 2s é conservador);
   aumente se o site exigir.
 - `time.sleep`, retry para 429/5xx e progress bar via `tqdm` são feitos
@@ -386,9 +433,13 @@ from typing import Any
 import pandas as pd
 
 from ..playwright_scraper import PaginationStrategy, PlaywrightScraper
+from ..schemas.{fonte} import Input{Fonte}, Output{Fonte}
 
 
 class Scraper{Fonte}(PlaywrightScraper):
+    schema_entrada = Input{Fonte}  # com PesquisaNavegadorMixin
+    schema_saida = Output{Fonte}
+
     def __init__(self, debug: bool = True, headless: bool = True):
         super().__init__("{nome_buscador}", debug=debug, headless=headless)
         self._url_base = "{URL_INICIAL}"
@@ -400,10 +451,10 @@ class Scraper{Fonte}(PlaywrightScraper):
         return self._url_base
 
     async def _executar_busca(self, **kwargs) -> None:
-        termo = kwargs.get('termo') or kwargs.get('pesquisa', '')
+        termo = kwargs['pesquisa']
         await self._preencher_campo("{seletor do campo de busca}", termo)
         await self._clicar_elemento("{seletor do botão de busca}")
-        await asyncio.sleep(self.page_load_wait)
+        # A base já espera page_load_wait depois deste método.
 
     async def _encontrar_total_paginas(self) -> int:
         # Lê do HTML carregado o total de páginas
@@ -426,24 +477,20 @@ class Scraper{Fonte}(PlaywrightScraper):
         with open(path, 'r', encoding='utf-8') as f:
             html = f.read()
         soup = BeautifulSoup(html, 'html.parser')
-        # ... extração
-        return pd.DataFrame(...)
+        # ... extração, uma lista por item na ordem de Output{Fonte}
+        return pd.DataFrame(registros, columns=self.colunas)
 ```
 
 Regras obrigatórias Playwright:
 
 - Cloudflare bypass já é automático (`_aguardar_cloudflare()` é chamado
-  pelo `_raspar_async` da base).
+  pelo `_baixar_async` da base).
 - Estratégia de paginação tem que casar com o que o site oferece. Se for
   `NEXT_BUTTON` ou `LOAD_MORE`, **sobrescreva** o método correspondente
   (`_paginar_por_botao_proximo` / `_paginar_por_carregar_mais`) — a base
   levanta `NotImplementedError` no default.
 - `_parse_page` é sync (não `async`); ele lê o arquivo HTML salvo em disco
   por `_salvar_html_pagina`.
-- O kwarg de busca tem que ser nomeado (`termo` / `pesquisa` / `assunto`)
-  para que o `PlaywrightScraper` adicione a coluna `termo_busca` no DataFrame
-  final. Verifique a lista em `_raspar_async` do `PlaywrightScraper`:
-  `['assunto', 'pesquisa', 'termo', 'q', 'query']`.
 - Usar `self._page` direto (atributo `Optional`, `None` até a
   inicialização) tende a quebrar o mypy do pre-commit; `saudelegis` e
   `datalegis` passam porque estão em `[[tool.mypy.overrides]]` no
@@ -473,7 +520,7 @@ Ver `references/factory-registration.md`. Em `src/raspe/__init__.py`:
        """Cria um raspador para {descrição da fonte}.
 
        Args:
-           pesquisa/termo/texto: Termo de busca.
+           pesquisa: Termo de busca.
 
        Returns:
            Scraper{Fonte}: Instância configurada do raspador.
@@ -484,14 +531,14 @@ Ver `references/factory-registration.md`. Em `src/raspe/__init__.py`:
 4. Adicionar `"{fonte}"` na lista `__all__`, na seção apropriada (HTTP ou
    Browser).
 
-5. Para HTTP, convenção recente (a partir da CAPES), não regra: registrar
-   a classe no `mapping` de `scraper()` em `src/raspe/scraper_manager.py`
-   (`"{FONTE}": Scraper{Fonte}`), o que habilita `scraper("{FONTE}")` além
-   de `raspe.{fonte}()`. CFM, Folha e NYT não estão no `mapping`.
+5. Registrar a classe, HTTP ou Playwright, no `_MAPPING` de `scraper()`
+   em `src/raspe/scraper_manager.py` (`"{FONTE}": Scraper{Fonte}`) e
+   reexportá-la em `src/raspe/scrapers/__init__.py` (import e `__all__`).
+   `tests/test_scraper_manager.py` e `tests/test_scrapers_init.py`
+   reprovam fonte que falte num dos dois.
 
 6. Testar o registro: um caso em `tests/test_init.py` (classe
-   `TestFactoriesHTTP` ou `TestFactoriesPlaywright`) e, se a fonte entrou
-   no `mapping`, outro em `tests/test_scraper_manager.py`.
+   `TestFactoriesHTTP` ou `TestFactoriesPlaywright`).
 
 ### Etapa 6 — Testes de contrato offline
 
@@ -511,11 +558,12 @@ Playwright segue o caminho descrito no fim desta etapa.
    import responses
    from responses import matchers, registries
 
+   from raspe.schemas.{fonte} import Output{Fonte}
    from raspe.scrapers.{fonte} import Scraper{Fonte}
    from tests._helpers import load_sample_bytes
 
    API_URL = "{endpoint do scraper}"
-   COLUNAS_OBRIGATORIAS = {"titulo", "link", "..."}
+   COLUNAS = Output{Fonte}.colunas()
 
 
    @pytest.fixture
@@ -548,14 +596,14 @@ Playwright segue o caminho descrito no fim desta etapa.
            df = scraper.raspar(pesquisa="economia")
 
            assert not df.empty
-           assert COLUNAS_OBRIGATORIAS <= set(df.columns)
-           assert "termo_busca" in df.columns
+           assert list(df.columns) == COLUNAS
+           assert (df["termo_busca"] == "economia").all()
    ```
 
 Casos mínimos (HTTP), exigidos pelo `CLAUDE.md` do raspe para cada
 método público: typical (paginação), single_page e no_results. Valide colunas
-por subconjunto (`COLUNAS_OBRIGATORIAS <= set(df.columns)`, nunca
-igualdade) e a presença de `termo_busca`. Use matcher de payload sempre
+por igualdade (`list(df.columns) == Output{Fonte}.colunas()`), também no
+no_results, e o valor de `termo_busca`. Use matcher de payload sempre
 que possível (`query_param_matcher` para GET,
 `urlencoded_params_matcher(..., strict_match=False)` para POST de
 formulário, `json_params_matcher` para POST JSON). O kwarg `strict_match`
@@ -573,6 +621,10 @@ a configuração (`url_base`, `pagination_strategy`, `_max_pages`,
 herança de `PlaywrightScraper`) e `_parse_page` sobre os samples. Modelo:
 `tests/saudelegis/test_config.py`.
 
+Com os samples gravados, registre a fonte em `ESPERADOS` de
+`tests/schemas/test_schema_coverage.py` (ver `references/test-patterns.md`,
+seção "Registro do schema"). Sem isso, a suíte reprova.
+
 ### Etapa 7 — Validação e documentação
 
 1. Rodar testes. O `addopts` do raspe liga `--cov=src/raspe` e
@@ -581,9 +633,12 @@ herança de `PlaywrightScraper`) e `_parse_page` sobre os samples. Modelo:
    `--no-cov` e, antes do PR, a suíte completa para conferir o gate.
    `filterwarnings = ["error"]` está ativo: warning não capturado vira
    falha.
+   Com o schema estável, regere `docs/colunas.md` antes da suíte
+   completa (`tests/schemas/test_documentacao.py` o confere):
    ```bash
    cd <RASPE_REPO>
-   pytest tests/{fonte}/ -v --no-cov
+   pytest tests/{fonte}/ tests/schemas/ -v --no-cov
+   python -m raspe.schemas.documentacao
    pytest
    ```
 
@@ -622,14 +677,11 @@ Se nada disso passar, então Playwright.
 
 ### Nome do parâmetro de busca
 
-Na busca única, a biblioteca adiciona a coluna `termo_busca`
-automaticamente apenas se o kwarg de busca tiver um destes nomes:
-- HTTP: `pesquisa`, `termo`, `q`, `query`.
-- Playwright: `assunto`, `pesquisa`, `termo`, `q`, `query`.
-
-Escolha o nome que case com a convenção do site (ex: NYT usa `texto` no
-factory, mas mapeia para `q` na API interna). Quando em dúvida, prefira
-`pesquisa`.
+O parâmetro de busca do `raspar()` é sempre `pesquisa`, vindo de um mixin
+de pesquisa do schema de entrada. Com ele, a base adiciona a coluna
+`termo_busca`, que todo `Output` tem. O nome do parâmetro no site fica
+só no `_set_query_base` (ex.: NYT recebe `pesquisa` e envia `q` à API).
+Nome antigo de fonte já publicada vai em `aliases_deprecados`.
 
 ### Encoding
 

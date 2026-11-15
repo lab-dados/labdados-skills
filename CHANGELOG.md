@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.11] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.7): a skill nao ensinava `schema_entrada`, `schema_saida` nem `colunas`, que o `CLAUDE.md` do raspe exige de toda fonte nova, e os templates geravam fonte sem validacao de entrada. Agora a `SKILL.md` traz o template dos schemas (etapa 4.0), os templates HTTP e Playwright declaram os dois schemas, usam `self.colunas` e leem `pesquisa`, e a fonte e registrada em `ESPERADOS` de `tests/schemas/test_schema_coverage.py`. Os testes de contrato conferem as colunas por igualdade (`list(df.columns) == Output<Fonte>.colunas()`, tambem no no_results), como no `CLAUDE.md` do raspe, e nao mais por subconjunto. A `raspe-architecture.md` ganha a secao "Schemas" e descreve o pipeline atual do `PlaywrightScraper` (o `_raspar_async` nao existe mais), com as esperas de `page_load_wait`, o DataFrame vazio com `colunas` quando ha zero paginas e a limpeza da pasta de download com `debug=False`. A Etapa 5 dizia que o `mapping` de `scraper()` era convencao so das fontes HTTP; hoje o raspe reprova fonte, HTTP ou Playwright, que falte no `_MAPPING` ou no `raspe/scrapers/__init__.py`, e a skill passa a pedir os dois.
+
 ## [1.18.10] - 2026-11-15
 
 Corrigido:

@@ -77,11 +77,12 @@ import pytest
 import responses
 from responses import matchers, registries
 
+from raspe.schemas.{fonte} import Output{Fonte}
 from raspe.scrapers.{fonte} import Scraper{Fonte}
 from tests._helpers import load_sample_bytes
 
 API_URL = "{endpoint exato do scraper}"
-COLUNAS_OBRIGATORIAS = {"titulo", "link", "data"}  # ajustar
+COLUNAS = Output{Fonte}.colunas()
 
 
 @pytest.fixture
@@ -123,8 +124,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="economia")
 
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
-        assert "termo_busca" in df.columns
+        assert list(df.columns) == COLUNAS
         assert (df["termo_busca"] == "economia").all()
         # Soma do parse das duas páginas — ajustar ao conteúdo dos samples
 
@@ -145,7 +145,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="pobreza")
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
@@ -159,6 +159,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+        assert list(df.columns) == COLUNAS
 ```
 
 ## Cenários mínimos
@@ -167,7 +168,7 @@ class TestRasparContract:
 |---|---|---|
 | Paginação típica | `page_01.html` + `page_02.html` | Verifica `_set_query_base`, `_find_n_pags`, paginação automática, parsing |
 | Página única | `single_page.html` | Caminho de saída quando só tem 1 página |
-| Zero resultados | `no_results.html` | Caminho do `_find_n_pags = 0`; assertiva `df.empty` |
+| Zero resultados | `no_results.html` | Caminho do `_find_n_pags = 0`; `df.empty` com as colunas do schema |
 
 Os três cenários são o mínimo por método público exigido pelo
 `CLAUDE.md` do raspe.
@@ -185,8 +186,8 @@ Os três cenários são o mínimo por método público exigido pelo
   `responses>=0.26.1`.** O piso do raspe é `responses>=0.25.0`, e em
   0.25.x ou 0.26.0 o kwarg levanta `TypeError`. Se usar esse matcher,
   suba o piso no `pyproject.toml` do raspe.
-- **Schema por subconjunto**: `COLUNAS_OBRIGATORIAS <= set(df.columns)`,
-  nunca igualdade.
+- **Colunas por igualdade**: `list(df.columns) == Output{Fonte}.colunas()`,
+  também no no_results.
 - **Sem `@pytest.mark.integration`** no contrato, e sem dependência de
   rede, relógio ou TLS real. Adapter custom (ex.: SSL desabilitado):
   testar só a configuração (`isinstance`).
@@ -238,10 +239,12 @@ tests/<fonte>/
 import pytest
 
 from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
+from raspe.schemas.{fonte} import Output{Fonte}
 from raspe.scrapers.{fonte} import Scraper{Fonte}
 from tests._helpers import load_sample_bytes
 
-COLUNAS_OBRIGATORIAS = {"titulo", "link", "data"}  # ajustar
+# _parse_page devolve as colunas da fonte; termo_busca entra depois, no _raspar.
+COLUNAS_DA_FONTE = Output{Fonte}.colunas_da_fonte()
 
 
 @pytest.fixture
@@ -269,18 +272,29 @@ class TestParsePage:
         sample.write_bytes(load_sample_bytes("{fonte}", "parse/typical.html"))
         df = scraper._parse_page(str(sample))
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS_DA_FONTE
 
     def test_no_results(self, scraper, tmp_path):
         sample = tmp_path / "page.html"
         sample.write_bytes(load_sample_bytes("{fonte}", "parse/no_results.html"))
-        assert scraper._parse_page(str(sample)).empty
+        df = scraper._parse_page(str(sample))
+        assert df.empty
+        assert list(df.columns) == COLUNAS_DA_FONTE
 ```
 
 Os scrapers Playwright concretos ficam no denominador da cobertura; só
 a base `playwright_scraper.py` é excluída (`[tool.coverage.run] omit`).
 Por isso o `test_config.py` precisa exercitar o construtor e o
 `_parse_page` da fonte nova.
+
+## Registro do schema (`tests/schemas/`)
+
+`tests/schemas/` confere todo raspador com schema. Fonte nova entra em
+`ESPERADOS` de `tests/schemas/test_schema_coverage.py`: copie a linha de
+uma fonte análoga (`ScraperIpea` para HTTP, `ScraperNYT` para JSON,
+`ScraperSaudeLegis` para Playwright), trocando os nomes, e importe as
+três classes no topo do arquivo. As docstrings do arquivo explicam os
+campos de `Registro`.
 
 ## Não testar
 
@@ -302,7 +316,7 @@ antes do PR, a suíte completa, que é onde o gate vale:
 
 ```bash
 cd <RASPE_REPO>
-pytest tests/{fonte}/ -v --no-cov
+pytest tests/{fonte}/ tests/schemas/ -v --no-cov
 pytest
 ```
 
