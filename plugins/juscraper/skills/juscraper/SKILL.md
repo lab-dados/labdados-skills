@@ -1,6 +1,6 @@
 ---
 name: juscraper
-description: "Usar em qualquer coleta de dados de tribunal brasileiro, mesmo sem citar \"juscraper\": processo por número CNJ, jurisprudência, acórdão, DJe e comunicações processuais. Tribunais: TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ, TRF1, TRF3, TRF5, TRF6 e STF; agregadores Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao (TST e TRTs). Para escrever raspador novo, usar a juscraper-builder."
+description: "Usar quando pedirem dados de tribunal brasileiro, mesmo sem citar \"juscraper\": processo por número CNJ, jurisprudência, acórdão, DJe e comunicações processuais. Tribunais: TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ, TRF1, TRF3, TRF5, TRF6 e STF; agregadores Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao (TST e TRTs). Não confundir com juscraper-builder (escrever raspador novo)."
 ---
 
 # JusScraper Skill

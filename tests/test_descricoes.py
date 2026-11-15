@@ -5,12 +5,18 @@ entre as duas sem critério.
 """
 
 import functools
+import importlib.util
 import re
 from pathlib import Path
 
 import pytest
 
 RAIZ = Path(__file__).resolve().parents[1]
+_spec = importlib.util.spec_from_file_location("cobertura_juscraper", RAIZ / "scripts" / "cobertura_juscraper.py")
+assert _spec is not None
+assert _spec.loader is not None
+cobertura_juscraper = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(cobertura_juscraper)
 
 IRMAS = {
     "juscraper": ["juscraper-builder"],
@@ -27,15 +33,13 @@ IRMAS = {
 @functools.cache
 def _description(skill: str) -> str:
     (skill_md,) = RAIZ.glob(f"plugins/*/skills/{skill}/SKILL.md")
-    frontmatter = skill_md.read_text(encoding="utf-8").split("---")[1]
-    (linha,) = [linha for linha in frontmatter.splitlines() if linha.startswith("description:")]
-    return linha
+    return cobertura_juscraper.descricao(skill_md.read_text(encoding="utf-8"))
 
 
 @pytest.mark.parametrize(("skill", "irma"), [(s, i) for s, irmas in IRMAS.items() for i in irmas])
 def test_description_nomeia_a_irma(skill, irma):
     # Só conta o nome depois do aviso: "raspe" também é verbo ("colete, raspe ou baixe").
-    aviso = re.search(r"(?:Não confundir com|Do not confuse with|usar a) (.*)", _description(skill))
+    aviso = re.search(r"(?:Não confundir com|Do not confuse with) (.*)", _description(skill))
     assert aviso, f"a description de {skill} não avisa de nenhuma irmã"
     assert re.search(rf"(?<![\w-]){re.escape(irma)}(?![\w-])", aviso.group(1)), (
         f"a description de {skill} não diz quando usar {irma} no lugar dela"
