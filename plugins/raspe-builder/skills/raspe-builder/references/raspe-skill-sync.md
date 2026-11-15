@@ -163,7 +163,7 @@ raspe.{fonte}().raspar(
 | `titulo` | str | ... |
 | `link` | str | URL absoluta para o item |
 | ... | ... | ... |
-| `termo_busca` | str | Adicionado automaticamente pelo BaseScraper |
+| `termo_busca` | str | Adicionado automaticamente pela base |
 
 ## Exemplos
 

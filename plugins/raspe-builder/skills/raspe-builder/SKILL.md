@@ -429,7 +429,7 @@ Regras obrigatórias Playwright:
 - `_parse_page` é sync (não `async`); ele lê o arquivo HTML salvo em disco
   por `_salvar_html_pagina`.
 - O kwarg de busca tem que ser nomeado (`termo` / `pesquisa` / `assunto`)
-  para que o `BaseScraper` adicione a coluna `termo_busca` no DataFrame
+  para que o `PlaywrightScraper` adicione a coluna `termo_busca` no DataFrame
   final. Verifique a lista em `_raspar_async` do `PlaywrightScraper`:
   `['assunto', 'pesquisa', 'termo', 'q', 'query']`.
 - Usar `self._page` direto (atributo `Optional`, `None` até a
@@ -517,7 +517,7 @@ Playwright segue o caminho descrito no fim desta etapa.
        @responses.activate(registry=registries.OrderedRegistry)
        def test_typical_paginacao(self, scraper, mocker):
            mocker.patch("time.sleep")
-           # BaseScraper.raspar faz 1 request para _find_n_pags + 1 por
+           # BaseScraper._raspar faz 1 request para _find_n_pags + 1 por
            # pagina. Para 2 paginas → 3 responses.add no total.
            responses.add(responses.GET, API_URL,
                body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
@@ -608,8 +608,8 @@ Se nada disso passar, então Playwright.
 
 ### Nome do parâmetro de busca
 
-A biblioteca adiciona a coluna `termo_busca` automaticamente apenas se
-o kwarg de busca tiver um destes nomes:
+Na busca única, a biblioteca adiciona a coluna `termo_busca`
+automaticamente apenas se o kwarg de busca tiver um destes nomes:
 - HTTP: `pesquisa`, `termo`, `q`, `query`.
 - Playwright: `assunto`, `pesquisa`, `termo`, `q`, `query`.
 
