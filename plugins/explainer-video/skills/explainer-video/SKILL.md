@@ -112,12 +112,20 @@ Em seguida, **ofereça** upload no YouTube como não-listado. Não suba sem perm
 
 ## Antes de começar: instalação de dependências
 
-Sempre verifique e instale as dependências em uma única passada antes da Etapa 5:
+Sempre verifique e instale as dependências em uma única passada antes da Etapa 5. Com o [uv](https://docs.astral.sh/uv/), prefira-o ao pip, num ambiente fora do repo do app (o comando imprime o caminho criado):
+
+```bash
+VENV="$(mktemp -d)/venv" && uv venv "$VENV" && echo "$VENV"
+uv pip install --python "$VENV/bin/python" playwright edge-tts google-api-python-client google-auth-oauthlib
+"$VENV/bin/python" -m playwright install chromium
+# ffmpeg geralmente já está instalado; se não: apt-get install -y ffmpeg
+```
+
+Daí em diante, rode os scripts com `"$VENV/bin/python" scripts/...`, e os `pip install --break-system-packages` das references e do `upload_youtube.py` viram `uv pip install --python "$VENV/bin/python" ...`. Sem o uv, use o pip:
 
 ```bash
 pip install --break-system-packages playwright edge-tts google-api-python-client google-auth-oauthlib
 python -m playwright install chromium
-# ffmpeg geralmente já está instalado; se não: apt-get install -y ffmpeg
 ```
 
 Faça isso em background enquanto escreve o roteiro (Etapa 4) para economizar tempo.

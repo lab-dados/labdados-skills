@@ -60,6 +60,10 @@ that does it for you):
    new skill, a row in the claude.ai zip table (`tests/test_empacotar_skills.py` fails without it).
 4. **`CHANGELOG.md`** — add an entry (Keep a Changelog format, semver).
 
+Skills that tell Claude to install a Python package with `pip install` also suggest uv
+(`uv add` in a project, `uv venv` + `uv pip install` outside one, `uv tool install` for a CLI),
+with pip as the fallback; `tests/test_instalacao.py` checks it.
+
 Versioning is [SemVer](https://semver.org/). Adding a new plugin = minor bump of
 `metadata.version`.
 

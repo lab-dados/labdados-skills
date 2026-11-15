@@ -25,9 +25,11 @@ Complete este checklist antes de qualquer chamada. Fonte a fonte, a instalação
 pip install git+https://github.com/bdcdo/raspe.git
 ```
 
-Python >= 3.10. Verifique com `python -c "import raspe; print(raspe.__version__)"`.
+Python >= 3.10. Verifique com `uv pip show raspe` (com uv) ou `python -c "import raspe; print(raspe.__version__)"`.
 
 Cobre: `presidencia`, `camara`, `senado`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
+
+Prefira o [uv](https://docs.astral.sh/uv/): `uv add git+https://github.com/bdcdo/raspe.git` num projeto com `pyproject.toml`, `uv venv` + `uv pip install git+https://github.com/bdcdo/raspe.git` fora dele; vale para todo `pip install` da skill e das references. O pacote fica no `.venv`: rode o Python e o `python -m playwright install chromium` com `uv run`. Sem o uv, sugira instalá-lo ou siga com o pip.
 
 ### 2. Instalação com navegador (3 fontes Playwright)
 
