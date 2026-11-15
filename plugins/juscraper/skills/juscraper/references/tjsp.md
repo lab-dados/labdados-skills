@@ -35,8 +35,7 @@ Construtor com `sleep_time=0.5` como default. Para descobrir IDs de filtros ante
 ### `method` em `cpopg`/`cposg`
 
 ```python
-tjsp.cpopg(id_cnj, method='html')  # padrao: scraping HTML
-tjsp.cpopg(id_cnj, method='api')   # via API REST do TJSP
+tjsp.cpopg(id_cnj, method='html')  # padrao e unico que funciona
 ```
 
 Use `'html'`. A API do TJSP deixou de devolver processos em novembro de 2026:
@@ -51,9 +50,9 @@ Conferido ao vivo em 2026-11-15 com o 0.5.0 e com a `main` (`a2a3421`).
 - **`cpopg`** devolve `dict` com os DataFrames `basicos`, `partes`,
   `movimentacoes` e `peticoes_diversas`. `movimentacoes` vem vazia (o eSAJ
   passou a carregar as movimentacoes por AJAX, jtrecenti/juscraper#428) e
-  `basicos` nao traz a situacao do processo; a `main` corrige os dois. Para a
+  `basicos` nao traz a situacao do processo; a `main` corrige os dois (#476). Para a
   data da sentenca, use o `cjpg` (`data_disponibilizacao`). Rode um processo
-  por vez: a busca com lista de CNJs perde processos (#472, corrigido na `main`).
+  por vez: a busca com lista de CNJs perde processos (#472, corrigido na `main` pelo #473).
   Processo nao achado levanta `ValueError`.
 - **`cposg`** devolve um `DataFrame`, nao `dict`: uma linha por processo, com 18
   colunas (`processo`, `status`, `classe`, `assunto`, `orgao_julgador`,

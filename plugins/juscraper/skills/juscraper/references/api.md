@@ -195,7 +195,7 @@ df = tjsp.cposg(
 )
 ```
 
-**Retorna:** `pd.DataFrame` com uma linha por processo e 18 colunas (`processo`, `status`, `classe`, `assunto`, `orgao_julgador`, `relator`, `origem`; `movimentacoes`, `partes`, `decisoes`, `composicao` e `primeira_inst` como listas), nao `dict` como o `cpopg`. Variantes granulares: `cposg_download`, `cposg_parse`.
+**Retorna:** `pd.DataFrame` com uma linha por processo e 18 colunas (`processo`, `status`, `classe`, `assunto`, `orgao_julgador`, `relator`, `origem`; `movimentacoes`, `partes`, `decisoes`, `composicao` e `primeira_inst` como listas, entre outras), nao `dict` como o `cpopg`. Variantes granulares: `cposg_download`, `cposg_parse`.
 
 **No juscraper 0.5.0, o `cposg` do TJSP devolve DataFrame vazio, sem aviso, para todo processo** (o eSAJ passou a carregar as movimentacoes por AJAX). Corrigido na `main` (jtrecenti/juscraper#528, `[unreleased]`).
 

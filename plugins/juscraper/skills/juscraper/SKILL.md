@@ -76,7 +76,7 @@ Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependenc
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP e TJPE `[v0.5.0+]` (diretos), JusBR (qualquer tribunal), PDPJ |
 | Buscar jurisprudencia do STF (acordaos ou decisoes monocraticas) | `listar_decisoes(pesquisa)`; `contar_decisoes()` para total e facetas `[v0.4.0+]` | STF |
 | Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` `[v0.4.0+]` | TRF1, TRF3, TRF5, TRF6 |
-| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP; TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`) |
+| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`) |
 | Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
 | Baixar texto de documentos/pecas | `download_documents()`; `cpopg(download_pecas=True, diretorio=...)` `[v0.4.0+]` | JusBR; PDPJ `[v0.4.0+]`; TRF1/TRF3/TRF5 `[v0.4.0+]`; TJPE `[v0.5.0+]` |
 | Coletar comunicacoes/intimacoes publicadas no DJe | `listar_comunicacoes()` | ComunicaCNJ `[v0.3.0+]` |
@@ -164,7 +164,8 @@ Consulte primeiro se existe reference para o tribunal do estudo.
 
 **Tribunais ja documentados**:
 - `references/tjsp.md` — cobertura temporal, `cjpg` (1o grau; TJES e TJTO
-  tambem tem), parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`.
+  tambem tem), parametro `method`, retorno e limites de `cpopg`/`cposg` no
+  0.5.0, diferencas da `cjsg`.
 
 **Tribunais ainda nao validados**: a maioria dos demais. Nao assuma
 cobertura equivalente a TJSP — cada TJ tem calendario proprio de
@@ -372,7 +373,7 @@ Leia a referencia apropriada antes de gerar codigo:
   comunicacoes/DJe, contagem antes da coleta, ou download de pecas.
 
 - **`references/tjsp.md`** — Especificidades do TJSP: `cjpg` (1o grau; TJES e TJTO tambem tem),
-  parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`, `pesquisa=""`,
+  parametro `method`, retorno e limites de `cpopg`/`cposg` no 0.5.0, diferencas da `cjsg`, `pesquisa=""`,
   `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
 
 - **`references/decisoes-e-processos.md`** — Juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ.
@@ -428,5 +429,5 @@ O total de tokens por linha e `_input_tokens + _output_tokens`; a coluna
 ja esta contido em `_output_tokens` (nao somar de novo).
 
 O mesmo vale para o `cpopg` do TJSP, que retorna um dict de DataFrames —
-extraia o DataFrame relevante (ex: `dados["movimentacoes"]`) e confirme
-qual coluna contem o texto antes de passar.
+extraia o DataFrame relevante (ex: `dados["movimentacoes"]`, vazio no 0.5.0)
+e confirme qual coluna contem o texto antes de passar.

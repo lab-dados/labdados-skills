@@ -8,7 +8,7 @@ segue [Semantic Versioning](https://semver.org/).
 
 Corrigido:
 
-- `juscraper` (plugin 1.5.1): a `SKILL.md`, a `api.md` e a `tribunais.md` diziam que o `cposg` do TJSP devolve `dict`; devolve `DataFrame` com uma linha por processo, e no juscraper 0.5.0 volta vazio, sem aviso, para todo processo (o eSAJ passou a carregar as movimentacoes por AJAX; corrigido na `main` da biblioteca pelo jtrecenti/juscraper#528). A `tjsp.md` ganha a secao "Retorno e limites de `cpopg`/`cposg` no juscraper 0.5.0", com os limites do `cpopg` que so estavam na `decisoes-e-processos.md` (movimentacoes vazias, sem situacao do processo, lista de CNJs que perde processos), e a `api.md` deixa de anunciar `id_cnj` como lista sem ressalva. `method='api'` sai como opcao nas duas: a API do TJSP deixou de devolver processos. Tudo conferido ao vivo com o 0.5.0 e com a `main`.
+- `juscraper` (plugin 1.5.1): a `SKILL.md`, a `api.md` e a `tribunais.md` diziam que o `cposg` do TJSP devolve `dict`; devolve `DataFrame` com uma linha por processo, e no juscraper 0.5.0 volta vazio, sem aviso, para todo processo (o eSAJ passou a carregar as movimentacoes por AJAX; corrigido na `main` da biblioteca pelo jtrecenti/juscraper#528). A `tjsp.md` ganha a secao "Retorno e limites de `cpopg`/`cposg` no juscraper 0.5.0", com os limites do `cpopg` que so estavam na `decisoes-e-processos.md` (movimentacoes vazias, sem situacao do processo, lista de CNJs que perde processos), e a `api.md` deixa de anunciar `id_cnj` do `cpopg` como lista sem ressalva. `method='api'` sai como opcao nas duas: a API do TJSP deixou de devolver processos. Tudo conferido ao vivo com o 0.5.0 e com a `main`.
 
 ## [1.18.0] - 2026-11-15
 
