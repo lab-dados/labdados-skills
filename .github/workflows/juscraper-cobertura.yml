@@ -3,8 +3,9 @@ name: juscraper-cobertura
 # Confere a cobertura descrita na skill juscraper contra o codigo da main do
 # juscraper. Em PR, reprova a mudanca que deixa a skill fora de sincronia. No
 # agendamento semanal, pega o caso inverso: o juscraper ganhou ou perdeu um
-# metodo e a skill nao acompanhou; ai abre (ou comenta) uma issue aqui. Quando
-# uma execucao na main volta a passar, a issue aberta e fechada sozinha.
+# metodo e a skill nao acompanhou; ai abre uma issue aqui (ou comenta na aberta,
+# ou reabre a fechada). Quando uma execucao na main volta a passar, a issue
+# aberta e fechada sozinha.
 #
 # O `gerar` e separado do `conferir` porque executa codigo de outro repositorio
 # (jtrecenti/juscraper). Ele roda sem permissao de escrita e sem credencial
@@ -30,6 +31,14 @@ on:
   schedule:
     - cron: "0 11 * * 1" # segunda, 08h em Brasilia
   workflow_dispatch:
+
+# Uma execucao por vez em cada ref, sem cancelar a que esta rodando. Sem isso,
+# um push na main cujo `gerar` leu o juscraper antes de uma mudanca podia
+# terminar depois de um agendamento que reprovou, e o `fechar` dele fechava a
+# issue recem-aberta pelo `avisar`.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -98,7 +107,9 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Abrir ou comentar a issue
+      # Uma issue so para o problema: comenta na aberta; se nao ha, reabre a
+      # fechada mais recente de mesmo titulo; so cria quando nunca houve.
+      - name: Abrir, reabrir ou comentar a issue
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -111,13 +122,15 @@ jobs:
               python scripts/cobertura_juscraper.py /tmp/cobertura.json
 
           Depois revise a description da SKILL.md e as tags de versao das references. Se o job que falhou foi o gerar, o problema esta no juscraper (main quebrada ou scripts/tabela_cobertura.py ausente)."
-          numero=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number,title \
-            --jq 'first(.[] | select(.title == env.TITULO)) | .number')
-          if [ -n "$numero" ]; then
-            gh issue comment "$numero" --body "$corpo"
-          else
-            gh issue create --title "$TITULO" --body "$corpo"
-          fi
+          achado=$(gh issue list --state all --search "in:title \"$TITULO\" sort:created-desc" \
+            --json number,title,state \
+            --jq '[.[] | select(.title == env.TITULO)] | (map(select(.state == "OPEN")) + .) | first(.[]) | "\(.number) \(.state)"')
+          read -r numero estado <<< "$achado"
+          case "$estado" in
+            OPEN) gh issue comment "$numero" --body "$corpo" ;;
+            CLOSED) gh issue reopen "$numero" --comment "$corpo" ;;
+            *) gh issue create --title "$TITULO" --body "$corpo" ;;
+          esac
 
   # Fecha a issue do `avisar` quando a conferencia volta a passar em qualquer
   # execucao na main. A busca por titulo exato tem de ser a mesma do `avisar`.
