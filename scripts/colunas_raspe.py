@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from itertools import takewhile
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -36,14 +37,21 @@ _FONTE = re.compile(r"`raspe\.(\w+)\(\)`")
 def ler_tabelas(documento: str) -> Tabelas:
     """Tabela de cada fonte do ``docs/colunas.md``, na ordem do documento.
 
-    A secao com tabela cita as fontes no titulo; a secao sem tabela, no corpo.
+    A secao com tabela cita as fontes no titulo e so a primeira tabela conta; a
+    secao sem tabela cita no corpo as fontes sem schema, sem apagar a tabela de
+    uma fonte ja lida.
     """
     tabelas: Tabelas = {}
     for secao in re.split(r"^## ", documento, flags=re.MULTILINE)[1:]:
         titulo, _, corpo = secao.partition("\n")
-        tabela = [linha for linha in corpo.splitlines() if linha.startswith("|")]
+        linhas = corpo.splitlines()
+        inicio = next((i for i, linha in enumerate(linhas) if linha.startswith("|")), len(linhas))
+        tabela = list(takewhile(lambda linha: linha.startswith("|"), linhas[inicio:]))
         for fonte in _FONTE.findall(titulo if tabela else corpo):
-            tabelas[fonte] = tabela
+            if tabela:
+                tabelas[fonte] = tabela
+            else:
+                tabelas.setdefault(fonte, [])
     if not any(tabelas.values()):
         raise SystemExit("docs/colunas.md sem secao com tabela de colunas: o formato do documento mudou?")
     return tabelas
@@ -100,17 +108,20 @@ def main(argumentos: list[str] | None = None) -> int:
     gerados = blocos(ler_tabelas(opcoes.colunas.read_text(encoding="utf-8")))
 
     erros = []
+    # Tudo e conferido antes de gravar: marcador quebrado num arquivo nao deixa os outros meio atualizados.
+    atualizados: dict[Path, str] = {}
     for caminho, (nome, conteudo) in gerados.items():
         if not caminho.exists():
             erros.append(f"{caminho.relative_to(RAIZ)}: falta a reference da fonte (veja a raspe-skill-sync.md da raspe-builder)")
             continue
         texto = caminho.read_text(encoding="utf-8")
         atualizado = substituir(texto, nome, conteudo, caminho)
-        if atualizado == texto:
-            continue
-        if opcoes.check:
-            erros.append(f"{caminho.relative_to(RAIZ)}: bloco gerado desatualizado")
-        else:
+        if atualizado != texto:
+            atualizados[caminho] = atualizado
+    if opcoes.check:
+        erros += [f"{caminho.relative_to(RAIZ)}: bloco gerado desatualizado" for caminho in atualizados]
+    else:
+        for caminho, atualizado in atualizados.items():
             caminho.write_text(atualizado, encoding="utf-8")
     # Bloco de fonte que saiu do documento (ou perdeu o schema) ficaria congelado sem aviso.
     inicio_tabela = marcadores("tabela")[0]

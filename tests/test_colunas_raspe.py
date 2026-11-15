@@ -43,6 +43,20 @@ def test_ler_tabelas():
     assert tabelas["camara"] == tabelas["senado"] == []
 
 
+def test_secao_sem_tabela_nao_apaga_tabela_lida():
+    documento = DOCUMENTO + "\n## Observações\n\n`raspe.cfm()` aceita filtros por UF.\n"
+    assert colunas_raspe.ler_tabelas(documento)["cfm"] == colunas_raspe.ler_tabelas(DOCUMENTO)["cfm"]
+
+
+def test_so_a_primeira_tabela_da_secao_conta():
+    documento = DOCUMENTO.replace(
+        "| `tipo` | texto | Tipo da norma. | Resolução |\n| `termo_busca` | texto | Termo de busca. | natjus |\n",
+        "| `tipo` | texto | Tipo da norma. | Resolução |\n| `termo_busca` | texto | Termo de busca. | natjus |\n"
+        "\nValores de `tipo`:\n\n| Valor |\n| --- |\n| Parecer |\n",
+    )
+    assert colunas_raspe.colunas(colunas_raspe.ler_tabelas(documento)["cfm"]) == ["`tipo`", "`termo_busca`"]
+
+
 def test_documento_sem_tabela_falha():
     with pytest.raises(SystemExit, match="formato"):
         colunas_raspe.ler_tabelas("# Colunas\n\n## `raspe.cfm()`\n\nSem tabela.\n")
@@ -103,8 +117,11 @@ def test_bloco_de_fonte_fora_do_documento(tmp_path, monkeypatch, capsys):
     assert "capes.md: tem bloco de colunas" in capsys.readouterr().err
 
 
-def test_marcadores_ausentes(tmp_path, monkeypatch):
+def test_marcadores_ausentes_nao_grava_nada(tmp_path, monkeypatch):
     documento = _preparar(tmp_path, monkeypatch)
     (tmp_path / "cfm.md").write_text("sem marcadores\n", encoding="utf-8")
+    antes = (tmp_path / "fontes.md").read_text(encoding="utf-8")
     with pytest.raises(SystemExit, match="marcadores"):
         colunas_raspe.main([documento])
+    # fontes.md vem antes de cfm.md e ficaria gravado se a escrita fosse arquivo a arquivo.
+    assert (tmp_path / "fontes.md").read_text(encoding="utf-8") == antes

@@ -65,10 +65,12 @@ df = scraper.raspar(pesquisa="dispositivo médico")
 print(f"Total coletado: {len(df)}")
 print(df["situacao"].value_counts(dropna=False))
 
-# Separa vigentes (a coluna 'situacao' traz o rótulo do portal, como
-# 'Vigente' ou 'Revogado'; confira os valores no value_counts acima)
-vigentes = df[df["situacao"] == "Vigente"].copy()
-revogados = df[df["situacao"].str.startswith("Revogado", na=False)].copy()
+# Separa os revogados do resto. A coluna 'situacao' traz o rótulo do portal,
+# que varia ('Vigente', 'Vigente com Alterações', 'Revogado', 'Revogado
+# Tacitamente'...): confira os valores no value_counts acima antes de filtrar.
+revogado = df["situacao"].str.startswith("Revogado", na=False)
+vigentes = df[~revogado].copy()
+revogados = df[revogado].copy()
 
 # Export
 with pd.ExcelWriter("anvisa_dispositivo_medico.xlsx") as w:

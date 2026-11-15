@@ -51,11 +51,11 @@ Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abr
 - **Cloudflare**: o domínio `datalegis.net` tem bot detection. `playwright-stealth` é aplicado automaticamente pela classe base `ScraperDatalegis`. Se a stealth falhar (IP bloqueado, padrão de comportamento detectado), aparece `BrowserError: Timeout`. Veja `references/playwright.md` para diagnóstico.
 - **Paginação via SELECT dropdown**: a navegação usa um `<select id="fieldPage">` com `onchange="openPage()"`. Você não interage com isso — só saiba que aparece em logs.
 - **Limite de 100 páginas** (`_max_pages=100`). Coleta completa de um termo genérico pode atingir esse teto; nesse caso sai um `UserWarning`.
-- **`situacao` traz o rótulo do portal** (por exemplo, `Vigente` ou `Revogado`) e só vem nula quando o ato não tem rótulo. Confira os valores antes de filtrar:
+- **`situacao` traz o rótulo do portal** (por exemplo, `Vigente`, `Vigente com Alterações`, `Alterador` ou `Revogado`) e só vem nula quando o ato não tem rótulo. Os rótulos variam: confira os valores antes de filtrar, em vez de comparar com um rótulo só:
 
   ```python
   print(df["situacao"].value_counts(dropna=False))
-  vigentes = df[df["situacao"] == "Vigente"]
+  revogados = df[df["situacao"].str.startswith("Revogado", na=False)]
   ```
 
 - Tempo típico: ~15-30s por página. 100 páginas = ~30-60 min.

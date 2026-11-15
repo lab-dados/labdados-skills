@@ -191,7 +191,10 @@ df = raspe.{fonte}().raspar(...)
 
 Deixe os dois marcadores vazios e, em `<MARKETPLACE_ROOT>`, preencha a
 tabela da fonte e a matriz da `fontes.md` com o `docs/colunas.md`
-regerado na Etapa 7 do `SKILL.md`, item 1:
+regerado na Etapa 7 do `SKILL.md`, item 1. O script reescreve os blocos
+de todas as fontes: com a branch do raspe atrasada em relação à `main`,
+ele desfaria mudanças de outras fontes, então atualize a branch antes de
+regerar o documento.
 
 ```bash
 python scripts/colunas_raspe.py <raspe>/docs/colunas.md   # <raspe>: o clone do raspe

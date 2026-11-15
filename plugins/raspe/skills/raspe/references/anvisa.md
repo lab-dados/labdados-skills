@@ -53,7 +53,7 @@ Iguais aos de `raspe.ans()`:
 
 - **Cloudflare + stealth**: igual à ANS. Sintomas de bloqueio: timeout em cima do campo de busca, página travada em challenge. Veja `references/playwright.md`.
 - **Paginação via SELECT dropdown** (estratégia `SELECT_DROPDOWN`, `_max_pages=100`).
-- **`situacao` traz o rótulo do portal** (`Vigente`, `Revogado` etc.) e só vem nula quando o ato não tem rótulo. Confira com `df["situacao"].value_counts(dropna=False)` antes de filtrar.
+- **`situacao` traz o rótulo do portal** (`Vigente`, `Vigente com Alterações`, `Alterador`, `Revogado` etc.) e só vem nula quando o ato não tem rótulo. Os rótulos variam: confira com `df["situacao"].value_counts(dropna=False)` antes de filtrar.
 - Tempo típico: 15-30s por página.
 
 ## Exemplo
@@ -64,8 +64,12 @@ import raspe
 df = raspe.anvisa().raspar(pesquisa="dispositivo médico")
 print(df.columns.tolist())
 
-# Concentrar em vigentes (confira antes os rótulos com value_counts)
-vigentes = df[df["situacao"] == "Vigente"]
+# Rótulos de situação, antes de filtrar
+print(df["situacao"].value_counts(dropna=False))
+
+# Separar os revogados ("Revogado", "Revogado Tacitamente"...) do resto
+revogado = df["situacao"].str.startswith("Revogado", na=False)
+vigentes = df[~revogado]
 print(f"{len(vigentes)} atos vigentes")
 
 # Exportar

@@ -585,6 +585,11 @@ seção "Registro do schema"). Sem isso, a suíte reprova.
    ```bash
    python -c "import raspe; df = raspe.{fonte}().raspar(pesquisa='X', paginas=range(1, 2)); print(df.shape); print(df.head())"
    ```
+   Em fonte Playwright, cujo schema recusa `paginas` com `ValidationError`,
+   limite pelo teto interno (o `UserWarning` de teto atingido é esperado):
+   ```bash
+   python -c "import raspe; s = raspe.{fonte}(); s._max_pages = 1; df = s.raspar(pesquisa='X'); print(df.shape); print(df.head())"
+   ```
 
 3. Atualizar `CHANGELOG.md` do raspe: uma linha em `### Adicionado`,
    sob `## [Não lançado]`, em pt-BR e no particípio ("Adicionado scraper

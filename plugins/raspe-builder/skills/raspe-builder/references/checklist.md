@@ -110,6 +110,8 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
   ```bash
   python -c "import raspe; df = raspe.<fonte>().raspar(pesquisa='X', paginas=range(1, 2)); print(df.shape); print(df.columns.tolist())"
   ```
+  Em fonte Playwright, sem `paginas` (o schema o recusa):
+  `s = raspe.<fonte>(); s._max_pages = 1; df = s.raspar(pesquisa='X')`.
   Retorna DataFrame não-vazio com colunas esperadas e coluna
   `termo_busca`.
 
