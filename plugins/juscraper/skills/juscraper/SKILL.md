@@ -20,9 +20,9 @@ jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do
 - Repositorio: https://github.com/jtrecenti/juscraper
 - Documentacao: https://jtrecenti.github.io/juscraper/
 
-Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e
-`baixar_sentenca`/`baixar_sentencas` (TJSP) da cobertura abaixo sao `[unreleased]`,
-verificados no snapshot `1b657e7` da `main`; nao fazem parte da 0.5.0 do PyPI.
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP),
+`baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 da cobertura abaixo sao
+`[unreleased]`, verificados no snapshot `30eb73c` da `main`; nao fazem parte da 0.5.0 do PyPI.
 
 ## Antes de comecar
 
@@ -78,7 +78,7 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP e TJPE `[v0.5.0+]` (diretos), JusBR (qualquer tribunal), PDPJ |
 | Buscar jurisprudencia do STF (acordaos ou decisoes monocraticas) | `listar_decisoes(pesquisa)`; `contar_decisoes()` para total e facetas `[v0.4.0+]` | STF |
 | Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` `[v0.4.0+]` | TRF1, TRF3, TRF5, TRF6 |
-| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`) |
+| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`); TRF3 `[unreleased]` |
 | Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
 | Baixar texto de documentos/pecas | `download_documents()`; `cpopg(download_pecas=True, diretorio=...)` `[v0.4.0+]` | JusBR; PDPJ `[v0.4.0+]`; TRF1/TRF3/TRF5 `[v0.4.0+]`; TJPE `[v0.5.0+]` |
 | Coletar comunicacoes/intimacoes publicadas no DJe | `listar_comunicacoes()` | ComunicaCNJ `[v0.3.0+]` |
@@ -107,9 +107,9 @@ Lista gerada do codigo da `main` do juscraper. Na duvida entre esta lista e algu
 - `cjsg`: TJAC, TJAL, TJAM, TJAP, TJBA, TJCE, TJDFT, TJES, TJGO, TJMG, TJMS, TJMT, TJPA, TJPB, TJPE, TJPI, TJPR, TJRJ, TJRN, TJRO, TJRR, TJRS, TJSC, TJSP, TJTO, TRF3
 - `cjpg`: TJES, TJSP, TJTO
 - `cpopg`: TJPE, TJSP, TRF1, TRF3, TRF5, TRF6, JusBR, PDPJ
-- `cposg`: TJMG, TJSP
-- `baixar_acordao`: TJAC, TJSP
-- `baixar_acordaos`: TJAC, TJSP
+- `cposg`: TJMG, TJSP, TRF3
+- `baixar_acordao`: TJAC, TJCE, TJMS, TJSP
+- `baixar_acordaos`: TJAC, TJCE, TJMS, TJSP
 - `baixar_sentenca`: TJSP
 - `baixar_sentencas`: TJSP
 - `cjsg_ementa`: TJTO

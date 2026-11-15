@@ -6,7 +6,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 
 ### Tribunais com scraper direto (30)
 
-Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/`baixar_sentencas` (TJSP) sao `[unreleased]`: cobertura conferida no snapshot `1b657e7` da `main`, ainda fora da 0.5.0 do PyPI.
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 sao `[unreleased]`: cobertura conferida no snapshot `30eb73c` da `main`, ainda fora da 0.5.0 do PyPI.
 
 <!-- cobertura-juscraper:tribunais:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
 
@@ -18,12 +18,12 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/
 | **TJAM** | sim | - | - | - | - |
 | **TJAP** | sim | - | - | - | - |
 | **TJBA** | sim | - | - | - | - |
-| **TJCE** | sim | - | - | - | - |
+| **TJCE** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
 | **TJDFT** | sim | - | - | - | - |
 | **TJES** | sim | sim | - | - | - |
 | **TJGO** | sim | - | - | - | - |
 | **TJMG** | sim | - | - | sim | - |
-| **TJMS** | sim | - | - | - | - |
+| **TJMS** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
 | **TJMT** | sim | - | - | - | - |
 | **TJPA** | sim | - | - | - | - |
 | **TJPB** | sim | - | - | - | - |
@@ -39,7 +39,7 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/
 | **TJSP** | sim | sim | sim | sim | `baixar_acordao`, `baixar_acordaos`, `baixar_sentenca`, `baixar_sentencas` |
 | **TJTO** | sim | sim | - | - | `cjsg_ementa` |
 | **TRF1** | - | - | sim | - | - |
-| **TRF3** | sim | - | sim | - | - |
+| **TRF3** | sim | - | sim | sim | - |
 | **TRF5** | - | - | sim | - | - |
 | **TRF6** | - | - | sim | - | - |
 
