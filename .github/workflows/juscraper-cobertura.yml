@@ -3,7 +3,8 @@ name: juscraper-cobertura
 # Confere a cobertura descrita na skill juscraper contra o codigo da main do
 # juscraper. Em PR, reprova a mudanca que deixa a skill fora de sincronia. No
 # agendamento semanal, pega o caso inverso: o juscraper ganhou ou perdeu um
-# metodo e a skill nao acompanhou; ai abre (ou comenta) uma issue aqui.
+# metodo e a skill nao acompanhou; ai abre (ou comenta) uma issue aqui. Quando
+# uma execucao na main volta a passar, a issue aberta e fechada sozinha.
 #
 # Sao dois jobs porque o primeiro executa codigo de outro repositorio
 # (jtrecenti/juscraper). Ele roda sem permissao de escrita e sem credencial
@@ -31,6 +32,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  TITULO: "juscraper-cobertura reprovou no agendamento"
 
 jobs:
   gerar:
@@ -97,7 +101,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TITULO: "juscraper-cobertura reprovou no agendamento"
           EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           corpo="A execucao agendada de juscraper-cobertura reprovou: $EXECUCAO
@@ -114,3 +117,27 @@ jobs:
           else
             gh issue create --title "$TITULO" --body "$corpo"
           fi
+
+  # Fecha a issue aberta pelo `avisar` quando a skill volta a ficar em sincronia.
+  # Vale qualquer execucao na main (push, agendamento ou manual), porque todas
+  # conferem contra a main do juscraper; em PR nao, porque a main pode seguir
+  # fora de sincronia. Compara o titulo exato para nao fechar issue parecida.
+  fechar:
+    needs: conferir
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Fechar a issue aberta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          numeros=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number,title \
+            --jq '.[] | select(.title == env.TITULO) | .number')
+          for numero in $numeros; do
+            gh issue close "$numero" --reason completed \
+              --comment "A skill voltou a ficar em sincronia com o juscraper: $EXECUCAO"
+          done
