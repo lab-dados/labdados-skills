@@ -80,7 +80,6 @@ def {fonte}(**kwargs):
     Requer instalação das dependências: pip install raspe[browser]
 
     Args:
-        termo: Termo de busca.
         headless: Se True, executa em modo headless (default: True).
         debug: Se True, mantém arquivos baixados (default: True).
 
@@ -92,7 +91,7 @@ def {fonte}(**kwargs):
 
     Exemplo:
         >>> import raspe
-        >>> df = raspe.{fonte}().raspar(termo="X")
+        >>> df = raspe.{fonte}().raspar(pesquisa="X")
     """
     from .scrapers.{fonte} import Scraper{Fonte}
     return Scraper{Fonte}(**kwargs)
@@ -165,32 +164,33 @@ python -c "import raspe; raspe.{fonte}"  # acessar a função (não chama)
 python -c "import raspe; raspe.{fonte}()"  # instanciar
 # Também passa sem playwright: o import do driver é preguiçoso.
 
-python -c "import raspe; raspe.{fonte}().raspar(termo='teste')"
+python -c "import raspe; raspe.{fonte}().raspar(pesquisa='teste')"
 # Aqui deve levantar DriverNotInstalledError se não tiver playwright.
 ```
 
 ## Registro em `scraper_manager.py` e testes
 
-Para fontes HTTP, a convenção recente (a partir da CAPES; CFM, Folha e
-NYT não estão no `mapping`) é registrar também a classe no `mapping` da função
+Toda fonte, HTTP ou Playwright, entra no `_MAPPING` da função
 `scraper()` em `src/raspe/scraper_manager.py`, o que habilita
-`scraper("{FONTE}")` além de `raspe.{fonte}()`:
+`scraper("{FONTE}")` além de `raspe.{fonte}()`, e é reexportada em
+`src/raspe/scrapers/__init__.py` (import e `__all__`).
+`tests/test_scraper_manager.py` e `tests/test_scrapers_init.py`
+reprovam fonte que falte num dos dois.
 
 ```python
 from .scrapers.{fonte} import Scraper{Fonte}
 ...
-    mapping: dict[str, Type[BaseScraper]] = {
-        ...
-        "{FONTE}": Scraper{Fonte},
-    }
+_MAPPING: dict[str, Type[AbstractScraper]] = {
+    ...
+    "{FONTE}": Scraper{Fonte},
+}
 ```
 
 A chave vai em maiúsculas porque `scraper()` normaliza o nome com
 `.upper()`.
 
 Depois, acrescente o caso da factory em `tests/test_init.py`
-(`TestFactoriesHTTP` ou `TestFactoriesPlaywright`) e, se a fonte entrou
-no `mapping`, em `tests/test_scraper_manager.py`. A factory em
+(`TestFactoriesHTTP` ou `TestFactoriesPlaywright`). A factory em
 `src/raspe/__init__.py` entra no denominador do gate de cobertura
 (`fail_under = 80`), e são esses testes que a exercitam.
 

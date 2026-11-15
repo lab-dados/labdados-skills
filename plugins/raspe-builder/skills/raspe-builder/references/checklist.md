@@ -26,11 +26,17 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] `__init__` chama `super().__init__("<nome_buscador_em_minusculas>")`
 - [ ] Headers `User-Agent` realista (Firefox/Chrome) configurados via
   `self.session.headers.update({...})`
+- [ ] (HTTP) Sem o marcador de contagem, `_find_n_pags` devolve
+  `self._confirmar_busca_vazia(soup)`, nunca 0
 - [ ] Paginação configurada — `query_page_multiplier` e
   `query_page_increment` corretos para o tipo de paginação do site
-- [ ] `_parse_page` retorna `pd.DataFrame` com colunas consistentes
-  mesmo no caminho de erro (não levanta exceção, retorna DataFrame vazio
-  com `columns=[...]`)
+- [ ] (*) `schema_entrada` e `schema_saida` declarados, com os schemas em
+  `src/raspe/schemas/<fonte>.py` e exportados em `schemas/__init__.py`;
+  parâmetro de busca `pesquisa` (mixin de pesquisa)
+- [ ] `_parse_page` monta o DataFrame com `columns=self.colunas`, mesmo
+  no caminho de erro (não levanta exceção, retorna
+  `pd.DataFrame(columns=self.colunas)`); `colunas` não declarado na
+  classe (sai do `schema_saida`)
 - [ ] Não sobrescreve `raspar()` (é o da `AbstractScraper`)
 - [ ] Não duplica funcionalidades já fornecidas pela base: `tqdm`,
   `time.sleep`, retry para 429/5xx, criação de diretório temporário
@@ -50,10 +56,10 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] `python -c "import raspe; print(raspe.<fonte>)"` funciona
 - [ ] (Playwright) `import raspe` continua funcionando mesmo sem
   `[browser]` instalado
-- [ ] (HTTP, convenção recente a partir da CAPES) Classe registrada no
-  `mapping` de `scraper()` em `src/raspe/scraper_manager.py`
-- [ ] Caso da factory em `tests/test_init.py` e, se registrada no
-  `mapping`, em `tests/test_scraper_manager.py`
+- [ ] (*) Classe registrada no `_MAPPING` de `scraper()` em
+  `src/raspe/scraper_manager.py` e reexportada em
+  `src/raspe/scrapers/__init__.py`
+- [ ] Caso da factory em `tests/test_init.py`
 
 ## 4. Testes (`tests/<fonte>/`)
 
@@ -77,7 +83,11 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
   `urlencoded_params_matcher(..., strict_match=False)` para POST de
   formulário, que exige `responses>=0.26.1` no `pyproject.toml` do raspe,
   `json_params_matcher` para POST JSON)
-- [ ] Colunas validadas por subconjunto (`<=`), nunca igualdade
+- [ ] Colunas validadas por igualdade
+  (`list(df.columns) == Output<Fonte>.colunas()`), também no no_results
+- [ ] (*) Fonte registrada em `ESPERADOS` de
+  `tests/schemas/test_schema_coverage.py` e `docs/colunas.md` regerado
+  (`python -m raspe.schemas.documentacao`)
 - [ ] `mocker.patch("time.sleep")` em todos os testes
 - [ ] (Se aplicável) Fluxo multi-etapa com
   `registries.OrderedRegistry`; captcha, token dinâmico ou import lazy

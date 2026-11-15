@@ -36,8 +36,8 @@ Adicione uma linha:
 Onde:
 - **Tecnologia**: `HTTP`, `HTTP (JSON)`, `Playwright`, ou
   `Playwright + stealth`.
-- **Parametro-chave**: o nome do kwarg de busca (`pesquisa`, `termo`,
-  `texto`, `assunto`).
+- **Parametro-chave**: `pesquisa`, o kwarg de busca de toda fonte com
+  schema.
 - **Autenticação**: `nenhuma`, `API key`, ou similar.
 
 Mantenha a ordem aproximada da tabela (legislação → órgãos → imprensa →
@@ -145,8 +145,8 @@ Resumo curto: o que o site cobre, motivo de existir essa fonte no raspe.
 
 ```python
 raspe.{fonte}().raspar(
-    pesquisa: str | list[str],         # ou termo/texto/assunto conforme o caso
-    paginas: range | int | None = None,
+    pesquisa: str | list[str],         # str nas fontes com Playwright
+    paginas: range | None = None,      # só fontes HTTP
     {outros parametros opcionais}: {tipo} = {default},
 ) -> pd.DataFrame
 ```
