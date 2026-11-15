@@ -35,7 +35,9 @@ on:
 # Uma execucao por vez em cada ref. Sem isso, um push na main cujo `gerar` leu
 # o juscraper antes de uma mudanca podia terminar depois de um agendamento que
 # reprovou, e o `fechar` dele fechava a issue recem-aberta pelo `avisar`. So em
-# PR a execucao nova cancela a anterior, que conferia um commit ja superado.
+# PR a execucao nova cancela a anterior, que conferia um commit ja superado. O
+# GitHub guarda uma so execucao na fila: se um push chega enquanto o agendamento
+# espera, o agendamento e cancelado e o aviso fica para a semana seguinte.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -107,9 +109,9 @@ jobs:
     permissions:
       issues: write
     steps:
-      # Uma issue so para o problema: comenta na aberta; se nao ha, reabre a
-      # fechada mais recente de mesmo titulo; so cria quando nunca houve. A
-      # lista vem por data de criacao, a mais nova primeiro.
+      # A lista vem por data de criacao, a mais nova primeiro, e sem `--search`,
+      # cujo indice demora a ver a issue que a execucao anterior acabou de abrir
+      # ou fechar.
       - name: Abrir, reabrir ou comentar a issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -124,7 +126,7 @@ jobs:
 
           Depois revise a description da SKILL.md e as tags de versao das references. Se o job que falhou foi o gerar, o problema esta no juscraper (main quebrada ou scripts/tabela_cobertura.py ausente)."
           achado=$(gh issue list --state all --limit 1000 --json number,title,state \
-            --jq '[.[] | select(.title == env.TITULO)] | (map(select(.state == "OPEN")) + .) | first(.[]) | "\(.number) \(.state)"')
+            --jq 'map(select(.title == env.TITULO)) | (map(select(.state == "OPEN")) + .) | first(.[]) | "\(.number) \(.state)"')
           read -r numero estado <<< "$achado"
           case "$estado" in
             OPEN) gh issue comment "$numero" --body "$corpo" ;;
@@ -133,9 +135,7 @@ jobs:
           esac
 
   # Fecha a issue do `avisar` quando a conferencia volta a passar em qualquer
-  # execucao na main. Como no `avisar`, a lista sai sem `--search`, cujo indice
-  # demora a ver a issue que a execucao anterior acabou de abrir ou fechar, e o
-  # titulo tem de ser exatamente o mesmo.
+  # execucao na main. Mesma lista e mesmo titulo exato do `avisar`.
   fechar:
     needs: conferir
     if: github.ref == 'refs/heads/main'
