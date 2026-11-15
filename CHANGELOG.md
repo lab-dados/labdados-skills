@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.4] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.4): a `test-patterns.md` mandava seguir o `tests/fixtures/capture/ipea.py` "que usa `attach_capture_hook`", helper que saiu do raspe no bdcdo/raspe#71 (o `ipea.py` usava `capturar_cenarios` desde o #49), e mandava copiar o `outerHTML` do navegador para `samples/raspar/`. Agora a secao "Captura dos samples" manda copiar o `presidencia.py` (que usa `capturar_cenarios` e `pasta_saida`) e ler o README da pasta, e traz so o que a skill acrescenta: o comando `python -m tests.fixtures.capture.<fonte> --saida`, a conferencia do `_find_n_pags` impresso (1 no `single_page`, 0 no `no_results`) e o `enxugar=enxugar_html` para pagina acima de 500 KB. A `SKILL.md`, a `playwright-mcp-recon.md` e a `checklist.md` passam a dizer que, nos scrapers HTTP, os samples saem desse script (resposta crua) e nao do HTML salvo na engenharia reversa, que segue virando sample so nos Playwright. Fluxo rodado ao vivo contra a Folha com a `main` do raspe (`22ce57f`).
+
 ## [1.18.3] - 2026-11-15
 
 Corrigido:

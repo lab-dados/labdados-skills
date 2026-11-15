@@ -29,11 +29,11 @@ Claude Code para reconhecer um site e capturar requisições. Aplicar na
 4. browser_click(botão de busca)
 5. browser_wait_for(resultado visível)
 6. browser_network_requests()             # captura página 1
-7. browser_evaluate("document.documentElement.outerHTML")  # salvar sample
+7. browser_evaluate("document.documentElement.outerHTML")  # HTML da página 1
 8. browser_click(link/botão da página 2)
 9. browser_wait_for(novo resultado)
 10. browser_network_requests()            # captura página 2
-11. browser_evaluate("document.documentElement.outerHTML")  # sample p.2
+11. browser_evaluate("document.documentElement.outerHTML")  # HTML da página 2
 ```
 
 ## Identificação do endpoint principal
@@ -64,7 +64,7 @@ em ordem:
    - `text/html` → caminho HTTP/HTML.
    - Outros → investigar manualmente.
 
-## Como capturar o HTML completo (sample para teste)
+## Como capturar o HTML completo (referência para o parser)
 
 Use `browser_evaluate` com:
 
@@ -73,10 +73,11 @@ Use `browser_evaluate` com:
 ```
 
 Salve o retorno em
-`/tmp/raspe-recon/<fonte>/page_01.html`. Na Etapa 6 ele vira
-`tests/<fonte>/samples/raspar/page_01.html` (HTTP) ou
-`tests/<fonte>/samples/parse/typical.html` (Playwright, que também
-precisa de um `no_results.html` e não usa `samples/raspar/`).
+`/tmp/raspe-recon/<fonte>/page_01.html`. Ele serve para escrever o
+parser e, nos scrapers Playwright, vira na Etapa 6
+`tests/<fonte>/samples/parse/typical.html` (que também precisa de um
+`no_results.html`). Nos HTTP, os samples saem do script de captura (ver
+`test-patterns.md`, "Captura dos samples").
 
 Para a página 2 (só HTTP), repita após paginar. Mesmo arquivo, sufixo
 `page_02.html`.
