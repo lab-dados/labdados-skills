@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.13] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.8): a skill dizia que fonte Playwright nao tem `test_raspar_contract.py` nem `samples/raspar/`, mas o raspe hoje testa o `raspar()` das fontes Playwright sem abrir o navegador, com a pagina falsa de `navegador_falso` (`tests/saudelegis/test_raspar_contract.py`, raspe #82). A secao "Testes para Playwright" da `test-patterns.md` passa a ensinar esse contrato, com template, a ordem das leituras que a pagina falsa devolve (contagem primeiro, depois uma por pagina salva) e o script de captura com `capturar_paginas_lidas`; o `test_config.py` continua ao lado. A Etapa 6 da `SKILL.md` repetia o template HTTP e as regras de matcher da `test-patterns.md` e agora so aponta para ela. No sync com a skill `raspe`, a tabela "Colunas retornadas" da reference da fonte deixa de ser digitada: vem copiada do `docs/colunas.md` gerado a partir do schema de saida, e a matriz de colunas da `fontes.md` segue a mesma ordem.
+
 ## [1.18.12] - 2026-11-15
 
 Corrigido:

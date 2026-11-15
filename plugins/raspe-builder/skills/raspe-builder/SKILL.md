@@ -70,7 +70,8 @@ Antes de iniciar, verifique:
      - Para HTTP/JSON: `src/raspe/scrapers/nyt.py`.
      - Para Playwright: `src/raspe/scrapers/anvisa.py` e `src/raspe/scrapers/saudelegis.py`.
    - `src/raspe/base_scraper.py` e `src/raspe/playwright_scraper.py` (a interface real, sempre).
-   - `tests/ipea/test_raspar_contract.py` (padrão canônico de testes offline).
+   - `tests/ipea/test_raspar_contract.py` (padrão canônico de testes offline;
+     para Playwright, `tests/saudelegis/test_raspar_contract.py`).
    - `references/raspe-architecture.md` desta skill para um resumo das classes-base.
 
 ## Workflow principal
@@ -542,84 +543,22 @@ Ver `references/factory-registration.md`. Em `src/raspe/__init__.py`:
 
 ### Etapa 6 — Testes de contrato offline
 
-Ver `references/test-patterns.md`. Padrão canônico HTTP:
-`tests/ipea/test_raspar_contract.py`. Os itens 2 e 3 valem para HTTP;
-Playwright segue o caminho descrito no fim desta etapa.
+Siga `references/test-patterns.md`: captura dos samples, template do
+contrato, casos mínimos e regras do `CLAUDE.md` do raspe. Modelos:
+`tests/ipea/test_raspar_contract.py` (HTTP) e
+`tests/saudelegis/test_raspar_contract.py` (Playwright).
 
 1. Criar `tests/{fonte}/__init__.py` (vazio).
-2. (HTTP) Criar o script de captura `tests/fixtures/capture/{fonte}.py`,
-   obrigatório pelo `CLAUDE.md` do raspe, e rodá-lo para gravar os
-   samples em
-   `tests/{fonte}/samples/raspar/`: `page_01.html`, `page_02.html`,
-   `single_page.html` e `no_results.html`.
-3. (HTTP) Criar `tests/{fonte}/test_raspar_contract.py`:
-   ```python
-   import pytest
-   import responses
-   from responses import matchers, registries
-
-   from raspe.schemas.{fonte} import Output{Fonte}
-   from raspe.scrapers.{fonte} import Scraper{Fonte}
-   from tests._helpers import load_sample_bytes
-
-   API_URL = "{endpoint do scraper}"
-   COLUNAS = Output{Fonte}.colunas()
-
-
-   @pytest.fixture
-   def scraper():
-       return Scraper{Fonte}()
-
-
-   class TestRasparContract:
-       # OrderedRegistry consome os `add` na ordem; com o registry
-       # padrão, um request com params errados cairia num `add` sem
-       # matcher e o teste passaria.
-       @responses.activate(registry=registries.OrderedRegistry)
-       def test_typical_paginacao(self, scraper, mocker):
-           mocker.patch("time.sleep")
-           # BaseScraper._raspar faz 1 request para _find_n_pags + 1 por
-           # pagina. Para 2 paginas → 3 responses.add no total.
-           responses.add(responses.GET, API_URL,
-               body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
-               status=200, content_type="text/html; charset=utf-8",
-               match=[matchers.query_param_matcher(
-                   {"{param_busca}": "economia"}, strict_match=False,
-               )])
-           responses.add(responses.GET, API_URL,
-               body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
-               status=200, content_type="text/html; charset=utf-8")
-           responses.add(responses.GET, API_URL,
-               body=load_sample_bytes("{fonte}", "raspar/page_02.html"),
-               status=200, content_type="text/html; charset=utf-8")
-
-           df = scraper.raspar(pesquisa="economia")
-
-           assert not df.empty
-           assert list(df.columns) == COLUNAS
-           assert (df["termo_busca"] == "economia").all()
-   ```
-
-Casos mínimos (HTTP), exigidos pelo `CLAUDE.md` do raspe para cada
-método público: typical (paginação), single_page e no_results. Valide colunas
-por igualdade (`list(df.columns) == Output{Fonte}.colunas()`), também no
-no_results, e o valor de `termo_busca`. Use matcher de payload sempre
-que possível (`query_param_matcher` para GET,
-`urlencoded_params_matcher(..., strict_match=False)` para POST de
-formulário, `json_params_matcher` para POST JSON). O kwarg `strict_match`
-de `urlencoded_params_matcher` só existe a partir de `responses` 0.26.1,
-e o piso do raspe é `responses>=0.25.0`: em versão anterior, o teste
-quebra com `TypeError`. Se usar esse matcher, suba o piso no
-`pyproject.toml` do raspe para `responses>=0.26.1`. Não escreva testes de
-retry: já estão cobertos em `tests/test_base_scraper.py`.
-
-Para Playwright: `responses` não intercepta o navegador, então não há
-`test_raspar_contract.py` nem `samples/raspar/`. O teste fica em
-`tests/{fonte}/test_config.py`, com samples em
-`tests/{fonte}/samples/parse/typical.html` e `no_results.html`. Ele cobre
-a configuração (`url_base`, `pagination_strategy`, `_max_pages`,
-herança de `PlaywrightScraper`) e `_parse_page` sobre os samples. Modelo:
-`tests/saudelegis/test_config.py`.
+2. Criar o script de captura `tests/fixtures/capture/{fonte}.py`,
+   obrigatório pelo `CLAUDE.md` do raspe, e rodá-lo para gravar em
+   `tests/{fonte}/samples/raspar/` os samples `page_01.html`,
+   `page_02.html`, `single_page.html` e `no_results.html`.
+3. Criar `tests/{fonte}/test_raspar_contract.py` com os casos typical
+   (paginação), single_page e no_results. HTTP usa `responses`;
+   Playwright usa a página falsa de `navegador_falso`, sem abrir o
+   navegador.
+4. (Playwright) Criar também `tests/{fonte}/test_config.py`, com
+   construtor e `_parse_page` sobre `samples/parse/`.
 
 Com os samples gravados, registre a fonte em `ESPERADOS` de
 `tests/schemas/test_schema_coverage.py` (ver `references/test-patterns.md`,
@@ -709,7 +648,7 @@ no `_parse_page`.
 |---|---|
 | `references/raspe-architecture.md` | Sempre antes de gerar código. Cobre a API real de `BaseScraper`, `HTMLScraper`, `PlaywrightScraper`. |
 | `references/playwright-mcp-recon.md` | Etapa 2 (captura de requisições) — protocolo objetivo de uso do Playwright MCP. |
-| `references/test-patterns.md` | Etapa 6 — padrão `responses` + samples HTML. |
+| `references/test-patterns.md` | Etapa 6 — padrão `responses` (HTTP) ou `navegador_falso` (Playwright) + samples HTML. |
 | `references/factory-registration.md` | Etapa 5 — como editar `src/raspe/__init__.py`. |
 | `references/raspe-skill-sync.md` | Etapa 7 — como atualizar a skill `raspe` do marketplace. |
 | `references/checklist.md` | Final, antes de declarar a fonte pronta. |

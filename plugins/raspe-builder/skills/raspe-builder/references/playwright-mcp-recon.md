@@ -76,8 +76,8 @@ Salve o retorno em `<PASTA_RECON>/page_01.html`, a pasta
 temporária criada na Etapa 2 do `SKILL.md` (item 6). Ele serve para escrever o
 parser e, nos scrapers Playwright, vira na Etapa 6
 `tests/<fonte>/samples/parse/typical.html` (que também precisa de um
-`no_results.html`). Nos HTTP, os samples saem do script de captura (ver
-`test-patterns.md`, "Captura dos samples").
+`no_results.html`). Os samples de `samples/raspar/`, nos dois tipos,
+saem do script de captura (ver `test-patterns.md`, "Captura dos samples").
 
 Para a página 2 (só HTTP), repita após paginar. Mesmo arquivo, sufixo
 `page_02.html`.
