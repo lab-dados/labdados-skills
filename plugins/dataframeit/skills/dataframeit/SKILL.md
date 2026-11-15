@@ -94,7 +94,7 @@ Nenhum dos dois aceita `use_search=True`.
 Os parâmetros aceitos variam por modelo, e não há regra universal. **Consulte `references/modelos-parametros.md` antes de configurar `model_kwargs`.** O essencial:
 
 - O dataframeit não envia parâmetro de amostragem: o cliente recebe só o que vier em `model_kwargs`.
-- Não passe `temperature` a modelo que a rejeita (Claude Sonnet 5 e Opus mais novos, GPT-6 com raciocínio ligado, série o, Gemini 3.5 Flash-Lite e 3.6 Flash ou mais novo): a chamada volta com erro 400, ou o parâmetro está deprecado.
+- Não passe `temperature` a modelo que a rejeita (Claude Haiku 5.5, Sonnet 5 e 5.5, Opus 4.7 ou mais novo e Fable, GPT-6 com raciocínio ligado, série o, Gemini 3.5 Flash-Lite e 3.6 Flash ou mais novo): a chamada volta com erro 400, ou o parâmetro está deprecado.
 - Nos modelos que aceitam, passe `temperature` (e `seed`, quando existir) explicitamente; sem isso vale o default do provedor, em geral maior que 0.
 
 ```python

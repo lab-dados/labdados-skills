@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\"."
+description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\". Não confundir com openalex (revisão de literatura, bibliometria)."
 ---
 
 # Raspe Skill
@@ -83,7 +83,8 @@ O usuário raramente diz "presidência" ou "câmara" diretamente. Traduza termos
 | "RDC", "resoluções da ANVISA", "portarias ANVISA", "registro sanitário" | `anvisa` |
 | "código de ética médica", "resolução CFM", "parecer CFM" | `cfm` |
 | "estudo do IPEA", "texto para discussão", "publicação do IPEA" | `ipea` |
-| "artigo acadêmico", "paper", "revisão de literatura", "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos científicos" | `capes` |
+| "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos da CAPES" | `capes` |
+| "artigo acadêmico", "paper", "periódicos científicos", "revisão de literatura", "revisão sistemática", "bibliometria", sem citar a CAPES | não é raspe: use `openalex-skill` |
 | "intimação processual", "comunicado oficial do tribunal", "comunicações do CNJ" | não é raspe: a fonte CNJ saiu da biblioteca. Use `juscraper-skill` (ComunicaCNJ, `juscraper.scraper("comunica_cnj")`) |
 | "matéria da Folha", "Folha de São Paulo escreveu sobre" | `folha` |
 | "NYT sobre Brasil", "matéria do New York Times" | `nyt` |

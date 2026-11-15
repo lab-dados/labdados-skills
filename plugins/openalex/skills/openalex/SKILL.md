@@ -1,6 +1,6 @@
 ---
 name: openalex
-description: "Use for literature search, systematic reviews, bibliometrics, citation networks, or downloading papers and PDFs from OpenAlex."
+description: "Use for literature search, systematic reviews, bibliometrics, citation networks, or downloading papers and PDFs from OpenAlex. Do not confuse with raspe (CAPES Portal de Periódicos search, only when named)."
 ---
 
 # OpenAlex Skill

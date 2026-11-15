@@ -2,7 +2,7 @@
 
 Matriz dos hiperparâmetros aceitos por cada família de modelo, com recomendação para **extração estruturada e classificação de campos finitos** (o caso central do dataframeit).
 
-Atualizado em setembro de 2026 a partir das páginas de modelos e de deprecação de cada provedor. Confirme na documentação oficial antes de executar: provedores aposentam modelos e mudam parâmetros com frequência. Os modelos atuais, os preços e o padrão de cada provider no dataframeit estão em https://brunodcdo.com.br/dataframeit/guides/providers/; o padrão da versão instalada sai de `from dataframeit.core import DEFAULT_MODELS`.
+Atualizado em setembro de 2026 (Anthropic em novembro de 2026) a partir das páginas de modelos e de deprecação de cada provedor. Confirme na documentação oficial antes de executar: provedores aposentam modelos e mudam parâmetros com frequência. Os modelos atuais, os preços e o padrão de cada provider no dataframeit estão em https://brunodcdo.com.br/dataframeit/guides/providers/; o padrão da versão instalada sai de `from dataframeit.core import DEFAULT_MODELS`.
 
 **Lembrete do dataframeit**: nos provedores via LangChain, a biblioteca não envia parâmetro de amostragem, e o cliente recebe só o que vier em `model_kwargs`. Para modelo que não aceita `temperature`, não passe o parâmetro; para determinismo nos que aceitam, passe o valor explicitamente, senão vale o default do provedor. Ver `api.md §Modelo e temperature`.
 
@@ -22,7 +22,7 @@ Atualizado em setembro de 2026 a partir das páginas de modelos e de deprecaçã
 | **o1, o3, o3-mini** | `openai` | **Não aceita** | Não | o1 e o3-mini saem em 23/10/2026, o3 em 11/12/2026 |
 | `claude-haiku-4-5` | `anthropic` | Aceita 0.0-1.0 | Não | `{'temperature': 0}` |
 | `claude-sonnet-4-6` | `anthropic` | Aceita 0.0-1.0 | Não | `{'temperature': 0}` |
-| `claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`, Opus 4.7/4.8 | `anthropic` | **Não aceita** (erro 400) | Não | `{}`: não passar `temperature`. Não é default para extração |
+| `claude-haiku-5-5`, `claude-sonnet-5`, `claude-sonnet-5-5`, `claude-opus-5`, `claude-opus-5-5`, Opus 4.7/4.8, Fable | `anthropic` | **Não aceita** (erro 400) | Não | `{}`: não passar `temperature`. Não é default para extração |
 | `mistral-small-latest` (hoje Mistral Small 4) | `mistralai` | Aceita, 0-0.7 recomendado | `random_seed` | `{'temperature': 0, 'random_seed': 42}` |
 | `mistral-large-latest` (hoje Mistral Large 3) | `mistralai` | Aceita | `random_seed` | `{'temperature': 0, 'random_seed': 42}` |
 | `command-a-03-2025` | `cohere` | Aceita | Sim | `{'temperature': 0, 'seed': 42}` |
@@ -35,7 +35,7 @@ Atualizado em setembro de 2026 a partir das páginas de modelos e de deprecaçã
 1. Para extração e classificação, **modelo pequeno** sempre (ver roteamento em `SKILL.md §Passo 1`).
 2. Determinismo por `temperature=0`, passado em `model_kwargs`, quando o modelo aceita. Nos Gemini 3.x o parâmetro está deprecado ou deve ficar em 1.0 (§Google).
 3. `seed` fixo sempre que disponível, cumulativo com `temperature=0`.
-4. **Modelos de raciocínio** (série o, GPT-5/GPT-6 com raciocínio ligado, Claude Sonnet 5/Opus) não aceitam `temperature`. Para extração, prefira modelo sem raciocínio ou desligue o raciocínio quando o provedor permite (GPT-6 Luna/Sol com `reasoning_effort='none'`).
+4. **Modelos de raciocínio** (os marcados **Não aceita** na tabela) não aceitam `temperature`. Para extração, prefira modelo sem raciocínio ou desligue o raciocínio quando o provedor permite (GPT-6 Luna/Sol com `reasoning_effort='none'`).
 5. Parâmetro recusado pelo provedor (erro 400) não ganha nova tentativa: todas as linhas terminam `'error'`. Rode uma amostra antes.
 
 ---
@@ -136,7 +136,7 @@ o1 e o3-mini desligam em 23/10/2026; o3 e os snapshots `-2025-08-07` de `gpt-5`,
 
 ## §Anthropic (`provider='anthropic'`)
 
-IDs sem sufixo de data: `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-sonnet-5`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5-1`. A Anthropic anuncia a aposentadoria do Haiku 4.5 para não antes de 15/10/2026: confira a página de deprecações antes de fixá-lo num pipeline longo.
+IDs sem sufixo de data: `claude-haiku-4-5`, `claude-haiku-5-5`, `claude-sonnet-4-6`, `claude-sonnet-5`, `claude-sonnet-5-5`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5-1`, `claude-fable-5-2`. Em 03/11/2026 o Haiku 4.5 seguia ativo, sem data de aposentadoria: confira a página de deprecações antes de fixá-lo num pipeline longo.
 
 ### Claude Haiku 4.5 e Sonnet 4.6
 
@@ -149,11 +149,11 @@ IDs sem sufixo de data: `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-sonnet-
 
 Não há parâmetro `seed`: a Anthropic não expõe controle de seed. Para reprodutibilidade, `temperature=0` basta na maioria dos casos.
 
-### Claude Sonnet 5, Opus 4.7/4.8, Opus 5, Opus 5.5 e Fable
+### Claude Haiku 5.5, Sonnet 5 e 5.5, Opus 4.7/4.8, Opus 5, Opus 5.5 e Fable
 
 **Não aceitam `temperature`, `top_p` nem `top_k`**: qualquer valor diferente do padrão volta com erro 400, então não passe esses parâmetros em `model_kwargs`. No Fable, o `langchain-anthropic` recusa antes da chamada, com `ValueError`.
 
-O thinking desses modelos é adaptativo e controlado por `effort`; no Opus 5.5 e no Fable ele não pode ser desligado. Para extração, esses modelos não são default: use Haiku 4.5 e escale só com justificativa. O padrão de `provider='anthropic'` sem `model` é um deles (confira `DEFAULT_MODELS`), então passe `model='claude-haiku-4-5'` explicitamente.
+O thinking desses modelos é adaptativo e controlado por `effort`; no Opus 5.5 e no Fable ele não pode ser desligado, e no Haiku 5.5 vem ligado por padrão. Para extração, Sonnet, Opus e Fable não são default: use Haiku 4.5 e escale só com justificativa. O padrão de `provider='anthropic'` sem `model` não é o Haiku (confira `DEFAULT_MODELS`), então passe `model='claude-haiku-4-5'` explicitamente. O Haiku 5.5 custa um décimo do 4.5 (US$ 0,10/0,50 por MTok com prompt de até 100K tokens), mas o thinking ligado é cobrado como saída e a troca não foi medida com o dataframeit: compare no piloto antes de adotá-lo.
 
 Fonte: Claude API Docs (Models overview, Adaptive thinking, Migration guide).
 

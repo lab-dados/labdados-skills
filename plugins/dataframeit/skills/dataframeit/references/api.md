@@ -151,7 +151,7 @@ O modelo padrão nem sempre é o indicado para extração: o da Anthropic não �
 
 Nos provedores via LangChain, o dataframeit não envia parâmetro de amostragem: o cliente recebe só `model_provider`, a `api_key` (quando houver) e o que vier em `model_kwargs`. Duas consequências:
 
-- Modelo que não aceita `temperature` (ex.: Claude Sonnet 5 e Opus mais novos, GPT-6 com raciocínio ligado, série o, Gemini 3.5 Flash-Lite e 3.6 Flash ou mais novo) funciona sem ajuste. Não passe `temperature` a esses modelos: no Claude e na GPT-6 com raciocínio, a chamada volta com erro 400, que não ganha nova tentativa.
+- Modelo que não aceita `temperature` (os marcados **Não aceita** ou **Deprecada** na tabela de `modelos-parametros.md`) funciona sem ajuste. Não passe `temperature` a esses modelos: no Claude e na GPT-6 com raciocínio, a chamada volta com erro 400, que não ganha nova tentativa.
 - Para determinismo, passe `temperature` (e `seed`, quando existir) explicitamente nos modelos que aceitam. Sem isso, vale o default do provedor, em geral maior que 0.
 
 ---
