@@ -284,7 +284,7 @@ Utilitarios para manipulacao: `from juscraper.utils.cnj import clean_cnj, split_
 `paginas=None` = todas (usar com cautela).
 
 **Tipos de retorno**:
-- `cpopg()`/`cposg()` do TJSP: retorna `dict` com DataFrames (chaves: dados, partes, movimentacoes, etc.). Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
+- `cpopg()`/`cposg()` do TJSP: retorna `dict` com DataFrames (no `cpopg`: basicos, partes, movimentacoes, peticoes_diversas). Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
 - `cjsg()`/`cjpg()`: retorna um unico `pandas.DataFrame`
 - `listar_processos()`: retorna `pandas.DataFrame`
 - `download_documents()`: retorna `pandas.DataFrame` com coluna `texto`
@@ -339,6 +339,9 @@ Apos a coleta:
   0.4.0 o juscraper nao instala `pyarrow`: rode `pip install pyarrow` antes do `to_parquet`.
 - **Para combinar tribunais:** colete separadamente e concatene com `pd.concat([df1, df2])`
 - **cpopg/cposg do TJSP retornam dict:** itere com `for tabela, df in resultado.items():`. TRFs, TJPE e TJMG devolvem DataFrame direto.
+- **Enriquecer decisoes com dados do processo** (valor da causa, partes, classe, vara): merge
+  com o `cpopg` pelo CNJ, onde o tribunal tem `cpopg`, e nao regex ou LLM sobre o texto da
+  decisao. Ver `references/decisoes-e-processos.md` (validada no TJSP).
 
 ## Workflow tipico do agente
 
@@ -371,6 +374,8 @@ Leia a referencia apropriada antes de gerar codigo:
 - **`references/tjsp.md`** — Especificidades do TJSP: `cjpg` (1o grau; TJES e TJTO tambem tem),
   parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`, `pesquisa=""`,
   `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
+
+- **`references/decisoes-e-processos.md`** — Juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ.
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
   `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]` e `[unreleased]`, alem do procedimento
