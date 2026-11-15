@@ -7,9 +7,9 @@ Cinco fontes nacionais que cobrem multiplos tribunais a partir de um unico endpo
 | Agregador | Quando usar | Autenticacao | Status |
 |---|---|---|---|
 | **Datajud** | Listar/contar processos em qualquer tribunal (estaduais, federais, superiores, trabalho, eleitoral) por sigla ou por numero CNJ. Metadados sem texto. | Nenhuma (API key publica embutida) | Estavel desde v0.1.x |
-| **JusBR** | Consultar processo por CNJ em **qualquer tribunal** e **baixar texto das pecas** (`download_documents`). Para texto integral em processos da Justica Estadual ou Federal. | Obrigatoria (JWT do gov.br) | Estavel desde v0.1.x |
+| **JusBR** | Consultar processo por CNJ em **qualquer tribunal** e **baixar texto das pecas** (`download_documents`). Para texto integral em processos da Justica Estadual ou Federal. | Obrigatoria (JWT do SSO do PJe) | Estavel desde v0.1.x |
 | **ComunicaCNJ** | Coletar **comunicacoes processuais** publicadas pelos tribunais no PJe (DJe digital, intimacoes publicas). Util para acompanhar publicacoes em determinado tema sem percorrer Diarios Oficiais. | Nenhuma | `[v0.3.0+]` |
-| **PDPJ** | Consulta unificada via API DATALAKE do PDPJ (mesmo SSO do PJe). Substitui parcialmente JusBR e oferece endpoints granulares: existe, cpopg, documentos, movimentos, partes, pesquisa, contar, download_documents. | Obrigatoria (JWT do PDPJ via SSO PJe) | `[v0.4.0+]` |
+| **PDPJ** | Consulta unificada via API DATALAKE do PDPJ (mesmo SSO do PJe). Substitui parcialmente JusBR e oferece endpoints granulares: existe, cpopg, documentos, movimentos, partes, pesquisa, contar, download_documents. | Obrigatoria (JWT do SSO do PJe) | `[v0.4.0+]` |
 | **Falcao** | Jurisprudencia Nacional da Justica do Trabalho (CSJT): acordaos, sentencas, decisoes monocraticas, precedentes e recursos de revista do TST e dos 24 TRTs numa so busca (`listar_decisoes`). | Nenhuma | `[v0.5.0+]` |
 
 Comparativo de capacidade:
@@ -22,7 +22,7 @@ Comparativo de capacidade:
 | Comunicacoes/intimacoes publicas | nao | nao | sim | nao |
 | Filtro por tipo de movimentacao | sim (`tipos_movimentacao`) | nao | nao | nao |
 | Consultar varios tribunais numa chamada | sim (multi-alias) | um por vez | sim | um por vez |
-| Auth | nenhuma | JWT gov.br | nenhuma | JWT PDPJ |
+| Auth | nenhuma | JWT do SSO do PJe | nenhuma | JWT do SSO do PJe |
 
 ## Metodos por agregador
 
@@ -61,7 +61,8 @@ datajud = jus.scraper('datajud',
     api_key=None,        # None = usa chave publica embutida
     verbose=1,           # 0 = silencioso
     download_path=None,  # diretorio temporario
-    sleep_time=0.5
+    sleep_time=0.5,
+    politica=None        # [v0.5.0+] so o timeout; ver Gotchas
 )
 ```
 
@@ -146,6 +147,7 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 - **CNJ com whitespace ou separadores** (vindos de CSV/Excel) sao limpos automaticamente antes do envio. `[v0.3.0]`
 - **Problemas de runtime** (CNJ invalido, tribunal nao mapeado, falha de API, JSON corrompido) emitem `warnings.warn(UserWarning)` alem do log — em Jupyter sem handler de logging, fica visivel. `[v0.3.0]`
 - **Paginacao por cursor** `[v0.4.0+]`: `paginas=range(3, 6)` devolve as paginas 3 a 5 (o scraper percorre o prefixo pelo cursor `search_after` e descarta o que nao foi pedido); antes da 0.4.0 devolvia na pratica as paginas 1 a 3. `paginas=[3, 5]` vira `range(3, 6)`. `paginas=[]`, `0`, negativos e `range` descendente levantam `ValueError` antes de qualquer requisicao.
+- **Timeout** `[v0.5.0+]`: default em `jus.scraper('datajud').perfis_http['busca']` (60 s na 0.5.0), ajustavel com `politica={'busca': {'timeout': 180}}` (segundos ou o par `(conexao, leitura)`; `timeout=None` e os outros campos do perfil levantam `ValueError`). Consulta grande, como um ano inteiro de um assunto num TRF, pode passar de 60 s ja na pagina 1. O `UserWarning` de paginacao interrompida diz quantos registros vieram e quantos a consulta achou.
 - **Sem `RetryExhaustedError`**: o `DatajudScraper` herda de `HTTPScraper` `[v0.4.0+]` so para sessao e headers. As requisicoes passam pela `call_datajud_api`, que tem retry proprio (504/timeout refaz uma vez com `size // 4`) e, quando a falha persiste, devolve `None` e emite `UserWarning` em vez de levantar excecao.
 - **`data_inicio`/`data_fim` NAO sao aceitos** no Datajud — esses aliases mapeiam para `data_julgamento_*` em scrapers de jurisprudencia, e o Datajud filtra por **ajuizamento**, nao julgamento. Use `data_ajuizamento_inicio`/`_fim`. `extra="forbid"` faz quem usar o nome generico receber `TypeError` direto.
 
@@ -153,7 +155,7 @@ Retorna uma linha por tribunal: `tribunal`, `alias` (indice ES), `count`, `relat
 
 ## JusBR — Plataforma Digital do Poder Judiciario (PDPJ Legacy)
 
-Portal unificado mantido pelo CNJ. Consulta processos de **qualquer tribunal** e permite **baixar o texto dos documentos/pecas**.
+Portal unificado mantido pelo CNJ. Consulta processos de **qualquer tribunal** e permite **baixar o texto dos documentos/pecas**. Autenticacao, falhas por linha e politica HTTP sao as mesmas do PDPJ: ver §"JusBR e PDPJ" abaixo.
 
 ### Construtor
 
@@ -162,25 +164,12 @@ jusbr = jus.scraper('jusbr',
     verbose=0,
     download_path=None,
     sleep_time=0.5,
-    token=None           # JWT — pode passar aqui ou via .auth() depois
+    token=None,          # JWT; ver §"JusBR e PDPJ"
+    politica=None        # [v0.5.0+]; ver §"JusBR e PDPJ"
 )
 ```
 
-### Autenticacao (obrigatoria)
-
-```python
-jusbr = jus.scraper('jusbr')
-
-# Opcao 1: token manual
-jusbr.auth(token='eyJhbGciOiJSUzI1NiIs...')
-
-# Opcao 2: via cookies do Firefox (requer sessao ativa no jus.br)
-jusbr.auth_firefox()
-```
-
-Onde obter o token: acessar https://www.jus.br, fazer login via gov.br, abrir DevTools > Network, capturar a requisicao para a API e copiar o campo `access_token` do header `Authorization: Bearer <token>`.
-
-Tokens JWT expiram. `auth(token)` valida explicitamente o claim `exp` `[v0.4.0+]`: token expirado levanta `ValueError("Token JWT expirado.")`; token sem `exp` continua aceito. Se der erro de autenticacao, peca ao usuario um novo token.
+Alem de `auth(token)` e `auth_govbr()`, o JusBR tem `auth_firefox()`, que pega o token pela sessao do SSO aberta no Firefox.
 
 ### `cpopg`
 
@@ -188,7 +177,7 @@ Tokens JWT expiram. `auth(token)` valida explicitamente o claim `exp` `[v0.4.0+]
 df = jusbr.cpopg(id_cnj='3005317-12.2025.8.06.0000')   # str ou list[str]
 ```
 
-**Retorna:** `pd.DataFrame` com coluna canonica `processo` (tambem nas linhas de fallback `[v0.4.0+]`), alem de `numeroProcesso`, `idCodexTribunal`, `detalhes` (dict com metadados completos), `status_consulta`. Em linhas de fallback, `processo_pesquisado` pode aparecer como sinonimo historico, mas codigo novo deve usar `processo`.
+**Retorna:** `pd.DataFrame` com coluna canonica `processo` (tambem nas linhas de fallback `[v0.4.0+]`), alem de `numeroProcesso`, `idCodexTribunal`, `detalhes` (dict com metadados completos), `status_consulta` e `motivo_falha` `[v0.5.0+]`. Em linhas de fallback, `processo_pesquisado` pode aparecer como sinonimo historico, mas codigo novo deve usar `processo`. CNJ que a listagem nao acha sai com `status_consulta="Nao encontrado na lista inicial"` e `motivo_falha` `None`.
 
 ### `download_documents`
 
@@ -199,7 +188,7 @@ df_docs = jusbr.download_documents(
 )
 ```
 
-**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api`. O downloader e tolerante a disponibilidade parcial: baixa o que existir quando ha so texto ou so binario; quando ambos os links faltam, pula o documento.
+**Retorna:** `pd.DataFrame` onde cada linha e um documento, com colunas `numero_processo`, `idDocumento`, `descricao`, `nome`, `tipo`, `dataHoraJuntada`, `nivelSigilo`, `hrefTexto`, `hrefBinario`, `texto` (conteudo extraido), `_raw_text_api`, `_raw_binary_api` e `motivo_falha` `[v0.5.0+]`. O downloader e tolerante a disponibilidade parcial: baixa o que existir quando ha so texto ou so binario; quando ambos os links faltam, pula o documento. `[v0.5.0+]`: documento sem arquivo no metadado nao gera requisicao (conteudo `None`, `motivo_falha` `None`), e texto so com espacos sai `texto=None`.
 
 Contrato `[v0.4.0+]`:
 
@@ -211,7 +200,7 @@ Contrato `[v0.4.0+]`:
 
 ```python
 jusbr = jus.scraper('jusbr')
-jusbr.auth(token='...')
+jusbr.auth(token='...')        # se PDPJ_JWT ou o cache nao autenticaram
 
 # 1. Buscar metadados do processo
 resultado = jusbr.cpopg('3005317-12.2025.8.06.0000')
@@ -223,9 +212,52 @@ print(docs[['numero_processo', 'descricao', 'texto']].head())
 
 ### Gotchas
 
-- **`RetryExhaustedError`** `[v0.4.0+]`: o `JusbrScraper` agora herda de `HTTPScraper`. O contrato publico nao muda (os `fetch_*` internos capturam `RetryExhaustedError` e devolvem `None`, mantendo "erro -> None"). Mas se voce instrumentar codigo de baixo nivel para capturar excecoes do `download.py`, deve capturar `RetryExhaustedError` em vez de `requests.HTTPError` direto.
-- **Token expirado** vira `ValueError("Token JWT expirado.")` ja em `auth(token)` quando o claim `exp` existe; peca novo token ao usuario.
+- **Falha de requisicao**: ver `motivo_falha` em §"JusBR e PDPJ". Na 0.4.0, virava "Nao encontrado na lista inicial" no `cpopg` e `texto=None` no `download_documents`, sem motivo.
 - **Listar por nome de parte / OAB:** nao e suportado pelo JusBR. Para isso, use o **PDPJ** abaixo.
+
+---
+
+## JusBR e PDPJ — autenticacao, falhas por linha e politica HTTP
+
+### Autenticacao (obrigatoria, o mesmo token nos dois)
+
+JusBR e PDPJ usam o mesmo token: o JWT do SSO do PJe, obtido com login gov.br no portal de servicos do PDPJ. Sem token, a primeira consulta levanta `RuntimeError("Autenticacao necessaria...")`. Caminhos, do mais facil ao manual:
+
+1. **Ja autenticado ao construir** `[v0.5.0+]`: sem `token=`, o construtor carrega a credencial da variavel `PDPJ_JWT` (o JusBR aceita tambem `JUSBR_JWT`) e depois do cache gravado por um `auth_govbr()` anterior (`$XDG_CONFIG_HOME/juscraper/pdpj_token.json`, default `~/.config/...`), ignorando com aviso a que estiver vencida. O cache vale para os dois scrapers.
+2. **`auth_govbr()`** `[v0.5.0+]`, na maquina do usuario: abre o Chrome, Chromium ou Edge instalado para o login gov.br e captura o token, que grava no cache (`salvar=False` desliga) e renova sozinho quando ha refresh token. Exige `pip install 'juscraper[govbr]'` (sem ele, `ImportError`) e navegador com janela: nao roda no Colab nem em CI. `navegador=` aponta o executavel quando ele nao e achado; demais parametros em `help(jus.scraper('pdpj').auth_govbr)`.
+3. **`auth(token)`** com um JWT copiado do portal logado (DevTools > Network > header `Authorization: Bearer <token>`), ou `token=` no construtor. Token malformado ou vencido levanta `ValueError` (`"Token JWT expirado."`), no JusBR desde a 0.4.0 e no PDPJ desde a 0.5.0; token sem `exp` continua aceito. Um `auth()` que falha mantem o token anterior.
+
+Se a renovacao pelo SSO falhar, a requisicao levanta uma subclasse de `RuntimeError` e a coleta para: `RenovacaoPdpjError` (recusa: peca novo `auth_govbr()`) ou `SsoPdpjIndisponivelError` (a chamada seguinte tenta renovar de novo).
+
+### Falhas por linha: `motivo_falha` `[v0.5.0+]`
+
+Nos metodos com uma linha por item (JusBR: `cpopg` e `download_documents`; PDPJ: `cpopg`, `documentos`, `movimentos`, `partes`, `existe` com lista e `download_documents`), a requisicao que falha nao derruba a chamada: a linha sai com o conteudo `None` e a coluna `motivo_falha` diz por que, em vocabulario fechado:
+
+| `motivo_falha` | Significado |
+|---|---|
+| `None` | Deu certo |
+| `http_<status>` | Status HTTP de erro sem retry (ex.: `http_404`, `http_403`). No JusBR, o 403 na listagem aparece com processo ausente do data lake e tambem com acesso negado: para separar, cruze com o PDPJ, que marca o ausente com `nao_encontrado` |
+| `retry_esgotado_<status>` | O servidor respondeu com status retentavel ate o fim das tentativas |
+| `timeout` | Leitura lenta: o `timeout` do perfil pode estar curto (ver `politica=`) |
+| `conexao` | Host inalcancavel (inclui timeout de conexao) |
+| `json_invalido` | Resposta 200 com corpo que nao e o JSON esperado |
+| `nao_encontrado` | So PDPJ: processo ausente do data lake (`status_consulta="Nao encontrado"` fica para a resposta 200 com lista vazia) |
+
+- Um unico `UserWarning` ao fim da chamada conta as falhas e cita algumas. Para refazer so o que falhou: `df[df['motivo_falha'].notna()]`.
+- O **401** (token ausente, vencido ou invalido) nao vira linha: propaga `requests.HTTPError` e interrompe o lote, com as falhas anteriores numa nota do erro (`__notes__`).
+- Excecoes fora do vocabulario (ex.: `TooManyRedirects`) propagam.
+- No `cpopg`, a linha de falha sai com `status_consulta="Falha na consulta"`.
+- No `download_documents` com texto e binario, `motivo_falha` traz o motivo do texto quando o texto falhou, senao o do binario.
+
+### Politica HTTP: `politica=` `[v0.5.0+]`
+
+O construtor dos dois aceita `politica=`, que ajusta campo a campo os perfis `"listagem"` (lista de processos e detalhes) e `"documento"` (texto e binario). O que nao for passado fica com o default do scraper. Perfil ou campo desconhecido levanta `ValueError`.
+
+```python
+pdpj = jus.scraper('pdpj', politica={'documento': {'timeout': 120, 'max_retries': 3}})
+```
+
+Campos (os de `juscraper.core.http.RequestPolicy`): `timeout` (segundos ou `(conexao, leitura)`), `max_retries` (tentativas, inclusive a primeira), `base_backoff`, `retryable_statuses`, `retry_on_timeout`, `retry_on_connection_error`. Os defaults de cada perfil estao em `jus.scraper('pdpj').perfis_http` (ou `'jusbr'`). O 403 fica fora do retry de proposito: a API o usa para negar um documento isolado, como um sigiloso. Muitos `motivo_falha="timeout"` pedem um `timeout` maior no perfil correspondente.
 
 ---
 
@@ -250,7 +282,8 @@ Construtor **nao aceita** `download_path` (a API e leve, sem arquivos intermedia
 
 ```python
 df = cnj.listar_comunicacoes(
-    pesquisa='resolucao',                          # obrigatorio
+    pesquisa='resolucao',                          # pesquisa, numero_processo ou os dois
+    numero_processo=None,                          # CNJ, so os digitos vao a API [v0.5.0+]
     paginas=range(1, 4),                           # 1-based; None = todas
     data_disponibilizacao_inicio='2024-01-01',     # 'YYYY-MM-DD' ou 'DD/MM/YYYY'
     data_disponibilizacao_fim='2024-01-31',
@@ -265,14 +298,14 @@ df = cnj.listar_comunicacoes(
 ### Gotchas
 
 - **Datas em dois formatos** (ISO e BR) sao aceitas e convertidas para ISO antes do schema. Intervalo invalido (fim antes de inicio) levanta `ValueError`.
-- **`pesquisa` e obrigatorio.** Faltar gera `ValidationError`.
+- **`pesquisa` ou `numero_processo`.** O termo livre nao acha as comunicacoes de um processo pelo numero: use `numero_processo` `[v0.5.0+]`. Sem nenhum dos dois, `ValueError` antes da requisicao (ate a 0.4.0, `pesquisa` era obrigatorio e faltar gerava `ValidationError`).
 - **`RetryExhaustedError`** `[v0.4.0+]` ao esgotar `max_retries` em 429/5xx persistente — `ComunicaCNJ` migrou para `HTTPScraper`. Antes, 429/5xx propagava `requests.HTTPError`; agora propaga `juscraper.core.exceptions.RetryExhaustedError`. Codigo defensivo: capturar ambas. Este retry cobre 429/5xx; `pesquisa` ausente ou intervalo invalido continuam erros de input.
 
 ---
 
 ## PDPJ — DATALAKE Processos `[v0.4.0+]`
 
-Agregador para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Sucessor parcial do JusBR. **Usa o JWT do SSO do PJe — nao e o mesmo token do JusBR**, que consome o JWT do SSO do gov.br. Sao tokens distintos, embora o fluxo de captura via DevTools seja analogo. Oferece endpoints granulares e suporte a busca por nome de parte / OAB.
+Agregador para a API DATALAKE - Processos do PDPJ (`https://api-processo-integracao.data-lake.pdpj.jus.br/processo-api/api/v1`). Sucessor parcial do JusBR, com o mesmo token (JWT do SSO do PJe): autenticacao, `motivo_falha` e `politica=` em §"JusBR e PDPJ" acima. Oferece endpoints granulares e suporte a busca por nome de parte / OAB.
 
 ### Construtor
 
@@ -281,29 +314,17 @@ pdpj = jus.scraper('pdpj',
     verbose=0,
     download_path=None,
     sleep_time=0.5,
-    token=None           # JWT — pode passar aqui ou via .auth() depois
+    token=None,          # JWT; ver §"JusBR e PDPJ"
+    politica=None        # [v0.5.0+]; ver §"JusBR e PDPJ"
 )
 ```
-
-### Autenticacao
-
-```python
-pdpj = jus.scraper('pdpj')
-pdpj.auth(token='eyJhbGciOiJSUzI1NiIs...')
-```
-
-O token e um JWT emitido pelo SSO do PJe (diferente do JWT do gov.br que o JusBR usa — ver nota acima). Obter pelo portal PDPJ logado (DevTools > Network > capturar header `Authorization: Bearer <token>`).
-
-A autenticacao so valida o formato do token:
-- Token malformado -> `ValueError("Token JWT invalido: ...")`.
-- Token expirado **nao** e detectado em `auth()`: o client decodifica o JWT sem verificar assinatura, e o PyJWT desliga a checagem de `exp` nesse modo. O erro so aparece na primeira chamada autenticada. A validacao explicita de `exp` da 0.4.0 existe so no JusBR.
 
 ### Endpoints
 
 | Metodo | Para que serve | Retorno |
 |---|---|---|
-| `existe(id_cnj)` | Checa se o processo existe no Data Lake (rapido) | `bool` para `str`; `DataFrame[processo, existe]` para `list[str]` |
-| `cpopg(id_cnj)` | Detalhes do processo (uma linha por tramitacao) | `DataFrame[processo, numero_processo, id, sigla_tribunal, segmento_justica, nivel_sigilo, data_atualizacao, detalhes, status_consulta]` |
+| `existe(id_cnj)` | Checa se o processo existe no Data Lake (rapido) | `bool` para `str`; `DataFrame[processo, existe, motivo_falha]` para `list[str]` |
+| `cpopg(id_cnj)` | Detalhes do processo (uma linha por tramitacao) | `DataFrame[processo, numero_processo, id, sigla_tribunal, segmento_justica, nivel_sigilo, data_atualizacao, detalhes, status_consulta, motivo_falha]` |
 | `documentos(id_cnj)` | Lista documentos do processo (sem texto) | `DataFrame` (uma linha por documento) |
 | `movimentos(id_cnj)` | Lista movimentos do processo | `DataFrame` |
 | `partes(id_cnj)` | Lista partes do processo | `DataFrame` |
@@ -352,6 +373,8 @@ df_docs = pdpj.download_documents(
 )
 ```
 
+`with_text` e `with_binary` sao keyword-only `[v0.5.0+]`: `download_documents(df, None, True, False)` levanta `TypeError`.
+
 `base_df` pode vir tanto de `pdpj.documentos(...)` (uma linha por documento, ja com `id_documento`) quanto de `pdpj.cpopg(...)` (uma linha por processo — o client extrai documentos de `detalhes['documentos']` ou `detalhes['tramitacoes'][*]['documentos']`).
 
 Pelo menos um de `with_text` ou `with_binary` deve ser `True` (senao `ValueError`).
@@ -360,7 +383,7 @@ Pelo menos um de `with_text` ou `with_binary` deve ser `True` (senao `ValueError
 
 ```python
 pdpj = jus.scraper('pdpj')
-pdpj.auth(token='...')
+pdpj.auth(token='...')       # se PDPJ_JWT ou o cache nao autenticaram
 
 # Caminho A: ja tenho lista de CNJs
 docs = pdpj.documentos(['1000149-71.2024.8.26.0346', '...'])
@@ -382,7 +405,6 @@ texts = pdpj.download_documents(docs)
 | Criterio | JusBR | PDPJ |
 |---|---|---|
 | Status | Estavel | `[v0.4.0+]` |
-| Auth | JWT gov.br | JWT PDPJ (mesmo SSO PJe) |
 | cpopg por CNJ | sim | sim |
 | Download de pecas | sim (texto) | sim (texto e/ou binario, granular) |
 | Busca por nome de parte/OAB | nao | sim (`pesquisa`) |
@@ -393,8 +415,8 @@ Se ja esta implementado com JusBR, nao ha necessidade de migrar. Para casos novo
 
 ### Gotchas
 
-- **Token expirado:** desde a `[v0.5.0+]`, `auth()` (e o construtor com `token=`) recusa JWT vencido com `ValueError("Token JWT expirado.")`. Nas versoes anteriores o token vencido passava e a falha so aparecia na primeira chamada a API. Nos dois casos, peca um token novo ao usuario.
 - **`existe` retorna tipos diferentes** conforme o input: `bool` quando recebe `str`, `DataFrame` quando recebe `list[str]`. Pense duas vezes antes de usar em codigo generico.
+- **`existe` com `str`, `contar` e `pesquisa` levantam o erro da requisicao** `[v0.5.0+]`, em vez de devolver `False`, `0` ou o resultado truncado. Corpo fora do JSON esperado levanta `InvalidJSONResponseError`.
 - **Cursor `searchAfter` em `pesquisa`** e forwards-only — `paginas=[3, 5]` baixa as paginas 3, 4 e 5 contiguamente (nao pula a 4).
 - **Validacao `extra="forbid"`** em todos os endpoints: kwarg desconhecido vira `TypeError` com sugestao de typo via difflib (ex: `data_juglamento` -> "voce quis dizer 'data_julgamento'?").
 

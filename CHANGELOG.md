@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.12] - 2026-11-15
+
+Corrigido:
+
+- `juscraper` (plugin 1.5.5): a skill dizia estar alinhada a 0.4.0, com so partes da 0.5.0 revistas, e faltavam a politica HTTP, o `motivo_falha` e o `auth_govbr()`. Agora segue a 0.5.0. A `references/agregadores.md` ganha a secao "JusBR e PDPJ", com o token compartilhado (carregado de `PDPJ_JWT` ou do cache do `auth_govbr()`, extra `govbr`), o vocabulario do `motivo_falha` e os perfis do `politica=`. O Datajud e o TRF3 tambem aceitam `politica=`, o ComunicaCNJ aceita `numero_processo`, e no PDPJ `with_text`/`with_binary` passam a ser keyword-only. A `SKILL.md` deixa de dizer que JusBR e PDPJ usam tokens distintos e que o PDPJ aceita token vencido.
+
 ## [1.18.11] - 2026-11-15
 
 Corrigido:
