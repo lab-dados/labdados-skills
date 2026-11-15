@@ -30,7 +30,7 @@ repos:
         pass_filenames: false
 
       - id: pytest
-        name: pytest (raspador-builder e cobertura juscraper)
+        name: pytest (raspador-builder e scripts do repo)
         language: system
         entry: >-
           uv run --no-project --python 3.12 --with pytest --with requests --with pandas

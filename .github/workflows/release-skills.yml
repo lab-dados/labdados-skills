@@ -1,0 +1,49 @@
+name: release-skills
+
+# Anexa a release um <skill>.zip por skill, pronto para o upload no claude.ai, para
+# quem nao usa o Claude Code. O README aponta para
+# releases/latest/download/<skill>.zip, que segue a release mais recente.
+#
+# Dispara quando alguem empurra uma tag v* (cria a release, se ainda nao existir).
+# Pelo workflow_dispatch, escolha a tag em "Use workflow from" para refazer os zips
+# da release dessa tag; so serve para tag criada depois deste workflow, que precisa
+# existir nela. O workflow nunca cria tag por conta propria.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zips:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Exigir uma tag
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Rode a partir de uma tag v* (em 'Use workflow from'), nao de um branch."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Gerar os zips
+        run: python3 scripts/empacotar_skills.py dist
+
+      - name: Anexar a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.zip --clobber
+          else
+            gh release create "$TAG" dist/*.zip --verify-tag --generate-notes
+          fi

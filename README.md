@@ -46,6 +46,29 @@ Se a mensagem de erro cita um diretório com nome parecido com `lab-dados-labdad
 Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 `/plugin marketplace update` para puxar.
 
+## Usar no claude.ai, sem o Claude Code
+
+Cada skill tem um zip pronto na última release. Baixe o zip da skill e envie o
+arquivo, sem descompactar, na seção de Skills das configurações do claude.ai. A
+execução de código precisa estar ativada; as skills que raspam sites ou instalam
+bibliotecas Python também dependem do acesso à rede liberado nessas configurações.
+A `juscraper-builder` e a `raspe-builder` foram feitas para o Claude Code: geram código
+num checkout local do juscraper ou do raspe, e a `raspe-builder` exige o Playwright MCP.
+A `juscraper-builder-captcha` não tem zip, porque depende de arquivos da `juscraper-builder`.
+
+| Skill | Zip |
+|-------|-----|
+| juscraper | [juscraper.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/juscraper.zip) |
+| dataframeit | [dataframeit.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/dataframeit.zip) |
+| openalex | [openalex.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/openalex.zip) |
+| raspe | [raspe.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/raspe.zip) |
+| juscraper-builder | [juscraper-builder.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/juscraper-builder.zip) |
+| raspe-builder | [raspe-builder.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/raspe-builder.zip) |
+| raspador-builder | [raspador-builder.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/raspador-builder.zip) |
+| explainer-video | [explainer-video.zip](https://github.com/lab-dados/labdados-skills/releases/latest/download/explainer-video.zip) |
+
+Os zips saem do workflow `release-skills`, a cada tag `v*` empurrada.
+
 ## Skills disponiveis
 
 | Skill | O que faz | Trigger tipico |
