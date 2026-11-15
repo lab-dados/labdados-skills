@@ -10,10 +10,10 @@ Cobre **25 tribunais estaduais**, **4 tribunais regionais federais** (TRF1, TRF3
 o **STF** (busca de jurisprudencia) e **5 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao), permitindo buscar
 jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
 
-> **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15); a cobertura (quem tem cada metodo) acompanha a 0.5.0 (PyPI, 2026-10-21).**
+> **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15), com partes revistas contra a 0.5.0 (PyPI, 2026-10-21), entre elas a cobertura (quem tem cada metodo).**
 > Recursos marcados `[v0.5.0+]` exigem `pip install -U 'juscraper>=0.5.0'`; `[v0.4.0+]` exigem
 > `pip install -U 'juscraper>=0.4.0'`; `[v0.3.0+]` exigem `juscraper>=0.3.0`. Recursos marcados
-> `[unreleased]` existem so na `main` do repositorio (snapshot `5ebde28`) e exigem
+> `[unreleased]` existem so na `main` do repositorio (posteriores a ultima release do PyPI) e exigem
 > `pip install "git+https://github.com/jtrecenti/juscraper.git"`. Ver `references/versao.md`
 > para o changelog skill ↔ biblioteca.
 
@@ -37,7 +37,7 @@ Verifique se `juscraper` esta instalado:
 
 | Necessidade | Comando |
 |---|---|
-| Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` (default, recomendado) | `pip install -U juscraper` ou `uv add juscraper` |
+| Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` e `[v0.5.0+]` (default, recomendado) | `pip install -U juscraper` ou `uv add juscraper` |
 | TJMG e TRF6 (captcha automatico via `txtcaptcha`) | `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha` |
 | STF `[v0.4.0+]` e TJPE `cpopg` `[v0.5.0+]` (cookie do AWS WAF via Playwright) | `pip install 'juscraper[waf]'` (ou `[stf]`, mesmo conteudo) e depois `playwright install chromium` |
 | Salvar em parquet (`df.to_parquet`) | `pip install pyarrow` (saiu das dependencias base na 0.4.0) |
@@ -378,7 +378,7 @@ Leia a referencia apropriada antes de gerar codigo:
 - **`references/decisoes-e-processos.md`** — Juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ.
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
-  `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]` e `[unreleased]`, alem do procedimento
+  `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]`, `[v0.5.0+]` e `[unreleased]`, alem do procedimento
   para bumps futuros.
 
 - **`references/assuntos-tjsp.md`** — Arvore oficial de assuntos (classificacao tematica)

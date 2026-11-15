@@ -65,7 +65,7 @@ Atualizacoes sao distribuidas ao subir a versao em `marketplace.json` — rode
 ### juscraper
 
 - Python >= 3.11
-- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0, e a cobertura (quem tem cada metodo), a v0.5.0
+- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0, com partes revistas contra a v0.5.0, entre elas a cobertura (ver `references/versao.md` da skill)
 - Para TJMG e TRF6 (captcha): `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`
 - Para STF: `pip install 'juscraper[stf]'` e `playwright install chromium` (ou um cookie `waf_token` ja obtido)
 - Para salvar em parquet: `pip install pyarrow`, que saiu das dependencias base na v0.4.0

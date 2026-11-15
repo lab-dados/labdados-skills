@@ -615,7 +615,7 @@ contagem = stf.contar_decisoes(pesquisa='pejotização', base='acordaos')
 
 **Teto de 10.000 registros na 0.4.0:** a API so entrega os 10.000 primeiros registros de uma busca, com no maximo 250 por pagina. Pagina que comeca depois do registro 10.000 levanta `ValueError` antes de qualquer requisicao. Com `paginas=None` e mais de 10.000 resultados, `listar_decisoes` emite `UserWarning` e devolve so os 10.000 primeiros; divida a busca por intervalo de datas para obter o resto. `tamanho_pagina` fora de 1-250 vira `ValidationError`. Rode `contar_decisoes` antes para saber se a busca passa do teto.
 
-**Na `main`, ainda sem release `[unreleased]`** (jtrecenti/juscraper#347, #348, #349; instalar com `pip install "juscraper[stf] @ git+https://github.com/jtrecenti/juscraper.git"`):
+**Desde a 0.5.0 `[v0.5.0+]`** (jtrecenti/juscraper#347, #348, #349; instalar com `pip install -U 'juscraper[stf]>=0.5.0'`):
 
 - `paginas=None` deixa de truncar: divide buscas acima do teto em janelas de datas disjuntas (datas de publicacao quando ha filtro de publicacao; senao, de julgamento) e devolve todas as linhas ou levanta erro. Um unico dia acima do teto, residual sem data acima do teto, IDs faltando ou duplicados e contagens divergentes levantam `ValueError`. Paginas explicitas mantem os offsets e a ordem do portal e nao disparam a divisao.
 - Coleta integral (`paginas=None`) ordena so por `id`, sem o score de relevancia, que varia entre replicas do indice e fazia a paginacao repetir ou pular documentos.
