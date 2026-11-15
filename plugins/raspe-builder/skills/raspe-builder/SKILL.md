@@ -158,10 +158,11 @@ Veja `references/playwright-mcp-recon.md` para o protocolo detalhado.
    às vezes com filtros default obrigatórios) e/ou retorne ao Playwright
    MCP para inspecionar a URL real depois do `click`.
 
-6. **Captura de samples**. Salve o HTML completo das páginas 1 e 2 (e
+6. **HTML de referência**. Salve o HTML completo das páginas 1 e 2 (e
    responses JSON, se for o caso) em
    `/tmp/raspe-recon/<fonte>/page_01.html` (e `page_02.html`). Esses
-   arquivos vão virar samples de teste na Etapa 6.
+   arquivos servem para escrever o parser (e, nos Playwright, viram
+   samples na Etapa 6).
    - HTTP: copie `r.text` da resposta.
    - Playwright: use `browser_evaluate` com `document.documentElement.outerHTML`.
 
@@ -489,7 +490,8 @@ Playwright segue o caminho descrito no fim desta etapa.
 
 1. Criar `tests/{fonte}/__init__.py` (vazio).
 2. (HTTP) Criar o script de captura `tests/fixtures/capture/{fonte}.py`,
-   obrigatório pelo `CLAUDE.md` do raspe, e salvar os samples em
+   obrigatório pelo `CLAUDE.md` do raspe, e rodá-lo para gravar os
+   samples em
    `tests/{fonte}/samples/raspar/`: `page_01.html`, `page_02.html`,
    `single_page.html` e `no_results.html`.
 3. (HTTP) Criar `tests/{fonte}/test_raspar_contract.py`:

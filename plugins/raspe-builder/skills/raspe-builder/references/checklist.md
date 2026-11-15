@@ -59,7 +59,9 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 
 - [ ] (*) `tests/<fonte>/__init__.py` vazio criado
 - [ ] (*) (HTTP) Script de captura `tests/fixtures/capture/<fonte>.py` criado
-- [ ] (*) (HTTP) Samples HTML salvos em `tests/<fonte>/samples/raspar/`:
+- [ ] (*) (HTTP) Samples gravados pelo script de captura em
+  `tests/<fonte>/samples/raspar/`, com `_find_n_pags` 1 no `single_page`
+  e 0 no `no_results`:
   - `page_01.html` (paginação típica)
   - `page_02.html` (segunda página, se paginar)
   - `single_page.html` (cenário 1 página de resultados)

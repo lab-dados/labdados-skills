@@ -36,26 +36,31 @@ encoding (especialmente sites em latin-1).
 
 ## Captura dos samples
 
-Durante a Etapa 2 (engenharia reversa), use `browser_evaluate`:
+Os samples HTTP saem do script `tests/fixtures/capture/<fonte>.py`,
+obrigatório pela checklist do `CLAUDE.md` do raspe, e não do
+`browser_evaluate` da Etapa 2: o `outerHTML` é o DOM que o navegador
+montou, não a resposta crua que o scraper recebe.
 
-```javascript
-() => document.documentElement.outerHTML
+O script passa os cenários a `capturar_cenarios`, de
+`tests/fixtures/capture/_util.py`, que faz cada requisição pelo próprio
+scraper e grava a resposta crua. Copie `tests/fixtures/capture/presidencia.py`
+(docstring, `CENARIOS`, `main()` com `pasta_saida`) e leia
+`tests/fixtures/capture/README.md`. Rode da raiz do raspe, como módulo:
+
+```bash
+cd <RASPE_REPO>
+uv run python -m tests.fixtures.capture.{fonte} --saida /tmp/captura-{fonte}
 ```
 
-Os samples capturados na Etapa 2 ficam temporariamente em
-`/tmp/raspe-recon/<fonte>/page_NN.html`. Para usar como teste, **mova**
-(ou copie) cada arquivo para `tests/<fonte>/samples/raspar/page_NN.html`
-no repositório raspe. Capture os três cenários mínimos (paginação
-típica, página única, zero resultados), acionando cada um com termos
-diferentes durante a engenharia reversa.
+Cada cenário imprime o `_find_n_pags` da resposta: `single_page` tem de
+dar 1 e `no_results`, 0. Se não der, troque o termo. Quando der, rode
+sem `--saida` para gravar em `tests/{fonte}/samples/raspar/`. Fonte de
+API JSON grava `.json` (como o `nyt.py`).
 
-O script `tests/fixtures/capture/<fonte>.py` é obrigatório pela
-checklist do `CLAUDE.md` do raspe: ele exercita o scraper real e grava
-as respostas cruas em `tests/<fonte>/samples/<endpoint>/`, e é o que
-permite regerar os samples quando o site mudar. Siga o padrão dos
-existentes (`tests/fixtures/capture/ipea.py`, que usa
-`attach_capture_hook` de `_util.py`) e leia
-`tests/fixtures/capture/README.md`.
+Página acima dos 500 KB do hook `check-added-large-files`: passe
+`enxugar=enxugar_html` (também de `_util.py`) a `capturar_cenarios`,
+como o `camara.py`. Se o peso vier de outra parte da página, `enxugar`
+aceita qualquer função `bytes -> bytes` (`ipea.py`, `capes.py`).
 
 ## Template de test_raspar_contract.py
 
