@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.10] - 2026-11-15
+
+Corrigido:
+
+- `explainer-video` (plugin 1.0.4): sem as bibliotecas do Google, o `scripts/upload_youtube.py` mandava rodar `pip install --break-system-packages`, fora da convencao do uv (#59), e, quando faltava tambem o `google-api-python-client`, nem chegava a dica: parava num `ModuleNotFoundError`. Agora o script confere as dependencias logo no inicio, diz qual import falhou e imprime `uv pip install --python <python do script>` e, sem o uv, `<python do script> -m pip install`, os dois no Python que roda o script, sem `--break-system-packages`; se esse Python for o do sistema e recusar a instalacao, manda criar um venv. O `tests/test_upload_youtube.py` roda o script sem as dependencias e confere a dica.
+
 ## [1.18.9] - 2026-11-15
 
 Alterado (#8):
