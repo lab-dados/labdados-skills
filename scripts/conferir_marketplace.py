@@ -24,4 +24,6 @@ for plugin in marketplace["plugins"]:
 
 for erro in erros:
     print("ERRO:", erro)
-sys.exit(1 if erros else 0)
+if erros:
+    sys.exit(1)
+print(f"{len(marketplace['plugins'])} plugins no marketplace, todo source local tem SKILL.md.")
