@@ -649,7 +649,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 2. **`sleep_time=0` causa bloqueio** — os tribunais detectam acesso agressivo.
 
-3. **cpopg do TJSP retorna dict; cjsg, cjpg e cposg retornam DataFrame** — nao trate todos igual. O `cpopg` dos TRFs e do TJPE `[v0.5.0+]` tambem retorna DataFrame (uma linha por processo), nao dict.
+3. **So o cpopg do TJSP retorna dict** — `cjsg`, `cjpg`, `cposg` e o `cpopg` dos TRFs e do TJPE `[v0.5.0+]` retornam DataFrame. Nao trate todos igual.
 
 4. **Numero CNJ: separadores opcionais mas zeros a esquerda importam** — `1000149-71.2024.8.26.0346` e `10001497120248260346` sao aceitos.
 

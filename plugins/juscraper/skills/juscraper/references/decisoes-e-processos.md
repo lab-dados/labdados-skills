@@ -132,7 +132,6 @@ antes do merge.
 
 ## Limites do `cpopg` do TJSP no juscraper 0.5.0
 
-`movimentacoes` vem vazia (jtrecenti/juscraper#428), e a situacao do processo
-nao vem; os dois estao corrigidos na `main` pelo #476 (`[unreleased]`). Ate a
-correcao chegar ao PyPI, a data da sentenca vem do `cjpg`
+`movimentacoes` vem vazia e a situacao do processo nao vem (detalhes em
+`tjsp.md`). Ate a correcao chegar ao PyPI, a data da sentenca vem do `cjpg`
 (`data_disponibilizacao`), nao das movimentacoes.

@@ -164,8 +164,7 @@ Consulte primeiro se existe reference para o tribunal do estudo.
 
 **Tribunais ja documentados**:
 - `references/tjsp.md` — cobertura temporal, `cjpg` (1o grau; TJES e TJTO
-  tambem tem), parametro `method`, retorno e limites de `cpopg`/`cposg` no
-  0.5.0, diferencas da `cjsg`.
+  tambem tem), parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`.
 
 **Tribunais ainda nao validados**: a maioria dos demais. Nao assuma
 cobertura equivalente a TJSP — cada TJ tem calendario proprio de
@@ -285,7 +284,7 @@ Utilitarios para manipulacao: `from juscraper.utils.cnj import clean_cnj, split_
 `paginas=None` = todas (usar com cautela).
 
 **Tipos de retorno**:
-- `cpopg()` do TJSP: retorna `dict` com DataFrames (basicos, partes, movimentacoes, peticoes_diversas). Os demais `cpopg` (TRFs, TJPE `[v0.5.0+]`) e todo `cposg` (TJSP e TJMG `[v0.5.0+]`) retornam DataFrame (uma linha por processo ou recurso), nao dict. No 0.5.0, o `cposg` do TJSP volta vazio (ver `references/tjsp.md`).
+- `cpopg()` do TJSP: retorna `dict` com DataFrames (basicos, partes, movimentacoes, peticoes_diversas). Os demais `cpopg` (TRFs, TJPE `[v0.5.0+]`) e todo `cposg` (TJSP e TJMG `[v0.5.0+]`) retornam DataFrame (uma linha por processo ou recurso).
 - `cjsg()`/`cjpg()`: retorna um unico `pandas.DataFrame`
 - `listar_processos()`: retorna `pandas.DataFrame`
 - `download_documents()`: retorna `pandas.DataFrame` com coluna `texto`
@@ -339,7 +338,7 @@ Apos a coleta:
   `df.to_parquet('resultados.parquet')` (parquet e melhor para DataFrames grandes). Desde a
   0.4.0 o juscraper nao instala `pyarrow`: rode `pip install pyarrow` antes do `to_parquet`.
 - **Para combinar tribunais:** colete separadamente e concatene com `pd.concat([df1, df2])`
-- **cpopg do TJSP retorna dict:** itere com `for tabela, df in resultado.items():`. O `cposg` do TJSP e os de TRFs, TJPE e TJMG devolvem DataFrame direto.
+- **cpopg do TJSP retorna dict:** itere com `for tabela, df in resultado.items():`. O resto devolve DataFrame direto.
 - **Enriquecer decisoes com dados do processo** (valor da causa, partes, classe, vara): merge
   com o `cpopg` pelo CNJ, onde o tribunal tem `cpopg`, e nao regex ou LLM sobre o texto da
   decisao. Ver `references/decisoes-e-processos.md` (validada no TJSP).
@@ -429,5 +428,5 @@ O total de tokens por linha e `_input_tokens + _output_tokens`; a coluna
 ja esta contido em `_output_tokens` (nao somar de novo).
 
 O mesmo vale para o `cpopg` do TJSP, que retorna um dict de DataFrames —
-extraia o DataFrame relevante (ex: `dados["movimentacoes"]`, vazio no 0.5.0)
-e confirme qual coluna contem o texto antes de passar.
+extraia o DataFrame relevante (ex: `dados["partes"]`) e confirme
+qual coluna contem o texto antes de passar.

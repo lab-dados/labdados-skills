@@ -156,7 +156,7 @@ result = tjsp.cpopg(
 
 **Retorna:** `dict` com DataFrames. Chaves tipicas: `basicos`, `partes`, `movimentacoes`, `peticoes_diversas`. Variantes granulares: `cpopg_download`, `cpopg_parse`.
 
-**No juscraper 0.5.0:** passe um CNJ por vez (a lista perde processos, jtrecenti/juscraper#472); `movimentacoes` vem vazia (#428) e `basicos` nao traz a situacao do processo. A `main` (`[unreleased]`) corrige os tres. Ver `references/tjsp.md` §Retorno e limites.
+**No juscraper 0.5.0:** passe um CNJ por vez, e `movimentacoes` vem vazia. Ver `references/tjsp.md` §Retorno e limites.
 
 #### TRF1, TRF3, TRF5
 ```python
@@ -197,7 +197,7 @@ df = tjsp.cposg(
 
 **Retorna:** `pd.DataFrame` com uma linha por processo e 18 colunas (`processo`, `status`, `classe`, `assunto`, `orgao_julgador`, `relator`, `origem`; `movimentacoes`, `partes`, `decisoes`, `composicao` e `primeira_inst` como listas, entre outras), nao `dict` como o `cpopg`. Variantes granulares: `cposg_download`, `cposg_parse`.
 
-**No juscraper 0.5.0, o `cposg` do TJSP devolve DataFrame vazio, sem aviso, para todo processo** (o eSAJ passou a carregar as movimentacoes por AJAX). Corrigido na `main` (jtrecenti/juscraper#528, `[unreleased]`).
+**No juscraper 0.5.0, volta vazio, sem aviso, para todo processo.** Ver `references/tjsp.md` §Retorno e limites.
 
 ### cjsg — Busca de jurisprudencia (2o grau)
 
