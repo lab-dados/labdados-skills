@@ -22,49 +22,8 @@ jobs:
             python -c "import json; json.load(open('$f'))"
           done
 
-      - name: Verify each plugin source path exists
-        run: |
-          python - <<'PYEOF'
-          import json, sys, os
-          with open('.claude-plugin/marketplace.json') as f:
-              mp = json.load(f)
-          missing = []
-          for p in mp['plugins']:
-              src = p.get('source')
-              if isinstance(src, str) and src.startswith('./'):
-                  if not os.path.isdir(src):
-                      missing.append((p['name'], src))
-          if missing:
-              for name, src in missing:
-                  print(f"ERROR: plugin {name} source {src} does not exist")
-              sys.exit(1)
-          print("All plugin source paths exist.")
-          PYEOF
-
-      - name: Verify each plugin has a SKILL.md under skills/
-        run: |
-          python - <<'PYEOF'
-          import json, sys, os, glob
-          with open('.claude-plugin/marketplace.json') as f:
-              mp = json.load(f)
-          errors = []
-          for p in mp['plugins']:
-              src = p['source'] if isinstance(p['source'], str) else None
-              if not src or not src.startswith('./'):
-                  continue
-              skills_dir = os.path.join(src, 'skills')
-              if not os.path.isdir(skills_dir):
-                  errors.append(f"{p['name']}: missing {skills_dir}")
-                  continue
-              found = glob.glob(os.path.join(skills_dir, '*', 'SKILL.md'))
-              if not found:
-                  errors.append(f"{p['name']}: no SKILL.md under {skills_dir}")
-          if errors:
-              for e in errors:
-                  print('ERROR:', e)
-              sys.exit(1)
-          print("All plugins have at least one SKILL.md.")
-          PYEOF
+      - name: Verify each plugin source exists and has a SKILL.md
+        run: python3 scripts/conferir_marketplace.py
 
       - name: Validate plugins with Claude Code
         run: |

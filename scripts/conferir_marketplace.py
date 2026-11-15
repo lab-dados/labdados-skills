@@ -1,7 +1,7 @@
-"""Confere o marketplace como o validate.yml: todo `source` local existe e tem SKILL.md.
+"""Confere o marketplace: todo `source` local existe e tem SKILL.md.
 
-O `claude plugin validate` não confere nenhum dos dois, então o hook do pre-commit roda este
-script para pegar antes do push o que o CI reprovaria.
+O `claude plugin validate` não confere nenhum dos dois. Este script roda no validate.yml e no
+hook do pre-commit, que assim pega antes do push o que o CI reprovaria.
 """
 
 import glob
@@ -24,4 +24,6 @@ for plugin in marketplace["plugins"]:
 
 for erro in erros:
     print("ERRO:", erro)
-sys.exit(1 if erros else 0)
+if erros:
+    sys.exit(1)
+print(f"{len(marketplace['plugins'])} plugins no marketplace, todo source local tem SKILL.md.")
