@@ -4,6 +4,13 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.5] - 2026-11-15
+
+Corrigido (#24):
+
+- `dataframeit` (plugin 1.3.3): a lista de modelos que recusam `temperature` (erro 400 com valor diferente do padrao) parava no Claude Sonnet 5 e nos Opus; inclui agora o Haiku 5.5 e o Sonnet 5.5, na `SKILL.md` e na `modelos-parametros.md`, que tambem ganha os IDs `claude-haiku-5-5`, `claude-sonnet-5-5` e `claude-fable-5-2`. A data "aposentadoria do Haiku 4.5 nao antes de 15/10/2026" ja tinha passado: em 03/11/2026 ele seguia ativo, sem data. O Haiku 4.5 continua o modelo recomendado; a reference diz o preco do Haiku 5.5 e que a troca nao foi medida com o dataframeit. Fonte: Claude API Docs (Models overview, Migrating to Claude Haiku 5.5).
+- `openalex` (plugin 1.1.3) e `raspe` (plugin 1.1.2): as duas descriptions disputavam "artigo academico" sem se citar, como o CLAUDE.md exige de skills irmas. Agora a da openalex manda ao raspe so a busca no Portal de Periodicos da CAPES, e a do raspe manda a openalex a revisao de literatura e a bibliometria. A tabela de gatilhos do raspe mandava "revisao de literatura" para `capes`, contra a propria secao de skills complementares, que a manda para a openalex; passa a seguir a segunda. `tests/test_descricoes.py` confere os pares de irmas.
+
 ## [1.18.4] - 2026-11-15
 
 Corrigido:
