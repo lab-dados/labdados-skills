@@ -31,13 +31,13 @@ Complete este checklist antes de qualquer chamada.
 ### 1. Instalacao
 
 Verifique se `juscraper` esta instalado:
-1. `pip show juscraper` ou `python -c "import juscraper; print(juscraper.__version__)"`
+1. `uv pip show juscraper` (com uv), `pip show juscraper` ou `python -c "import juscraper; print(juscraper.__version__)"`
 2. Python >= 3.11 obrigatorio.
 3. Escolha o modo de instalacao conforme o que vai usar:
 
 | Necessidade | Comando |
 |---|---|
-| Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` e `[v0.5.0+]` (default, recomendado) | `pip install -U juscraper` ou `uv add juscraper` |
+| Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` e `[v0.5.0+]` (default, recomendado) | `pip install -U juscraper` |
 | TJMG e TRF6 (captcha automatico via `txtcaptcha`) | `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha` |
 | STF `[v0.4.0+]` e TJPE `cpopg` `[v0.5.0+]` (cookie do AWS WAF via Playwright) | `pip install 'juscraper[waf]'` (ou `[stf]`, mesmo conteudo) e depois `playwright install chromium` |
 | Salvar em parquet (`df.to_parquet`) | `pip install pyarrow` (saiu das dependencias base na 0.4.0) |
@@ -45,7 +45,7 @@ Verifique se `juscraper` esta instalado:
 
 Para TRF6, o captcha textual exige `txtcaptcha`, que nao faz parte das dependencias base: sem ele, o `cpopg` do TRF6 levanta `ImportError`. O extra `tjmg` declara `txtcaptcha`, entao `pip install 'juscraper[tjmg]'` resolve os dois tribunais.
 
-Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add juscraper` (ou `uv add 'juscraper[tjmg]'` etc.) instala e grava a dependencia; fora de projeto, `uv venv` e depois `uv pip install juscraper`. Os comandos `pip install` desta skill, aqui e nas references, valem com o uv trocando `pip install` por um desses. Instalado pelo uv, o pacote fica no `.venv`: confira com `uv pip show juscraper`, rode o Python com `uv run python` e baixe o Chromium do extra `waf` com `uv run playwright install chromium`. Se o usuario nao tem o uv, sugira instala-lo; se ele preferir o pip, siga com o pip.
+Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `pyproject.toml`, `uv venv` + `uv pip install juscraper` fora dele; vale para todo `pip install` da skill e das references. O pacote fica no `.venv`: rode o Python e o `playwright install chromium` com `uv run`. Sem o uv, sugira instala-lo ou siga com o pip.
 
 ### 2. Autenticacao (condicional)
 

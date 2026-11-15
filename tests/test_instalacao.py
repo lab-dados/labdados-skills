@@ -3,10 +3,11 @@
 import re
 from pathlib import Path
 
+import empacotar_skills
 import pytest
 
 RAIZ = Path(__file__).resolve().parents[1]
-SKILLS = sorted(RAIZ.glob("plugins/*/skills/*/SKILL.md"))
+SKILLS = [p / "SKILL.md" for p in empacotar_skills.skills(RAIZ)]
 PIP = re.compile(r"(?<!uv )pip install")
 # `uv pip install` serve com ou sem projeto; `uv tool install`, para CLI (openalex).
 UV = re.compile(r"\buv (pip|tool) install\b")

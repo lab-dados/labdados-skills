@@ -112,9 +112,7 @@ Em seguida, **ofereça** upload no YouTube como não-listado. Não suba sem perm
 
 ## Antes de começar: instalação de dependências
 
-Sempre verifique e instale as dependências em uma única passada antes da Etapa 5:
-
-Com o [uv](https://docs.astral.sh/uv/) disponível, prefira-o ao pip, num ambiente fora do repo do app, para não mexer no ambiente do usuário (o comando imprime o caminho criado):
+Sempre verifique e instale as dependências em uma única passada antes da Etapa 5. Com o [uv](https://docs.astral.sh/uv/), prefira-o ao pip, num ambiente fora do repo do app (o comando imprime o caminho criado):
 
 ```bash
 VENV="$(mktemp -d)/venv" && uv venv "$VENV" && echo "$VENV"

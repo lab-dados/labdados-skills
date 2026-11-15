@@ -45,26 +45,26 @@ Complete este checklist antes de qualquer chamada.
 
 ### 1. Instalação
 
-1. `pip show dataframeit` ou `python -c "import dataframeit; print(dataframeit.__version__)"`.
+1. `uv pip show dataframeit` (com uv), `pip show dataframeit` ou `python -c "import dataframeit; print(dataframeit.__version__)"`.
 2. Se não estiver instalado, instale com o extra do provedor desejado.
 3. Python >= 3.10 obrigatório.
 
-Prefira o [uv](https://docs.astral.sh/uv/) ao pip: num projeto com `pyproject.toml`, `uv add 'dataframeit[openai]'` instala e grava a dependência; fora de projeto, `uv venv` e depois `uv pip install 'dataframeit[openai]'`. Os comandos `pip install` desta skill, aqui e nas references, valem com o uv trocando `pip install` por um desses, com aspas em volta dos extras (no zsh, `[...]` sem aspas vira glob). Instalado pelo uv, o pacote fica no `.venv`: confira com `uv pip show dataframeit` e rode o Python com `uv run python`. Se o usuário não tem o uv, sugira instalá-lo; se ele preferir o pip, siga com o pip.
+Prefira o [uv](https://docs.astral.sh/uv/): `uv add 'dataframeit[openai]'` num projeto com `pyproject.toml`, `uv venv` + `uv pip install 'dataframeit[openai]'` fora dele; vale para todo `pip install` da skill e das references. O pacote fica no `.venv`: rode com `uv run python`. Sem o uv, sugira instalá-lo ou siga com o pip.
 
 | Extra | Comando | Quando usar |
 |---|---|---|
-| `[openai]` | `pip install dataframeit[openai]` | Padrão, OpenAI (GPT) |
-| `[google]` | `pip install dataframeit[google]` | Google Gemini |
-| `[anthropic]` | `pip install dataframeit[anthropic]` | Anthropic (Claude) |
-| `[groq]` | `pip install dataframeit[groq]` | Groq, alta taxa de tokens/s e custo baixo |
-| `[claude-code]` | `pip install dataframeit[claude-code]` | `provider='claude_code'` (instala o `claude-agent-sdk`), ver `references/modelos-parametros.md §Claude Code` |
-| `[codex]` | `pip install dataframeit[codex]` | `provider='codex'`, experimental (SDK Python oficial do Codex), ver `references/modelos-parametros.md §Codex`. Fica fora do `[all]` |
-| `[all]` | `pip install dataframeit[all]` | OpenAI, Google, Anthropic, Groq, Claude Code, Tavily, Exa, polars e excel |
-| `[search]` | `pip install dataframeit[openai,search]` | Busca web com Tavily |
-| `[search-exa]` | `pip install dataframeit[openai,search-exa]` | Busca web com Exa |
-| `[search-all]` | `pip install dataframeit[openai,search-all]` | Busca web com Tavily e Exa |
-| `[polars]` | `pip install dataframeit[openai,polars]` | Entrada e saída em polars (traz `pyarrow`, que também serve ao checkpoint `.parquet`) |
-| `[excel]` | `pip install dataframeit[openai,excel]` | Leitura e checkpoint em `.xlsx` via `openpyxl` |
+| `[openai]` | `pip install 'dataframeit[openai]'` | Padrão, OpenAI (GPT) |
+| `[google]` | `pip install 'dataframeit[google]'` | Google Gemini |
+| `[anthropic]` | `pip install 'dataframeit[anthropic]'` | Anthropic (Claude) |
+| `[groq]` | `pip install 'dataframeit[groq]'` | Groq, alta taxa de tokens/s e custo baixo |
+| `[claude-code]` | `pip install 'dataframeit[claude-code]'` | `provider='claude_code'` (instala o `claude-agent-sdk`), ver `references/modelos-parametros.md §Claude Code` |
+| `[codex]` | `pip install 'dataframeit[codex]'` | `provider='codex'`, experimental (SDK Python oficial do Codex), ver `references/modelos-parametros.md §Codex`. Fica fora do `[all]` |
+| `[all]` | `pip install 'dataframeit[all]'` | OpenAI, Google, Anthropic, Groq, Claude Code, Tavily, Exa, polars e excel |
+| `[search]` | `pip install 'dataframeit[openai,search]'` | Busca web com Tavily |
+| `[search-exa]` | `pip install 'dataframeit[openai,search-exa]'` | Busca web com Exa |
+| `[search-all]` | `pip install 'dataframeit[openai,search-all]'` | Busca web com Tavily e Exa |
+| `[polars]` | `pip install 'dataframeit[openai,polars]'` | Entrada e saída em polars (traz `pyarrow`, que também serve ao checkpoint `.parquet`) |
+| `[excel]` | `pip install 'dataframeit[openai,excel]'` | Leitura e checkpoint em `.xlsx` via `openpyxl` |
 | Outro provedor do LangChain | `pip install dataframeit langchain-mistralai` (ou `langchain-cohere` etc.) | Mistral, Cohere e qualquer provedor aceito pelo `init_chat_model` do LangChain. Não existem extras `[mistral]` nem `[cohere]`: o pip ignora extra inexistente com um aviso e o pacote de integração fica faltando |
 
 ### 2. Provedor de LLM (escolha um)
@@ -116,7 +116,7 @@ Só é necessária se a informação não está no texto (`use_search=True`). Fu
 - **Tavily** (padrão): `TAVILY_API_KEY`, https://tavily.com (1000 buscas/mês grátis)
 - **Exa**: `EXA_API_KEY`, https://exa.ai
 
-Instale o extra do buscador: `pip install dataframeit[openai,search]` para Tavily, `[openai,search-exa]` para Exa ou `[openai,search-all]` para os dois.
+Instale o extra do buscador: `pip install 'dataframeit[openai,search]'` para Tavily, `[openai,search-exa]` para Exa ou `[openai,search-all]` para os dois.
 
 Com busca, cada linha é resolvida por um agente que decide quando buscar, com até `max_search_calls` buscas (padrão 10). Busca por campo (`search_per_field`), grupos (`search_groups`), limites por grupo e por campo, custos e rate limit estão em **`references/busca-web.md`**.
 

@@ -88,7 +88,7 @@ Os zips saem do workflow `release-skills`, a cada tag `v*` empurrada.
 Recomendamos o [uv](https://docs.astral.sh/uv/) para instalar os pacotes Python: os comandos `pip install`
 abaixo valem trocando `pip install` por `uv add` (num projeto com `pyproject.toml`) ou por `uv pip install`
 (num ambiente criado com `uv venv`), e o `python -m playwright install chromium` vira
-`uv run python -m playwright install chromium`. As skills tambem sugerem o uv ao instalar.
+`uv run python -m playwright install chromium`.
 
 ### juscraper
 

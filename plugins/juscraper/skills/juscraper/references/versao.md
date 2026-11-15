@@ -14,7 +14,7 @@ Para confirmar a versao instalada no ambiente do usuario: `python -c "import jus
 
 | Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
-| 1.5.4 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main), nao reconferido | Instalacao sugere o uv (`uv add` num projeto, `uv venv` + `uv pip install` fora dele), com o pip como alternativa; so instalacao, cobertura sem mudanca |
+| 1.5.4 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main), nao reconferido | Instalacao sugere o uv, com o pip como alternativa; cobertura sem mudanca |
 | 1.5.3 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main) | `description` no padrao "Usar quando", com "Nao confundir com juscraper-builder" no lugar de "usar a juscraper-builder"; cobertura sem mudanca |
 | 1.5.2 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | STF com coleta integral acima de 10.000 registros e `checkpoint_dir`/`resume` passa a `[v0.5.0+]` (o snapshot `5ebde28` ja esta na 0.5.0) |
 | 1.5.1 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | `cposg` do TJSP devolve DataFrame, vazio no 0.5.0 (corrigido na `main`, `[unreleased]`); limites do `cpopg` no 0.5.0 reunidos em `references/tjsp.md`; `method='api'` deixa de ser oferecido |
