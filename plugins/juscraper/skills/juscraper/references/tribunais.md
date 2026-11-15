@@ -649,7 +649,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 2. **`sleep_time=0` causa bloqueio** — os tribunais detectam acesso agressivo.
 
-3. **cpopg/cposg do TJSP retornam dict, cjsg/cjpg retornam DataFrame** — nao trate todos igual. Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
+3. **So o cpopg do TJSP retorna dict** — `cjsg`, `cjpg`, `cposg` e o `cpopg` dos TRFs e do TJPE `[v0.5.0+]` retornam DataFrame. Nao trate todos igual.
 
 4. **Numero CNJ: separadores opcionais mas zeros a esquerda importam** — `1000149-71.2024.8.26.0346` e `10001497120248260346` sao aceitos.
 
@@ -659,7 +659,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 7. **Filtros parciais auto-completam `[v0.4.0+]`:** informar apenas `data_*_inicio` ou apenas `data_*_fim` faz o outro lado virar respectivamente "hoje" ou `01/01/1990`. Emite `UserWarning`.
 
-8. **cposg do TJSP com `method='api'`** — o parse JSON nao esta implementado. Use `'html'`.
+8. **cpopg/cposg do TJSP com `method='api'`** — a API do TJSP deixou de devolver processos. Use `'html'` (ver `references/tjsp.md`).
 
 9. **JusBR e PDPJ exigem autenticacao antes de qualquer chamada.** Detalhes em `references/agregadores.md`.
 

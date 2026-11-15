@@ -149,12 +149,14 @@ pdpj = jus.scraper('pdpj',   # [v0.4.0+]
 
 ```python
 result = tjsp.cpopg(
-    id_cnj,                    # str ou list[str] — numero(s) CNJ
-    method='html'              # 'html' ou 'api'
+    id_cnj,                    # str; aceita list[str], mas no 0.5.0 a lista perde processos
+    method='html'              # 'api' nao funciona mais (ver references/tjsp.md)
 )
 ```
 
 **Retorna:** `dict` com DataFrames. Chaves tipicas: `basicos`, `partes`, `movimentacoes`, `peticoes_diversas`. Variantes granulares: `cpopg_download`, `cpopg_parse`.
+
+**No juscraper 0.5.0:** passe um CNJ por vez, e `movimentacoes` vem vazia. Ver `references/tjsp.md` §Retorno e limites.
 
 #### TRF1, TRF3, TRF5
 ```python
@@ -187,13 +189,15 @@ Para JusBR e PDPJ, ver `references/agregadores.md`.
 **Disponivel em:** TJSP; TJMG `[v0.5.0+]`, que devolve DataFrame com uma linha por recurso (ver `references/tribunais.md` §TJMG).
 
 ```python
-result = tjsp.cposg(
+df = tjsp.cposg(
     id_cnj,                    # str ou list — numero(s) CNJ
-    method='html'              # 'html' ou 'api' (parse JSON nao implementado — use 'html')
+    method='html'              # 'api' nao funciona mais (ver references/tjsp.md)
 )
 ```
 
-Mesmo padrao de retorno e variantes do `cpopg` do TJSP.
+**Retorna:** `pd.DataFrame` com uma linha por processo e 18 colunas (`processo`, `status`, `classe`, `assunto`, `orgao_julgador`, `relator`, `origem`; `movimentacoes`, `partes`, `decisoes`, `composicao` e `primeira_inst` como listas, entre outras), nao `dict` como o `cpopg`. Variantes granulares: `cposg_download`, `cposg_parse`.
+
+**No juscraper 0.5.0, volta vazio, sem aviso, para todo processo.** Ver `references/tjsp.md` §Retorno e limites.
 
 ### cjsg — Busca de jurisprudencia (2o grau)
 

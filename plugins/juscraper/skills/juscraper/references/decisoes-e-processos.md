@@ -16,7 +16,8 @@ A chave e o CNJ reduzido aos 20 digitos. A coluna do CNJ muda conforme o metodo:
 do `cjsg` traz o numero do processo de origem, e o `cpopg` com ele devolve os
 metadados do 1o grau. Agravo de instrumento e outros feitos originarios do 2o grau
 tem numero proprio (terminado em `.8.26.0000`), que o `cpopg` nao acha: para eles,
-e para os dados do recurso, use o `cposg`.
+e para os dados do recurso, use o `cposg` (no 0.5.0 ele volta vazio; ver
+`tjsp.md`).
 
 ## Custo
 
@@ -131,7 +132,6 @@ antes do merge.
 
 ## Limites do `cpopg` do TJSP no juscraper 0.5.0
 
-`movimentacoes` pode vir vazia (jtrecenti/juscraper#428), e a situacao do processo
-nao vem; os dois estao corrigidos na `main` pelo #476 (`[unreleased]`). Ate a
-correcao chegar ao PyPI, a data da sentenca vem do `cjpg`
+`movimentacoes` vem vazia e a situacao do processo nao vem (detalhes em
+`tjsp.md`). Ate a correcao chegar ao PyPI, a data da sentenca vem do `cjpg`
 (`data_disponibilizacao`), nao das movimentacoes.

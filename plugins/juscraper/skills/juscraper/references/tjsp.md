@@ -35,12 +35,31 @@ Construtor com `sleep_time=0.5` como default. Para descobrir IDs de filtros ante
 ### `method` em `cpopg`/`cposg`
 
 ```python
-tjsp.cpopg(id_cnj, method='html')  # padrao: scraping HTML
-tjsp.cpopg(id_cnj, method='api')   # via API REST do TJSP
+tjsp.cpopg(id_cnj, method='html')  # padrao
 ```
 
-O metodo `'html'` e mais estavel. O parse JSON do `cposg` **nao esta
-implementado** — use `'html'`.
+Use `'html'`. A API do TJSP deixou de devolver processos em novembro de 2026:
+no juscraper 0.5.0, `method='api'` levanta `KeyError: 'basicos'` no `cpopg` e
+devolve DataFrame vazio no `cposg`. Na `main` (`[unreleased]`, #532),
+`method='api'` levanta `ValueError` antes de qualquer requisicao.
+
+### Retorno e limites de `cpopg`/`cposg` no juscraper 0.5.0
+
+Conferido ao vivo em 2026-11-15 com o 0.5.0 e com a `main` (`a2a3421`).
+
+- **`cpopg`** devolve `dict` com os DataFrames `basicos`, `partes`,
+  `movimentacoes` e `peticoes_diversas`. `movimentacoes` vem vazia (o eSAJ
+  passou a carregar as movimentacoes por AJAX, jtrecenti/juscraper#428) e
+  `basicos` nao traz a situacao do processo; a `main` corrige os dois (#476).
+  Rode um processo por vez: a busca com lista de CNJs perde processos (#472,
+  corrigido na `main` pelo #473). Processo nao achado levanta `ValueError`.
+- **`cposg`** devolve `DataFrame`, nao `dict`: uma linha por processo (colunas
+  em `api.md`). No 0.5.0, todo processo volta **vazio, sem aviso**, pelo mesmo
+  motivo das movimentacoes por AJAX. Corrigido na `main` (#528, `[unreleased]`):
+  para usar o `cposg` do TJSP hoje, instale a `main` (ver `versao.md`).
+
+Detalhes de uso do `cpopg` para enriquecer decisoes estao em
+`decisoes-e-processos.md`.
 
 ### `cjpg` (1º grau; TJES e TJTO tambem tem)
 
