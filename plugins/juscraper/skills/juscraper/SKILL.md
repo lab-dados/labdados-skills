@@ -339,6 +339,9 @@ Apos a coleta:
   0.4.0 o juscraper nao instala `pyarrow`: rode `pip install pyarrow` antes do `to_parquet`.
 - **Para combinar tribunais:** colete separadamente e concatene com `pd.concat([df1, df2])`
 - **cpopg/cposg do TJSP retornam dict:** itere com `for tabela, df in resultado.items():`. TRFs, TJPE e TJMG devolvem DataFrame direto.
+- **Enriquecer decisoes com dados do processo:** valor da causa, partes, classe, foro, vara,
+  data de distribuicao e processo principal saem do `cpopg`, juntado pelo CNJ, e nao de regex ou
+  LLM sobre o texto da decisao. Leia `references/decisoes-e-processos.md` antes do merge.
 
 ## Workflow tipico do agente
 
@@ -371,6 +374,10 @@ Leia a referencia apropriada antes de gerar codigo:
 - **`references/tjsp.md`** — Especificidades do TJSP: `cjpg` (1o grau; TJES e TJTO tambem tem),
   parametro `method` de `cpopg`/`cposg`, diferencas da `cjsg`, `pesquisa=""`,
   `QueryTooLongError`, `auto_chunk`, cobertura temporal validada.
+
+- **`references/decisoes-e-processos.md`** — Juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo
+  CNJ: quando preferir o merge a extrair do texto, custo, exemplo e armadilhas (decisoes
+  repetidas, cumprimento de sentenca, grafias de empresa, LGPD nas partes).
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
   `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]` e `[unreleased]`, alem do procedimento

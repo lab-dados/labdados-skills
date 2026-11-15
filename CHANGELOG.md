@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.0] - 2026-11-15
+
+Adicionado:
+
+- `juscraper` (plugin 1.5.0): nova reference `decisoes-e-processos.md` ensina a juntar a base do `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ reduzido aos 20 digitos. Diz quando preferir o merge a extrair do texto (dado que esta nos metadados do processo sai do `cpopg`), o custo (uma chamada por processo, 0,6 a 0,7 s no TJSP mais a pausa), traz um exemplo executavel com `validate=` e conferencia de que todos os processos casaram, e cobre quatro armadilhas: decisoes repetidas do mesmo processo, cumprimento de sentenca com CNJ proprio, grafias diferentes da mesma empresa e LGPD na tabela de partes. A `SKILL.md` e a `tjsp.md` apontam para ela (#40).
+
 ## [1.17.3] - 2026-11-04
 
 Corrigido:

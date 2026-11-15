@@ -65,6 +65,8 @@ df = tjsp.cjpg(id_processo='1011654-78.2024.8.26.0566', paginas=range(1, 2))
 
 `id_processo` aqui significa numero CNJ do processo, nao ID interno do eSAJ. Para jurisprudencia ou decisoes de 1o grau de um processo especifico, use `cjpg(id_processo=cnj)`; para dados cadastrais e andamento processual, use `cpopg(id_cnj=cnj)`.
 
+Para juntar a base do `cjpg` ou do `cjsg` aos dados do `cpopg` de cada processo, ver `decisoes-e-processos.md`.
+
 Para estimar volume antes de baixar sentencas, use `count_only=True`:
 
 ```python
