@@ -19,14 +19,18 @@ on:
     paths:
       - "plugins/juscraper/**"
       - "scripts/cobertura_juscraper.py"
+      - "scripts/frontmatter.py"
       - "tests/test_cobertura_juscraper.py"
+      - "tests/test_frontmatter.py"
       - ".github/workflows/juscraper-cobertura.yml"
   push:
     branches: [main]
     paths:
       - "plugins/juscraper/**"
       - "scripts/cobertura_juscraper.py"
+      - "scripts/frontmatter.py"
       - "tests/test_cobertura_juscraper.py"
+      - "tests/test_frontmatter.py"
       - ".github/workflows/juscraper-cobertura.yml"
   schedule:
     - cron: "0 11 * * 1" # segunda, 08h em Brasilia
@@ -95,7 +99,7 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Testes do sincronizador
-        run: uv run --no-project --python 3.12 --with pytest pytest tests/test_cobertura_juscraper.py -q
+        run: uv run --no-project --python 3.12 --with pytest pytest tests/test_cobertura_juscraper.py tests/test_frontmatter.py -q
 
       - name: Skill em sincronia com o juscraper
         run: python scripts/cobertura_juscraper.py "$RUNNER_TEMP/cobertura.json" --check

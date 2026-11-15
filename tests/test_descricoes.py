@@ -5,18 +5,13 @@ entre as duas sem critério.
 """
 
 import functools
-import importlib.util
 import re
 from pathlib import Path
 
 import pytest
+from frontmatter import descricao
 
 RAIZ = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("cobertura_juscraper", RAIZ / "scripts" / "cobertura_juscraper.py")
-assert _spec is not None
-assert _spec.loader is not None
-cobertura_juscraper = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(cobertura_juscraper)
 
 IRMAS = {
     "juscraper": ["juscraper-builder"],
@@ -33,7 +28,7 @@ IRMAS = {
 @functools.cache
 def _description(skill: str) -> str:
     (skill_md,) = RAIZ.glob(f"plugins/*/skills/{skill}/SKILL.md")
-    return cobertura_juscraper.descricao(skill_md.read_text(encoding="utf-8"))
+    return descricao(skill_md.read_text(encoding="utf-8"))
 
 
 @pytest.mark.parametrize(("skill", "irma"), [(s, i) for s, irmas in IRMAS.items() for i in irmas])
