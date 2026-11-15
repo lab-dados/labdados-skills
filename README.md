@@ -128,8 +128,8 @@ Os zips saem do workflow `release-skills`, a cada tag `v*` empurrada.
 
 - Playwright MCP configurado no Claude Code (para engenharia reversa)
 - Repositorio `bdcdo/raspe` clonado localmente em qualquer caminho — a
-  skill pergunta o caminho na primeira invocacao (ou tenta defaults:
-  `~/dev/raspe`, `~/Desktop/dev/raspe`, `~/repos/raspe`, `~/code/raspe`)
+  skill usa o diretorio atual ou o clone irmao `../raspe` e, se nao
+  achar nenhum, pergunta o caminho
 - `uv pip install -e ".[dev,browser]"` no repo raspe + `python -m playwright install chromium`
 - A skill gera codigo dentro do repo raspe (scraper, factory, testes offline com `responses`)
   e tambem atualiza a skill `raspe` deste marketplace com a nova fonte

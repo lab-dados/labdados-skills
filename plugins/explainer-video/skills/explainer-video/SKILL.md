@@ -29,7 +29,7 @@ Siga as etapas em ordem. Cada etapa tem detalhes em `references/` — leia o arq
 
 Identifique a fonte da informação:
 - Se o usuário deu um caminho de repo local: leia `README.md`, `docs/`, `package.json`/`pyproject.toml`, e arquivos óbvios como `index.html` ou rotas principais
-- Se deu uma URL git remota: clone para `/tmp/explainer-repo-<timestamp>` e analise lá
+- Se deu uma URL git remota: clone numa pasta temporária (`REPO=$(mktemp -d) && git clone <url> "$REPO" && echo "$REPO"`) e analise lá, no caminho impresso
 - Se deu só uma URL ao vivo sem repo: use `mcp__workspace__web_fetch` para extrair o conteúdo da página e qualquer link de docs
 
 Use `scripts/analyze_repo.py <repo-path>` para gerar um sumário estruturado JSON com:

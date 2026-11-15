@@ -52,13 +52,13 @@ Modifique o script.json temporariamente para só fazer goto + screenshot:
     {"narration": "", "actions": [
       {"type": "goto", "url": "/"},
       {"type": "wait", "ms": 2000},
-      {"type": "screenshot", "path": "/tmp/check-1.png"}
+      {"type": "screenshot", "path": "<PASTA_TMP>/check-1.png"}
     ]}
   ]
 }
 ```
 
-Rode, abra o screenshot, confirme que a página carregou. Repita para cada estado importante.
+`<PASTA_TMP>` é o caminho impresso por `mktemp -d`: arquivos de conferência e logs ficam fora do repo do app, para não sujar o `git status` dele. Rode, abra o screenshot, confirme que a página carregou. Repita para cada estado importante.
 
 ## SPA routing / wait_for_load_state
 
@@ -120,7 +120,8 @@ Se precisa subir um servidor local antes de gravar:
 
 ```bash
 # Em background, com log redirecionado
-nohup npm run dev > /tmp/dev-server.log 2>&1 &
+DEV_LOG=$(mktemp); echo "log do servidor: $DEV_LOG"
+nohup npm run dev > "$DEV_LOG" 2>&1 &
 SERVER_PID=$!
 
 # Esperar a porta abrir (max 30s)
