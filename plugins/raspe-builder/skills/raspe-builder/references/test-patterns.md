@@ -49,7 +49,8 @@ scraper e grava a resposta crua. Copie `tests/fixtures/capture/presidencia.py`
 
 ```bash
 cd <RASPE_REPO>
-uv run python -m tests.fixtures.capture.{fonte} --saida /tmp/captura-{fonte}
+SAIDA=$(mktemp -d "${TMPDIR:-/tmp}/captura-{fonte}.XXXXXX") && echo "captura em $SAIDA" &&
+  uv run python -m tests.fixtures.capture.{fonte} --saida "$SAIDA"
 ```
 
 Cada cenário imprime o `_find_n_pags` da resposta: `single_page` tem de

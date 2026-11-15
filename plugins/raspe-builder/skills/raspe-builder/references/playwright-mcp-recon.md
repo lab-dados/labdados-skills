@@ -72,8 +72,8 @@ Use `browser_evaluate` com:
 () => document.documentElement.outerHTML
 ```
 
-Salve o retorno em
-`/tmp/raspe-recon/<fonte>/page_01.html`. Ele serve para escrever o
+Salve o retorno em `<PASTA_RECON>/page_01.html`, a pasta
+temporária criada na Etapa 2 do `SKILL.md` (item 6). Ele serve para escrever o
 parser e, nos scrapers Playwright, vira na Etapa 6
 `tests/<fonte>/samples/parse/typical.html` (que também precisa de um
 `no_results.html`). Nos HTTP, os samples saem do script de captura (ver

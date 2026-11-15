@@ -48,6 +48,13 @@ Antes de iniciar, verifique:
    Sempre que aparecer `<RASPE_REPO>` nesta skill ou nos references,
    substitua pelo caminho confirmado com o usuário.
 
+   O `<MARKETPLACE_ROOT>` (clone de `lab-dados/labdados-skills`, editado
+   na Etapa 7) se acha do mesmo jeito, antes de qualquer `cd`:
+   ```bash
+   for d in . "<RASPE_REPO>/../labdados-skills"; do [ -d "$d/plugins/raspe/skills/raspe" ] && (cd "$d" && pwd) && break; done
+   ```
+   Confirme ou pergunte, como acima.
+
 3. **Dependências do raspe**:
    ```bash
    cd <RASPE_REPO>
@@ -161,8 +168,10 @@ Veja `references/playwright-mcp-recon.md` para o protocolo detalhado.
    MCP para inspecionar a URL real depois do `click`.
 
 6. **HTML de referência**. Salve o HTML completo das páginas 1 e 2 (e
-   responses JSON, se for o caso) em
-   `/tmp/raspe-recon/<fonte>/page_01.html` (e `page_02.html`). Esses
+   responses JSON, se for o caso) em `<PASTA_RECON>/page_01.html` (e
+   `page_02.html`), onde `<PASTA_RECON>` é o caminho impresso por
+   `mktemp -d "${TMPDIR:-/tmp}/raspe-recon-<fonte>.XXXXXX"` (para
+   reachá-lo: `ls -d "${TMPDIR:-/tmp}"/raspe-recon-<fonte>.*`). Esses
    arquivos servem para escrever o parser (e, nos Playwright, viram
    samples na Etapa 6).
    - HTTP: copie `r.text` da resposta.
@@ -589,7 +598,8 @@ herança de `PlaywrightScraper`) e `_parse_page` sobre os samples. Modelo:
 
 4. **Sincronizar a skill `raspe` do marketplace** — ver
    `references/raspe-skill-sync.md`. Isso fecha o ciclo: a skill que
-   ensina a usar a biblioteca passa a conhecer a nova fonte.
+   ensina a usar a biblioteca passa a conhecer a nova fonte. A edição é
+   feita no `<MARKETPLACE_ROOT>` confirmado nos Pré-requisitos (item 2).
 
 5. (Opcional) Criar notebook em `notebooks/NN_{fonte}.ipynb` no padrão
    dos vizinhos, se a fonte for de interesse alto.

@@ -132,7 +132,9 @@ Os zips saem do workflow `release-skills`, a cada tag `v*` empurrada.
   achar nenhum, pergunta o caminho
 - `uv pip install -e ".[dev,browser]"` no repo raspe + `python -m playwright install chromium`
 - A skill gera codigo dentro do repo raspe (scraper, factory, testes offline com `responses`)
-  e tambem atualiza a skill `raspe` deste marketplace com a nova fonte
+  e tambem atualiza a skill `raspe` deste marketplace com a nova fonte, num clone do
+  `labdados-skills`: o diretorio atual ou o irmao `labdados-skills` do clone do raspe e, se
+  nao achar nenhum, pergunta o caminho
 
 ### raspador-builder
 

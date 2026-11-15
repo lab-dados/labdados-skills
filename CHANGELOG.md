@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.8] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.6): o HTML de referencia da Etapa 2 ia para `/tmp/raspe-recon/<fonte>/` e a captura de conferencia dos samples, para `/tmp/captura-{fonte}`, caminhos fixos. Agora vao para pastas do `mktemp -d`, e o comando imprime o caminho criado. O nome da fonte no caminho deixa achar a pasta de novo. A Etapa 7 tambem nao dizia como achar o clone do `labdados-skills` (`<MARKETPLACE_ROOT>`): os pre-requisitos agora o procuram, antes de qualquer `cd`, no diretorio atual e no irmao `labdados-skills` do clone do raspe, com um comando pronto, e confirmam o caminho com o usuario (ou perguntam, se nao acharem). O README diz o mesmo.
+
 ## [1.18.7] - 2026-11-15
 
 Corrigido:
