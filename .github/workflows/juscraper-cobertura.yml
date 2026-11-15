@@ -32,13 +32,13 @@ on:
     - cron: "0 11 * * 1" # segunda, 08h em Brasilia
   workflow_dispatch:
 
-# Uma execucao por vez em cada ref, sem cancelar a que esta rodando. Sem isso,
-# um push na main cujo `gerar` leu o juscraper antes de uma mudanca podia
-# terminar depois de um agendamento que reprovou, e o `fechar` dele fechava a
-# issue recem-aberta pelo `avisar`.
+# Uma execucao por vez em cada ref. Sem isso, um push na main cujo `gerar` leu
+# o juscraper antes de uma mudanca podia terminar depois de um agendamento que
+# reprovou, e o `fechar` dele fechava a issue recem-aberta pelo `avisar`. So em
+# PR a execucao nova cancela a anterior, que conferia um commit ja superado.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -108,7 +108,8 @@ jobs:
       issues: write
     steps:
       # Uma issue so para o problema: comenta na aberta; se nao ha, reabre a
-      # fechada mais recente de mesmo titulo; so cria quando nunca houve.
+      # fechada mais recente de mesmo titulo; so cria quando nunca houve. A
+      # lista vem por data de criacao, a mais nova primeiro.
       - name: Abrir, reabrir ou comentar a issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -122,8 +123,7 @@ jobs:
               python scripts/cobertura_juscraper.py /tmp/cobertura.json
 
           Depois revise a description da SKILL.md e as tags de versao das references. Se o job que falhou foi o gerar, o problema esta no juscraper (main quebrada ou scripts/tabela_cobertura.py ausente)."
-          achado=$(gh issue list --state all --search "in:title \"$TITULO\" sort:created-desc" \
-            --json number,title,state \
+          achado=$(gh issue list --state all --limit 1000 --json number,title,state \
             --jq '[.[] | select(.title == env.TITULO)] | (map(select(.state == "OPEN")) + .) | first(.[]) | "\(.number) \(.state)"')
           read -r numero estado <<< "$achado"
           case "$estado" in
@@ -133,7 +133,9 @@ jobs:
           esac
 
   # Fecha a issue do `avisar` quando a conferencia volta a passar em qualquer
-  # execucao na main. A busca por titulo exato tem de ser a mesma do `avisar`.
+  # execucao na main. Como no `avisar`, a lista sai sem `--search`, cujo indice
+  # demora a ver a issue que a execucao anterior acabou de abrir ou fechar, e o
+  # titulo tem de ser exatamente o mesmo.
   fechar:
     needs: conferir
     if: github.ref == 'refs/heads/main'
@@ -146,7 +148,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          numeros=$(gh issue list --state open --search "in:title \"$TITULO\"" --json number,title \
+          numeros=$(gh issue list --state open --limit 1000 --json number,title \
             --jq '.[] | select(.title == env.TITULO) | .number')
           for numero in $numeros; do
             gh issue close "$numero" --reason completed \
