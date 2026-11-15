@@ -31,6 +31,7 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] `_parse_page` retorna `pd.DataFrame` com colunas consistentes
   mesmo no caminho de erro (não levanta exceção, retorna DataFrame vazio
   com `columns=[...]`)
+- [ ] Não sobrescreve `raspar()` (é o da `AbstractScraper`)
 - [ ] Não duplica funcionalidades já fornecidas pela base: `tqdm`,
   `time.sleep`, retry para 429/5xx, criação de diretório temporário
 - [ ] (Playwright) `_pagination_strategy` setado e, se for `NEXT_BUTTON`

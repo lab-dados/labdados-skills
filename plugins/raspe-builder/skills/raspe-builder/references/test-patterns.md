@@ -197,7 +197,7 @@ Os três cenários são o mínimo por método público exigido pelo
 
 ## Quantos `responses.add` por teste
 
-`BaseScraper.raspar` faz **2 requisições para a primeira página**:
+`BaseScraper._raspar` faz **2 requisições para a primeira página**:
 - Uma para `_find_n_pags` (descobrir o total).
 - Uma para `_download_data` (baixar a página 1 que será parseada).
 

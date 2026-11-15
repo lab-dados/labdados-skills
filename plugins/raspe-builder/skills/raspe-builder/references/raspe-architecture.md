@@ -37,9 +37,14 @@ Properties abstratas:
 
 Métodos abstratos:
 - `_parse_page(path: str) -> pd.DataFrame`.
-- `raspar(**kwargs) -> pd.DataFrame`.
+- `_raspar(**kwargs) -> pd.DataFrame` — coleta com os kwargs já
+  validados. `BaseScraper` e `PlaywrightScraper` já o implementam.
 
 Métodos concretos:
+- `raspar(**kwargs) -> pd.DataFrame` — caminho único de todos os
+  raspadores: chama `_validar_parametros(**kwargs)`, depois
+  `_raspar(**kwargs)`, e confere a saída com o `schema_saida` da classe
+  (se houver). Não sobrescreva `raspar()` na subclasse.
 - `_validar_parametros(**kwargs)` — auto-detecta pares de data
   (`data_inicio`/`data_fim`, `data_inicial`/`data_final`, `inicio`/`fim`,
   `begin_date`/`end_date`) e normaliza via
@@ -50,7 +55,8 @@ Métodos concretos:
 - `scrape(**kwargs)` — alias retrocompatível de `raspar()`.
 
 Subclasses podem sobrescrever `_validar_parametros`, mas devem chamar
-`super()._validar_parametros(**kwargs)` para manter validação de datas.
+`kwargs = super()._validar_parametros(**kwargs)` para manter validação de
+datas e devolver o dict: é ele que o `raspar()` passa ao `_raspar()`.
 
 ## BaseScraper
 
@@ -88,9 +94,10 @@ Métodos abstratos:
 - `_parse_page(path: str) -> pd.DataFrame` — herdado do AbstractScraper.
 
 Funcionalidades já prontas (não duplique):
-- `raspar(**kwargs)` — pipeline completo. Aceita kwargs como listas para
+- `_raspar(**kwargs)` — coleta completa. Aceita kwargs como listas para
   iterar (ex: `pesquisa=["a", "b"]`) e adiciona coluna `termo_busca`
-  automaticamente se algum kwarg for `pesquisa`/`termo`/`q`/`query`.
+  automaticamente: no modo lista, com o item da lista, qualquer que seja
+  o kwarg; na busca única, se algum kwarg for `pesquisa`/`termo`/`q`/`query`.
 - `_download_data` — chama `_set_query_base`, `_get_n_pags`, itera páginas,
   salva arquivos.
 - `_set_query_atual(query, pag)` — adiciona `query_page_name` ao dict
@@ -177,21 +184,21 @@ Helpers disponíveis (já implementados):
   automaticamente pelo `_raspar_async`. Detecta cookie `cf_clearance` ou
   ausência de markers de challenge.
 
-Pipeline interno (`_raspar_async`):
-1. `_validar_parametros(**kwargs)`.
-2. Cria download dir.
-3. Abre browser com stealth.
-4. `page.goto(url_base)`.
-5. `_aguardar_cloudflare()`.
-6. `_executar_busca(**kwargs)`.
-7. `_encontrar_total_paginas()` — limita a `_max_pages`.
-8. Salva primeira página, itera até `total_paginas`, navega via
+Pipeline interno (`_raspar_async`, com kwargs já validados pelo
+`raspar()` da `AbstractScraper`):
+1. Cria download dir.
+2. Abre browser com stealth.
+3. `page.goto(url_base)`.
+4. `_aguardar_cloudflare()`.
+5. `_executar_busca(**kwargs)`.
+6. `_encontrar_total_paginas()` — limita a `_max_pages`.
+7. Salva primeira página, itera até `total_paginas`, navega via
    `_navegar_proxima_pagina(pagina - 1)`.
-9. `_parse_data(download_dir)` — chama seu `_parse_page` para cada HTML.
-10. Adiciona coluna `termo_busca` se algum kwarg ∈
-    `['assunto', 'pesquisa', 'termo', 'q', 'query']`.
+8. `_parse_data(download_dir)` — chama seu `_parse_page` para cada HTML.
+9. Adiciona coluna `termo_busca` se algum kwarg ∈
+   `['assunto', 'pesquisa', 'termo', 'q', 'query']`.
 
-`raspar()` (sync) é `asyncio.run(self._raspar_async(**kwargs))`.
+`_raspar()` (sync) é `asyncio.run(self._raspar_async(**kwargs))`.
 
 ## Exceções (raspe.exceptions)
 

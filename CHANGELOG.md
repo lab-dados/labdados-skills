@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.3] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.3): alinhada ao bdcdo/raspe#66, em que o `raspar()` passou a ser unico na `AbstractScraper` (valida os kwargs, chama `_raspar()` e confere a saida com o `schema_saida`), o metodo abstrato passou a ser `_raspar()` e o `asyncio.run` foi para o `_raspar()` do `PlaywrightScraper`. A `raspe-architecture.md` passa a descrever esse fluxo, diz que um `_validar_parametros` sobrescrito tem de devolver o dict (e ele que chega ao `_raspar()`) e que, no modo lista, a coluna `termo_busca` vem do item, qualquer que seja o kwarg. `SKILL.md` e `test-patterns.md` trocam `BaseScraper.raspar`, que nao existe mais, por `BaseScraper._raspar`, e deixam de atribuir ao `BaseScraper` a coluna `termo_busca` dos raspadores Playwright; o checklist ganha "nao sobrescreve `raspar()`". Conferido contra a `main` do raspe (`41f1691`).
+
 ## [1.18.2] - 2026-11-15
 
 Corrigido:
