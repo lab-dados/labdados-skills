@@ -121,7 +121,7 @@ uv pip install --python "$VENV/bin/python" playwright edge-tts google-api-python
 # ffmpeg geralmente já está instalado; se não: apt-get install -y ffmpeg
 ```
 
-Daí em diante, rode os scripts com `"$VENV/bin/python" scripts/...`, e os `pip install --break-system-packages` das references e do `upload_youtube.py` viram `uv pip install --python "$VENV/bin/python" ...`. Sem o uv, use o pip:
+Daí em diante, rode os scripts com `"$VENV/bin/python" scripts/...`, e os `pip install --break-system-packages` das references viram `uv pip install --python "$VENV/bin/python" ...`. Sem o uv, use o pip:
 
 ```bash
 pip install --break-system-packages playwright edge-tts google-api-python-client google-auth-oauthlib

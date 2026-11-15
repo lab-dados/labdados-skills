@@ -19,7 +19,7 @@ Uso:
 Saída (stdout JSON):
   {"video_id": "...", "url": "https://youtu.be/...", "privacy": "unlisted"}
 
-Em caso de falta de credenciais, sai com código 2 e instruções no stderr.
+Em caso de falta de dependências ou de credenciais, sai com código 2 e instruções no stderr.
 """
 import argparse
 import json
@@ -27,20 +27,36 @@ import os
 import sys
 from pathlib import Path
 
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaFileUpload
+except ImportError as e:  # check_dependencies() explica como instalar, depois do --help
+    MISSING_DEPENDENCY = e
+else:
+    MISSING_DEPENDENCY = None
+
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 TOKEN_PATH = Path.home() / ".explainer-video-yt-token.json"
 
 
-def get_credentials():
-    try:
-        from google.oauth2.credentials import Credentials
-        from google_auth_oauthlib.flow import InstalledAppFlow
-        from google.auth.transport.requests import Request
-    except ImportError:
-        print("ERROR: missing dependencies. Run:", file=sys.stderr)
-        print("  pip install --break-system-packages google-api-python-client google-auth-oauthlib", file=sys.stderr)
+def check_dependencies():
+    if MISSING_DEPENDENCY:
+        packages = "google-api-python-client google-auth-oauthlib"
+        print(f"ERROR: missing dependencies ({MISSING_DEPENDENCY}). "
+              "Install them into this Python, with uv:", file=sys.stderr)
+        print(f'  uv pip install --python "{sys.executable}" {packages}', file=sys.stderr)
+        print("or, without uv:", file=sys.stderr)
+        print(f'  "{sys.executable}" -m pip install {packages}', file=sys.stderr)
+        print("If this is an externally managed (system) Python and the install is refused, create "
+              "a venv (uv venv <dir>, or python3 -m venv <dir>) and run this script with "
+              "<dir>/bin/python.", file=sys.stderr)
         sys.exit(2)
 
+
+def get_credentials():
     creds = None
     if TOKEN_PATH.exists():
         creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
@@ -70,9 +86,6 @@ def get_credentials():
 
 def upload(video_path: Path, title: str, description: str, tags: list[str],
            category: str, privacy: str = "unlisted") -> dict:
-    from googleapiclient.discovery import build
-    from googleapiclient.http import MediaFileUpload
-
     creds = get_credentials()
     youtube = build("youtube", "v3", credentials=creds)
 
@@ -120,6 +133,7 @@ def main():
     ap.add_argument("--privacy", default="unlisted",
                     choices=["unlisted", "private", "public"])
     args = ap.parse_args()
+    check_dependencies()
 
     tags = [t.strip() for t in args.tags.split(",") if t.strip()]
     result = upload(Path(args.video), args.title, args.description,
