@@ -57,6 +57,25 @@ def test_ausentes_na_descricao(descricao, faltam):
     assert cobertura_juscraper.ausentes_na_descricao(COBERTURA, skill_md) == faltam
 
 
+def test_descricao_le_so_o_frontmatter():
+    skill_md = '---\nname: x\ndescription: "Usar quando: a --- b"\n---\n\ndescription: do corpo\n'
+    assert cobertura_juscraper.descricao(skill_md) == '"Usar quando: a --- b"'
+
+
+@pytest.mark.parametrize(
+    "skill_md",
+    [
+        "---\nname: x\n---\n\ndescription: do corpo\n",
+        "---\ndescription: a\ndescription: b\n---\n",
+        "# Titulo\ndescription: do corpo\n---\n",
+        "---\ndescription: sem fechamento\n",
+    ],
+)
+def test_descricao_falha_sem_frontmatter_com_uma_description(skill_md):
+    with pytest.raises(ValueError):
+        cobertura_juscraper.descricao(skill_md)
+
+
 def _preparar(tmp_path, monkeypatch, descricao="STF, TJMG, TRF3, ComunicaCNJ, Falcao"):
     inicio, fim = cobertura_juscraper.marcadores("metodos")
     skill = tmp_path / "SKILL.md"

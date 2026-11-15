@@ -101,6 +101,24 @@ def substituir(texto: str, nome: str, conteudo: list[str], caminho: Path) -> str
     return antes + "\n".join([inicio, "", *conteudo, "", fim]) + depois
 
 
+# Fica aqui, e nao num modulo proprio, porque o filtro de caminhos do workflow juscraper-cobertura
+# so dispara com este arquivo; o tests/test_descricoes.py tambem usa.
+def descricao(skill_md: str) -> str:
+    """Texto da linha ``description:`` do frontmatter de uma SKILL.md, sem a chave e com as aspas.
+
+    O frontmatter vai da primeira linha do arquivo, ``---``, ate a proxima ``---``. Levanta
+    ``ValueError`` se nao houver frontmatter ou se ele nao tiver exatamente uma ``description:``.
+    """
+    linhas = skill_md.splitlines()
+    if linhas[:1] != ["---"]:
+        raise ValueError("a SKILL.md nao comeca com a linha --- do frontmatter")
+    frontmatter = linhas[1 : linhas.index("---", 1)]  # sem o --- de fechamento, ValueError
+    descricoes = [linha for linha in frontmatter if linha.startswith("description:")]
+    if len(descricoes) != 1:
+        raise ValueError(f"o frontmatter tem {len(descricoes)} linhas description:, e devia ter 1")
+    return descricoes[0].removeprefix("description:").strip()
+
+
 def _normalizar(texto: str) -> str:
     return re.sub(r"[^a-z0-9]", "", texto.lower())
 
@@ -111,9 +129,7 @@ def ausentes_na_descricao(cobertura: Cobertura, skill_md: str) -> list[str]:
     A comparacao ignora caixa e pontuacao, para ``ComunicaCNJ`` casar com
     ``comunica_cnj``, mas exige o nome inteiro: ``TJMG`` nao casa com ``TJMGS``.
     """
-    frontmatter = skill_md.split("---", 2)[1]
-    descricao = next(linha for linha in frontmatter.splitlines() if linha.startswith("description:"))
-    palavras = {_normalizar(palavra) for palavra in re.findall(r"[\w-]+", descricao)}
+    palavras = {_normalizar(palavra) for palavra in re.findall(r"[\w-]+", descricao(skill_md))}
     return [
         str(raspador["nome"])
         for raspador in [*cobertura["tribunais"], *cobertura["agregadores"]]

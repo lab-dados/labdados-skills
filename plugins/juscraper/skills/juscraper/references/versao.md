@@ -4,9 +4,9 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.5.2** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15) e, com a **0.5.0** (PyPI, 2026-10-21), na cobertura (quem tem cada metodo), na coleta integral e no checkpoint do STF e nos trechos revistos nas versoes 1.5.0 e 1.5.1 (`cpopg`/`cposg` do TJSP). O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto.
+A skill **v1.5.3** esta alinhada com o `juscraper` **0.4.0** (PyPI, 2026-09-15) e, com a **0.5.0** (PyPI, 2026-10-21), na cobertura (quem tem cada metodo), na coleta integral e no checkpoint do STF e nos trechos revistos nas versoes 1.5.0 e 1.5.1 (`cpopg`/`cposg` do TJSP). O resto da 0.5.0 (politica HTTP, `motivo_falha` no PDPJ, `auth_govbr()` e outros) ainda nao foi revisto.
 
-A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI (`.github/workflows/juscraper-cobertura.yml`). A ultima conferencia foi contra o snapshot `a2a3421` (2026-11-15). O que so existe na `main`, sem release no PyPI, aparece inline com a tag `[unreleased]` (`grep -rn 'unreleased\]' SKILL.md references` lista todos).
+A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI (`.github/workflows/juscraper-cobertura.yml`). A ultima conferencia foi contra o snapshot `3bf8205` (2026-11-15). O que so existe na `main`, sem release no PyPI, aparece inline com a tag `[unreleased]` (`grep -rn 'unreleased\]' SKILL.md references` lista todos).
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
@@ -14,6 +14,7 @@ Para confirmar a versao instalada no ambiente do usuario: `python -c "import jus
 
 | Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
+| 1.5.3 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main) | `description` no padrao "Usar quando", com "Nao confundir com juscraper-builder" no lugar de "usar a juscraper-builder"; cobertura sem mudanca |
 | 1.5.2 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | STF com coleta integral acima de 10.000 registros e `checkpoint_dir`/`resume` passa a `[v0.5.0+]` (o snapshot `5ebde28` ja esta na 0.5.0) |
 | 1.5.1 | 0.5.0 (2026-10-21) + `main` | `a2a3421` (main) | `cposg` do TJSP devolve DataFrame, vazio no 0.5.0 (corrigido na `main`, `[unreleased]`); limites do `cpopg` no 0.5.0 reunidos em `references/tjsp.md`; `method='api'` deixa de ser oferecido |
 | 1.5.0 | 0.5.0 (2026-10-21) + `main` | nao registrado | Nova `references/decisoes-e-processos.md`: juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ, conferido ao vivo no 0.5.0; correcoes do `cpopg` so na `main` (#473, #476) com `[unreleased]` |

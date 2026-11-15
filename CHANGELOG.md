@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.7] - 2026-11-15
+
+Corrigido:
+
+- `juscraper` (plugin 1.5.3): a `description` terminava em "usar a juscraper-builder", e nao no aviso "Nao confundir com" das outras skills, e o `tests/test_descricoes.py` aceitava "usar a" so por isso. Agora comeca por "Usar quando" e termina em "Nao confundir com juscraper-builder (escrever raspador novo)", e o teste deixa de aceitar "usar a". Cobertura conferida de novo contra a `main` do juscraper (`3bf8205`), sem mudanca.
+
 ## [1.18.6] - 2026-11-15
 
 Corrigido:
