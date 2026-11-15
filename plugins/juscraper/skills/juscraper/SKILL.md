@@ -13,7 +13,7 @@ jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do
 > **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15); a cobertura (quem tem cada metodo) acompanha a 0.5.0 (PyPI, 2026-10-21).**
 > Recursos marcados `[v0.5.0+]` exigem `pip install -U 'juscraper>=0.5.0'`; `[v0.4.0+]` exigem
 > `pip install -U 'juscraper>=0.4.0'`; `[v0.3.0+]` exigem `juscraper>=0.3.0`. Recursos marcados
-> `[unreleased]` existem so na `main` do repositorio (snapshot `5ebde28`) e exigem
+> `[unreleased]` existem so na `main` do repositorio (posteriores a 0.5.0) e exigem
 > `pip install "git+https://github.com/jtrecenti/juscraper.git"`. Ver `references/versao.md`
 > para o changelog skill ↔ biblioteca.
 
@@ -378,7 +378,7 @@ Leia a referencia apropriada antes de gerar codigo:
 - **`references/decisoes-e-processos.md`** — Juntar `cjpg`/`cjsg` aos metadados do `cpopg` pelo CNJ.
 
 - **`references/versao.md`** — Mapa skill ↔ versao do juscraper. Vocabulario das tags
-  `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]` e `[unreleased]`, alem do procedimento
+  `[v0.3.0+]`, `[v0.3.0+, requer extra tjmg]`, `[v0.4.0+]`, `[v0.5.0+]` e `[unreleased]`, alem do procedimento
   para bumps futuros.
 
 - **`references/assuntos-tjsp.md`** — Arvore oficial de assuntos (classificacao tematica)

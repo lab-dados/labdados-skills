@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.2] - 2026-11-15
+
+Corrigido:
+
+- `juscraper` (plugin 1.5.2): a tabela de alinhamento da `versao.md` parava na skill 1.4.0 e no snapshot `5ebde28` da biblioteca. Ganha as linhas 1.4.1 a 1.5.2 e diz contra que snapshot a cobertura foi conferida por ultimo (`a2a3421`). O `5ebde28` ja esta na 0.5.0 do PyPI, entao a tag `[unreleased]` passa a significar "so na `main`, posterior a 0.5.0", na `versao.md` e na `SKILL.md`, e a coleta integral e o checkpoint do STF (jtrecenti/juscraper#347, #348, #349), que a `tribunais.md` ainda dava como `[unreleased]`, passam a `[v0.5.0+]`, conferido no wheel 0.5.0 do PyPI.
+
 ## [1.18.1] - 2026-11-15
 
 Corrigido:
