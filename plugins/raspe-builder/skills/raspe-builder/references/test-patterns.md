@@ -8,7 +8,9 @@ desenho é deliberado:
   + paginação não regridam.
 - Os samples também servem como documentação do formato esperado.
 
-A referência canônica é `tests/ipea/test_raspar_contract.py`.
+A referência canônica é `tests/ipea/test_raspar_contract.py`. Fonte
+Playwright troca o `responses` por uma página falsa (seção "Testes para
+Playwright").
 
 ## Estrutura de arquivos por fonte
 
@@ -62,6 +64,15 @@ Página acima dos 500 KB do hook `check-added-large-files`: passe
 `enxugar=enxugar_html` (também de `_util.py`) a `capturar_cenarios`,
 como o `camara.py`. Se o peso vier de outra parte da página, `enxugar`
 aceita qualquer função `bytes -> bytes` (`ipea.py`, `capes.py`).
+
+Fonte Playwright também tem script de captura: copie
+`tests/fixtures/capture/saudelegis.py`, que passa cada cenário a
+`capturar_paginas_lidas` (um arquivo por página lida). Ele abre o
+Chromium: precisa do extra `browser` e de `playwright install chromium`.
+A conferência dele não separa `single_page` de `no_results`, e um
+`ScraperError` (acesso recusado, por exemplo) conta como zero
+resultados: na linha "N linhas, M páginas gravadas" de cada cenário,
+confira que o `no_results` deu 0 linhas sem mensagem de erro antes.
 
 ## Template de test_raspar_contract.py
 
@@ -214,26 +225,105 @@ ordem das chamadas. Se o teste falhar com `ConnectionError` ou
 
 ## Mockar time.sleep
 
-Sempre passe `mocker.patch("time.sleep")` para o teste rodar em
+Nos testes HTTP, sempre passe `mocker.patch("time.sleep")` para o teste rodar em
 milissegundos em vez de esperar 2s por página. O `mocker` vem de
-`pytest-mock` que já está no `pyproject.toml` de dev.
+`pytest-mock` que já está no `pyproject.toml` de dev. Nos de Playwright,
+o `navegador_falso` já zera as esperas.
 
 ## Testes para Playwright
 
-Mockar a navegação Playwright via `responses` não funciona — Playwright
-não usa o stack `requests`. O padrão do raspe (`tests/saudelegis/`,
-`tests/datalegis/`) é um `test_config.py` que testa configuração e
-parsing síncrono, sem abrir navegador:
+`responses` não intercepta o navegador, mas o contrato existe do mesmo
+jeito: `navegador_falso(mocker, raspador)`, de `tests/_helpers.py` (ver
+a docstring), troca o navegador por uma página falsa em
+`raspador.pagina_falsa`, e nada abre o Chromium. Modelos:
+`tests/saudelegis/test_raspar_contract.py` e
+`tests/datalegis/test_raspar_contract.py`.
 
 ```
 tests/<fonte>/
 ├── __init__.py
 ├── samples/
+│   ├── raspar/                       (gravados pelo script de captura)
+│   │   ├── page_01.html
+│   │   ├── page_02.html
+│   │   ├── single_page.html
+│   │   └── no_results.html
 │   └── parse/
 │       ├── typical.html
 │       └── no_results.html
+├── test_raspar_contract.py
 └── test_config.py
 ```
+
+### Quantas leituras por teste
+
+`pagina_falsa.content.side_effect` recebe os HTMLs na ordem em que o
+raspador os lê: a primeira leitura é a da contagem de páginas
+(`_encontrar_total_paginas`); depois, uma por página salva. Sem
+resultados, a segunda leitura é a do aviso de busca vazia. Paginação
+típica com 2 páginas = 3 HTMLs (`page_01`, `page_01`, `page_02`);
+single_page e no_results = 2. A conta vale quando a contagem lê o HTML
+por `_obter_html`, como no saudelegis e no datalegis; se a fonte lê o
+HTML também na busca, ou conta sem ele, ajuste a lista.
+
+### Template de test_raspar_contract.py (Playwright)
+
+Copie `tests/saudelegis/test_raspar_contract.py` e troque os nomes. O
+esqueleto:
+
+```python
+from raspe.schemas.{fonte} import Output{Fonte}
+from raspe.scrapers.{fonte} import Scraper{Fonte}
+from tests._helpers import load_sample, navegador_falso
+
+COLUNAS = Output{Fonte}.colunas()
+
+
+def _raspador(mocker, *nomes: str) -> Scraper{Fonte}:
+    """Raspador cuja página falsa devolve os samples ``nomes``, um por leitura."""
+    raspador = navegador_falso(mocker, Scraper{Fonte}(debug=False))
+    raspador.pagina_falsa.content.side_effect = [load_sample("{fonte}", f"raspar/{n}") for n in nomes]
+    return raspador
+
+
+class TestRaspar:
+    def test_typical_le_as_duas_paginas(self, mocker):
+        raspador = _raspador(mocker, "page_01.html", "page_01.html", "page_02.html")
+        df = raspador.raspar(pesquisa="economia")
+        assert len(df) == {N}  # soma das duas páginas
+        assert list(df.columns) == COLUNAS
+        assert (df["termo_busca"] == "economia").all()
+        cliques = [c.args[0] for c in raspador.pagina_falsa.click.await_args_list]
+        assert cliques[-1] == "{seletor do link da página 2}"
+
+    def test_no_results(self, mocker):
+        df = _raspador(mocker, "no_results.html", "no_results.html").raspar(pesquisa="termo_inexistente_xyzabc")
+        assert df.empty
+        assert list(df.columns) == COLUNAS
+```
+
+`test_single_page` é igual ao no_results, com `single_page.html` e
+`assert not df.empty`. O modelo do saudelegis ainda roda o typical com
+o Playwright fora de `sys.modules` (o contrato não depende do extra
+`browser`) e testa a página 2 que não carrega (`wait_for_selector`
+levantando `PlaywrightTimeoutFalso`).
+
+O template segue a paginação por link numerado (`NUMBERED_LINKS`, a do
+saudelegis). Com `SELECT_DROPDOWN`, o contrato do datalegis confere o
+`select_option` do combobox no lugar do clique. Para as outras
+estratégias o raspe não tem modelo: leia o `_paginar_por_*` da base
+antes de montar a página falsa.
+
+Se a fonte usa `asyncio.sleep` próprio (fora de `page_load_wait` e
+`between_pages_wait`), mocke-o no `_raspador`:
+`mocker.patch("asyncio.sleep", mocker.AsyncMock())`, como no contrato
+do datalegis.
+
+### test_config.py
+
+O raspe mantém também um `test_config.py` por fonte Playwright, com a
+configuração e o `_parse_page` sobre `samples/parse/`, sem passar pelo
+`raspar()`:
 
 ```python
 import pytest
@@ -284,8 +374,8 @@ class TestParsePage:
 
 Os scrapers Playwright concretos ficam no denominador da cobertura; só
 a base `playwright_scraper.py` é excluída (`[tool.coverage.run] omit`).
-Por isso o `test_config.py` precisa exercitar o construtor e o
-`_parse_page` da fonte nova.
+O contrato e o `test_config.py` juntos exercitam a busca, a contagem, a
+paginação e o `_parse_page` da fonte nova.
 
 ## Registro do schema (`tests/schemas/`)
 
@@ -304,7 +394,9 @@ campos de `Registro`.
 - BeautifulSoup `soup_it` — coberto em `tests/test_html_scraper.py`.
 
 Testes do scraper devem cobrir só o que é específico dele:
-`_set_query_base`, `_find_n_pags`, `_parse_page`.
+`_set_query_base`, `_find_n_pags`, `_parse_page` (Playwright:
+`_executar_busca`, `_encontrar_total_paginas`, a paginação e
+`_parse_page`).
 
 ## Rodar
 

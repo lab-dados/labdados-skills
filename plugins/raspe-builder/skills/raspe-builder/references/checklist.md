@@ -64,18 +64,21 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 ## 4. Testes (`tests/<fonte>/`)
 
 - [ ] (*) `tests/<fonte>/__init__.py` vazio criado
-- [ ] (*) (HTTP) Script de captura `tests/fixtures/capture/<fonte>.py` criado
-- [ ] (*) (HTTP) Samples gravados pelo script de captura em
-  `tests/<fonte>/samples/raspar/`, com `_find_n_pags` 1 no `single_page`
-  e 0 no `no_results`:
+- [ ] (*) Script de captura `tests/fixtures/capture/<fonte>.py` criado
+  (Playwright: com `capturar_paginas_lidas`, modelo `saudelegis.py`)
+- [ ] (*) Samples gravados pelo script de captura em
+  `tests/<fonte>/samples/raspar/`, com 1 página no `single_page` e 0 no
+  `no_results`, conferidos como em `test-patterns.md`, "Captura dos
+  samples":
   - `page_01.html` (paginação típica)
   - `page_02.html` (segunda página, se paginar)
   - `single_page.html` (cenário 1 página de resultados)
   - `no_results.html` (cenário zero resultados)
-- [ ] (*) (HTTP) `tests/<fonte>/test_raspar_contract.py` criado seguindo o
-  padrão `responses` (modelo: `tests/ipea/test_raspar_contract.py`)
-- [ ] (*) (HTTP) Casos cobertos:
-  - `test_typical_paginacao`
+- [ ] (*) `tests/<fonte>/test_raspar_contract.py` criado: HTTP com
+  `responses` (modelo: `tests/ipea/test_raspar_contract.py`), Playwright
+  com `navegador_falso` (modelo: `tests/saudelegis/test_raspar_contract.py`)
+- [ ] (*) Casos cobertos:
+  - typical, com paginação (`test_typical_paginacao` no HTTP)
   - `test_single_page`
   - `test_no_results`
 - [ ] (HTTP) Matcher de payload sempre que possível, sob
@@ -88,11 +91,11 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] (*) Fonte registrada em `ESPERADOS` de
   `tests/schemas/test_schema_coverage.py` e `docs/colunas.md` regerado
   (`python -m raspe.schemas.documentacao`)
-- [ ] `mocker.patch("time.sleep")` em todos os testes
+- [ ] (HTTP) `mocker.patch("time.sleep")` em todos os testes
 - [ ] (Se aplicável) Fluxo multi-etapa com
   `registries.OrderedRegistry`; captcha, token dinâmico ou import lazy
   mockados via `mocker.patch.dict(sys.modules, ...)`
-- [ ] (*) (Playwright) Em vez de testar `raspar()` end-to-end,
+- [ ] (*) (Playwright) Além do contrato,
   `tests/<fonte>/test_config.py` testa configuração (`url_base`,
   `pagination_strategy`, `_max_pages`) e `_parse_page` sobre
   `samples/parse/typical.html` e `no_results.html`

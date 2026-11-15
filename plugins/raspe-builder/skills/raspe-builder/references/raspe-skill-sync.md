@@ -98,9 +98,8 @@ Quatro matrizes para atualizar (na ordem em que aparecem no arquivo):
 | `{fonte}` | `{coluna1}`, `{coluna2}`, ... |
 ```
 
-Liste as colunas (sem `termo_busca`, que é implícita) que o
-`_parse_page` retorna. Olhar diretamente no código gerado em
-`src/raspe/scrapers/<fonte>.py`.
+Liste as colunas na ordem da tabela da fonte em `docs/colunas.md` do
+raspe (a mesma que o item 3 copia), sem `termo_busca`, que é implícita.
 
 ### Limites de coleta
 
@@ -159,12 +158,7 @@ raspe.{fonte}().raspar(
 
 ## Colunas retornadas
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `titulo` | str | ... |
-| `link` | str | URL absoluta para o item |
-| ... | ... | ... |
-| `termo_busca` | str | Adicionado automaticamente pela base |
+{tabela da fonte em `docs/colunas.md`, copiada sem editar}
 
 ## Exemplos
 
@@ -198,8 +192,15 @@ df = raspe.{fonte}().raspar(...)
 `text_column = "{coluna_recomendada}"`
 ```
 
+A tabela de colunas vem da seção do `docs/colunas.md` (regerado na
+Etapa 7 do `SKILL.md`, item 1) cujo título traz `raspe.{fonte}()`;
+fontes com o mesmo schema dividem a seção, como `raspe.ans()` e
+`raspe.anvisa()`. Descrição errada se corrige no `Output{Fonte}` do
+raspe, regerando o documento, e não na cópia.
+
 Use as references existentes (`references/presidencia.md` etc.) como
-modelo de tom, formato e profundidade.
+modelo de tom, formato e profundidade, menos na tabela de colunas: as
+antigas ainda têm a tabela digitada de duas colunas.
 
 ## 4. Atualizar `marketplace.json` da skill `raspe`?
 
