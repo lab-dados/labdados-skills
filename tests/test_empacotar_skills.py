@@ -1,16 +1,12 @@
 """Testa o empacotamento das skills em zips para o upload no claude.ai, sem rede."""
 
-import importlib.util
 import re
 import zipfile
 from pathlib import Path
 
+import empacotar_skills
+
 RAIZ = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("empacotar_skills", RAIZ / "scripts" / "empacotar_skills.py")
-assert _spec is not None
-assert _spec.loader is not None
-empacotar_skills = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(empacotar_skills)
 
 TODAS = [p.name for p in empacotar_skills.skills(RAIZ)]
 SKILLS = [s for s in TODAS if s not in empacotar_skills.SEM_ZIP]

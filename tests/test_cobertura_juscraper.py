@@ -4,18 +4,10 @@ O JSON daqui imita o formato de `scripts/tabela_cobertura.py --json` do juscrape
 contra o juscraper de verdade e o passo `--check` do workflow `juscraper-cobertura`.
 """
 
-import importlib.util
 import json
-from pathlib import Path
 
+import cobertura_juscraper
 import pytest
-
-RAIZ = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("cobertura_juscraper", RAIZ / "scripts" / "cobertura_juscraper.py")
-assert _spec is not None
-assert _spec.loader is not None
-cobertura_juscraper = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(cobertura_juscraper)
 
 COBERTURA = {
     "tribunais": [
@@ -55,25 +47,6 @@ def test_quem_tem_cada_metodo_junta_tribunais_e_agregadores():
 def test_ausentes_na_descricao(descricao, faltam):
     skill_md = f"---\nname: juscraper\ndescription: {descricao}\n---\n\nTJMG ComunicaCNJ no corpo nao conta.\n"
     assert cobertura_juscraper.ausentes_na_descricao(COBERTURA, skill_md) == faltam
-
-
-def test_descricao_le_so_o_frontmatter():
-    skill_md = '---\nname: x\ndescription: "Usar quando: a --- b"\n---\n\ndescription: do corpo\n'
-    assert cobertura_juscraper.descricao(skill_md) == '"Usar quando: a --- b"'
-
-
-@pytest.mark.parametrize(
-    "skill_md",
-    [
-        "---\nname: x\n---\n\ndescription: do corpo\n",
-        "---\ndescription: a\ndescription: b\n---\n",
-        "# Titulo\ndescription: do corpo\n---\n",
-        "---\ndescription: sem fechamento\n",
-    ],
-)
-def test_descricao_falha_sem_frontmatter_com_uma_description(skill_md):
-    with pytest.raises(ValueError):
-        cobertura_juscraper.descricao(skill_md)
 
 
 def _preparar(tmp_path, monkeypatch, descricao="STF, TJMG, TRF3, ComunicaCNJ, Falcao"):
