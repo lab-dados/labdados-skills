@@ -106,8 +106,8 @@ have offline tests in the *target* library repos, not here.
   infrastructure (CI, README, CLAUDE.md, hooks) does not.
 - GitHub Actions are pinned by commit SHA with the version in a comment; Dependabot bumps them
   monthly (`.github/dependabot.yml`). The pre-commit hook revision is pinned the same way.
-  Dependabot does not bump the two npm/PyPI pins, so bump them by hand: `claude-code@2.1.126` (since
-  23/09/2026, #23) in `.pre-commit-config.yaml` and in the command above, and `pre-commit@4.7.0` in `validate.yml`.
+  Dependabot does not bump the `@anthropic-ai/claude-code` pin (`.pre-commit-config.yaml` and the command
+  above) or the `pre-commit` one in `validate.yml`: bump them by hand.
 
 ## Builder skills
 

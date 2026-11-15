@@ -4,6 +4,7 @@ Cada par abaixo é uma sobreposição conhecida: sem o nome da irmã na descript
 entre as duas sem critério.
 """
 
+import functools
 import re
 from pathlib import Path
 
@@ -23,6 +24,7 @@ IRMAS = {
 }
 
 
+@functools.cache
 def _description(skill: str) -> str:
     (skill_md,) = RAIZ.glob(f"plugins/*/skills/{skill}/SKILL.md")
     frontmatter = skill_md.read_text(encoding="utf-8").split("---")[1]
@@ -34,7 +36,7 @@ def _description(skill: str) -> str:
 def test_description_nomeia_a_irma(skill, irma):
     # Só conta o nome depois do aviso: "raspe" também é verbo ("colete, raspe ou baixe").
     aviso = re.search(r"(?:Não confundir com|Do not confuse with|usar a) (.*)", _description(skill))
-    assert aviso, f"a description de {skill} não tem \"Não confundir com\""
+    assert aviso, f"a description de {skill} não avisa de nenhuma irmã"
     assert re.search(rf"(?<![\w-]){re.escape(irma)}(?![\w-])", aviso.group(1)), (
         f"a description de {skill} não diz quando usar {irma} no lugar dela"
     )
