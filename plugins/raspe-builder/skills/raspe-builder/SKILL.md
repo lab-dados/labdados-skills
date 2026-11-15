@@ -38,10 +38,12 @@ Antes de iniciar, verifique:
 
 2. **Repositório raspe clonado**. A skill se refere a esse caminho como
    `<RASPE_REPO>` ao longo do documento. Para detectar:
-   - Pergunte ao usuário, ou
-   - Tente nesta ordem: `~/dev/raspe`, `~/Desktop/dev/raspe`,
-     `~/repos/raspe`, `~/code/raspe`.
-   - Confirme que `<RASPE_REPO>/src/raspe/` e `<RASPE_REPO>/tests/` existem.
+   - Procure no diretório atual e no clone irmão `../raspe`:
+     ```bash
+     for d in . ../raspe; do [ -d "$d/src/raspe" ] && [ -d "$d/tests" ] && (cd "$d" && pwd) && break; done
+     ```
+   - Confirme com o usuário o caminho impresso antes de usá-lo; se o
+     comando não imprimir nada, pergunte o caminho.
 
    Sempre que aparecer `<RASPE_REPO>` nesta skill ou nos references,
    substitua pelo caminho confirmado com o usuário.

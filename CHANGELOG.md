@@ -4,6 +4,13 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.6] - 2026-11-15
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.5): para achar o clone do raspe, a `SKILL.md` tentava `~/dev/raspe`, `~/Desktop/dev/raspe`, `~/repos/raspe` e `~/code/raspe`, pastas de uma maquina so. Agora procura no diretorio atual e no clone irmao `../raspe`, com um comando pronto, e confirma o caminho com o usuario (ou pergunta, se nao achar). O README diz o mesmo.
+- `explainer-video` (plugin 1.0.2): o clone do repositorio, o screenshot de conferencia e o log do servidor iam para caminhos fixos em `/tmp`. Agora vao para pastas do `mktemp`, fora do repo do app, e o comando imprime o caminho criado.
+
 ## [1.18.5] - 2026-11-15
 
 Corrigido (#24):
