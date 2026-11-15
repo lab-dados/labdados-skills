@@ -93,14 +93,13 @@ abaixo valem trocando `pip install` por `uv add` (num projeto com `pyproject.tom
 ### juscraper
 
 - Python >= 3.11
-- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.4.0, com partes revistas contra a v0.5.0, entre elas a cobertura (ver `references/versao.md` da skill)
+- `pip install -U juscraper` (ou `uv add juscraper`); a skill esta alinhada a v0.5.0 (ver `references/versao.md` da skill)
 - Para TJMG e TRF6 (captcha): `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha`
 - Para STF: `pip install 'juscraper[stf]'` e `playwright install chromium` (ou um cookie `waf_token` ja obtido)
 - Para salvar em parquet: `pip install pyarrow`, que saiu das dependencias base na v0.4.0
 - Recursos marcados `[unreleased]` na skill: `pip install "git+https://github.com/jtrecenti/juscraper.git"`
 - Para Datajud: API key do CNJ (opcional — existe chave publica default)
-- Para JusBR: token JWT via login gov.br
-- Para PDPJ: token JWT do SSO do PJe
+- Para JusBR e PDPJ: o mesmo token JWT do SSO do PJe, via login gov.br (`auth_govbr()`, que pede `pip install 'juscraper[govbr]'`, a variavel `PDPJ_JWT` ou `auth(token)`)
 
 ### dataframeit
 

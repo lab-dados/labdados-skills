@@ -113,14 +113,16 @@ datajud = jus.scraper('datajud',
     api_key=None,        # None = usa chave publica embutida
     verbose=1,
     download_path=None,
-    sleep_time=0.5
+    sleep_time=0.5,
+    politica=None        # [v0.5.0+]
 )
 
 jusbr = jus.scraper('jusbr',
     verbose=0,
     download_path=None,
     sleep_time=0.5,
-    token=None           # JWT — pode passar aqui ou via .auth()
+    token=None,          # JWT; ver agregadores.md §"JusBR e PDPJ"
+    politica=None        # [v0.5.0+]
 )
 
 cnj = jus.scraper('comunica_cnj',   # [v0.3.0+]
@@ -133,7 +135,8 @@ pdpj = jus.scraper('pdpj',   # [v0.4.0+]
     verbose=0,
     download_path=None,
     sleep_time=0.5,
-    token=None
+    token=None,          # o mesmo token do JusBR
+    politica=None        # [v0.5.0+]
 )
 ```
 
@@ -366,9 +369,9 @@ Movidos para `references/agregadores.md`. Sumario dos endpoints publicos:
 | Agregador | Metodos principais |
 |---|---|
 | **Datajud** | `listar_processos`, `contar_processos` (`[v0.3.0]`) |
-| **JusBR** | `auth`, `auth_firefox`, `cpopg`, `download_documents` |
+| **JusBR** | `auth`, `auth_govbr` `[v0.5.0+]`, `auth_firefox`, `cpopg`, `download_documents` |
 | **ComunicaCNJ** `[v0.3.0+]` | `listar_comunicacoes` |
-| **PDPJ** `[v0.4.0+]` | `auth`, `existe`, `cpopg`, `documentos`, `movimentos`, `partes`, `pesquisa`, `contar`, `download_documents` |
+| **PDPJ** `[v0.4.0+]` | `auth`, `auth_govbr` `[v0.5.0+]`, `existe`, `cpopg`, `documentos`, `movimentos`, `partes`, `pesquisa`, `contar`, `download_documents` |
 
 ---
 

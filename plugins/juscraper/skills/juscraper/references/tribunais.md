@@ -6,7 +6,7 @@ Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TR
 
 ### Tribunais com scraper direto (30)
 
-Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/`baixar_sentencas` (TJSP) sao `[unreleased]`: cobertura conferida no snapshot `1b657e7` da `main`, ainda fora da 0.5.0 do PyPI.
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 sao `[unreleased]`: cobertura conferida no snapshot `30eb73c` da `main`, ainda fora da 0.5.0 do PyPI.
 
 <!-- cobertura-juscraper:tribunais:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
 
@@ -18,12 +18,12 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/
 | **TJAM** | sim | - | - | - | - |
 | **TJAP** | sim | - | - | - | - |
 | **TJBA** | sim | - | - | - | - |
-| **TJCE** | sim | - | - | - | - |
+| **TJCE** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
 | **TJDFT** | sim | - | - | - | - |
 | **TJES** | sim | sim | - | - | - |
 | **TJGO** | sim | - | - | - | - |
 | **TJMG** | sim | - | - | sim | - |
-| **TJMS** | sim | - | - | - | - |
+| **TJMS** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
 | **TJMT** | sim | - | - | - | - |
 | **TJPA** | sim | - | - | - | - |
 | **TJPB** | sim | - | - | - | - |
@@ -39,7 +39,7 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e `baixar_sentenca`/
 | **TJSP** | sim | sim | sim | sim | `baixar_acordao`, `baixar_acordaos`, `baixar_sentenca`, `baixar_sentencas` |
 | **TJTO** | sim | sim | - | - | `cjsg_ementa` |
 | **TRF1** | - | - | sim | - | - |
-| **TRF3** | sim | - | sim | - | - |
+| **TRF3** | sim | - | sim | sim | - |
 | **TRF5** | - | - | sim | - | - |
 | **TRF6** | - | - | sim | - | - |
 
@@ -528,7 +528,7 @@ tjrj.cjsg(
 
 ### TRF3 — `cjsg` `[v0.5.0+]`
 
-Portal `web.trf3.jus.br/jurisprudencia`. Filtros: `base` (`acordaos`, default; `turmas_recursais`; `monocraticas`; `monocraticas_turmas_recursais`), `numero_processo`, `relator` e `classe` (texto na grafia do portal, como `"NERY JUNIOR"` ou `"AI - AGRAVO DE INSTRUMENTO"`), `orgao_julgador`, `ementa`, `indexacao`, `tamanho_pagina` (`10`, `30` ou `50`) e **um** par de datas: `data_julgamento_*` ou `data_publicacao_*`. Passar os dois pares levanta `ValueError`, assim como `orgao_julgador`, `ementa` ou `indexacao` nas bases de monocraticas. A lista ja traz `ementa` e `inteiro_teor`.
+Portal `web.trf3.jus.br/jurisprudencia`. Filtros: `base` (`acordaos`, default; `turmas_recursais`; `monocraticas`; `monocraticas_turmas_recursais`), `numero_processo`, `relator` e `classe` (texto na grafia do portal, como `"NERY JUNIOR"` ou `"AI - AGRAVO DE INSTRUMENTO"`), `orgao_julgador`, `ementa`, `indexacao`, `tamanho_pagina` (`10`, `30` ou `50`) e **um** par de datas: `data_julgamento_*` ou `data_publicacao_*`. Passar os dois pares levanta `ValueError`, assim como `orgao_julgador`, `ementa` ou `indexacao` nas bases de monocraticas. A lista ja traz `ementa` e `inteiro_teor`. O perfil HTTP da busca esta em `jus.scraper('trf3').perfis_http['cjsg']` (timeout `(10, 60)`, conexao e leitura, na 0.5.0); para dar mais tempo de leitura, `jus.scraper('trf3', politica={'cjsg': {'timeout': (10, 120)}})` (campos em `references/agregadores.md` §"Politica HTTP").
 
 ### TRFs (TRF1, TRF3, TRF5) — `cpopg` via PJe `[v0.4.0+]`
 
@@ -667,7 +667,7 @@ Convencao da skill: cada tribunal pode ter sua propria reference a medida que es
 
 11. **Aliases depreciados emitem `DeprecationWarning`** — sempre use o nome canonico (`pesquisa`, `data_julgamento_inicio`, `tamanho_pagina`, `classe`, `assunto`, `vara`, `numero_processo`, `relator`, `id_classe`). Tabela completa em `references/api.md`.
 
-12. **`RetryExhaustedError` em `HTTPScraper` `[v0.4.0+]`:** na 0.4.0, o `cjsg` dos 25 tribunais estaduais (familia eSAJ e todos os demais), o `cjpg` de TJES/TJTO, o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ migraram para `HTTPScraper` e propagam a excecao. Datajud e JusBR herdam `HTTPScraper`, mas nao a propagam: o Datajud usa o retry proprio da `call_datajud_api` e devolve `None` com `UserWarning` quando falha; o JusBR captura a excecao nos `fetch_*` internos e devolve `None`. TRF6 e PDPJ ficaram fora. Quando esgota `max_retries` em 403/429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
+12. **`RetryExhaustedError` em `HTTPScraper` `[v0.4.0+]`:** desde a 0.4.0, o `cjsg` dos 25 tribunais estaduais (familia eSAJ e todos os demais), o `cjpg` de TJES/TJTO, o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ migraram para `HTTPScraper` e propagam a excecao. Datajud e JusBR herdam `HTTPScraper`, mas nao a propagam: o Datajud usa o retry proprio da `call_datajud_api` e devolve `None` com `UserWarning` quando falha; JusBR e PDPJ: ver `references/agregadores.md` §"JusBR e PDPJ". TRF6 ficou fora. Quando esgota `max_retries` em 403/429/5xx persistente, a excecao propagada e `juscraper.core.exceptions.RetryExhaustedError` em vez de `requests.HTTPError`/`requests.RequestException`. Para codigo defensivo, capture ambas.
 
 13. **`auto_chunk=True` substitui workaround manual de iteracao por ano `[v0.3.0]`:** na familia eSAJ (TJSP/TJAC/TJAL/TJAM/TJCE/TJMS `cjsg`, TJSP `cjpg`), janelas `data_julgamento_*` maiores que 366 dias agora sao automaticamente divididas em chunks e concatenadas com dedup. O `pd.concat([cjpg(...) for ano in range(...)])` antigo ja nao e necessario para esse caso. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`.
 

@@ -10,7 +10,7 @@ Cobre **25 tribunais estaduais**, **4 tribunais regionais federais** (TRF1, TRF3
 o **STF** (busca de jurisprudencia) e **5 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao), permitindo buscar
 jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
 
-> **Alinhada ao juscraper 0.4.0 (PyPI, 2026-09-15), com partes revistas contra a 0.5.0 (PyPI, 2026-10-21), entre elas a cobertura (quem tem cada metodo).**
+> **Alinhada ao juscraper 0.5.0 (PyPI, 2026-10-21).**
 > Recursos marcados `[v0.5.0+]` exigem `pip install -U 'juscraper>=0.5.0'`; `[v0.4.0+]` exigem
 > `pip install -U 'juscraper>=0.4.0'`; `[v0.3.0+]` exigem `juscraper>=0.3.0`. Recursos marcados
 > `[unreleased]` existem so na `main` do repositorio (posteriores a ultima release do PyPI) e exigem
@@ -20,9 +20,9 @@ jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do
 - Repositorio: https://github.com/jtrecenti/juscraper
 - Documentacao: https://jtrecenti.github.io/juscraper/
 
-Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC e TJSP) e
-`baixar_sentenca`/`baixar_sentencas` (TJSP) da cobertura abaixo sao `[unreleased]`,
-verificados no snapshot `1b657e7` da `main`; nao fazem parte da 0.5.0 do PyPI.
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP),
+`baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 da cobertura abaixo sao
+`[unreleased]`, verificados no snapshot `30eb73c` da `main`; nao fazem parte da 0.5.0 do PyPI.
 
 ## Antes de comecar
 
@@ -40,6 +40,7 @@ Verifique se `juscraper` esta instalado:
 | Tudo que esta em PyPI, incluindo os recursos `[v0.4.0+]` e `[v0.5.0+]` (default, recomendado) | `pip install -U juscraper` |
 | TJMG e TRF6 (captcha automatico via `txtcaptcha`) | `pip install 'juscraper[tjmg]'` ou `pip install txtcaptcha` |
 | STF `[v0.4.0+]` e TJPE `cpopg` `[v0.5.0+]` (cookie do AWS WAF via Playwright) | `pip install 'juscraper[waf]'` (ou `[stf]`, mesmo conteudo) e depois `playwright install chromium` |
+| Login gov.br do JusBR e do PDPJ com `auth_govbr()` `[v0.5.0+]` (usa o Chrome, Chromium ou Edge instalado) | `pip install 'juscraper[govbr]'` |
 | Salvar em parquet (`df.to_parquet`) | `pip install pyarrow` (saiu das dependencias base na 0.4.0) |
 | Recursos `[unreleased]` (so na `main`) | `pip install "git+https://github.com/jtrecenti/juscraper.git"` |
 
@@ -53,19 +54,18 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 - **STF** `[v0.4.0+]`: sem login, mas o portal fica atras de um desafio JavaScript do AWS WAF. O scraper obtem o cookie `aws-waf-token` com Playwright na primeira busca (extra `stf` + `playwright install chromium`) ou usa um cookie ja obtido em `jus.scraper('stf', waf_token=...)`. Sem nenhum dos dois, a primeira busca levanta `ImportError`.
 - **Datajud:** Tem API key publica embutida. Funciona sem configuracao.
 - **ComunicaCNJ:** API publica, sem autenticacao.
-- **JusBR:** Autenticacao obrigatoria (sem token, qualquer chamada falha com RuntimeError).
-  Pergunte ao usuario:
-  > Para usar o JusBR, voce precisa de um token JWT do gov.br.
-  > Acesse https://www.jus.br, faca login via gov.br, e extraia o token
-  > da aba Network do navegador (campo `access_token`).
-  > Alternativamente, use `.auth_firefox()` se tiver sessao ativa no Firefox.
-- **PDPJ:** Autenticacao obrigatoria via JWT do SSO do PJe.
-  **Nao e o mesmo token do JusBR** (que usa o SSO do gov.br) — sao tokens
-  distintos, embora o fluxo de captura via DevTools seja analogo. O token vem
-  do portal PDPJ logado (DevTools > Network > header
-  `Authorization: Bearer <token>`). Token malformado vira `ValueError`
-  ja em `pdpj.auth(token)`, mas token expirado passa pelo `auth` e so
-  falha na primeira chamada a API.
+- **JusBR e PDPJ:** autenticacao obrigatoria, com o mesmo token (JWT do SSO do PJe, login
+  gov.br). `[v0.5.0+]`: o construtor ja carrega o token da variavel `PDPJ_JWT` ou do cache de
+  um `auth_govbr()` anterior. Senao:
+  - na maquina do usuario, com navegador: `auth_govbr()` abre o login gov.br e renova o token
+    sozinho; nao roda no Colab nem em CI;
+  - fora dela, peca o token ao usuario e use `auth(token)`:
+    > Para usar o JusBR/PDPJ, voce precisa de um token JWT. Faca login via gov.br no portal
+    > de servicos do PDPJ (ou em https://www.jus.br) e copie o token do header
+    > `Authorization: Bearer <token>` na aba Network do navegador.
+
+  Token vencido: peca outro. Detalhes, `motivo_falha` e `politica=` em
+  `references/agregadores.md` §"JusBR e PDPJ".
 
 ## Roteamento de decisao — o que usar?
 
@@ -78,7 +78,7 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP e TJPE `[v0.5.0+]` (diretos), JusBR (qualquer tribunal), PDPJ |
 | Buscar jurisprudencia do STF (acordaos ou decisoes monocraticas) | `listar_decisoes(pesquisa)`; `contar_decisoes()` para total e facetas `[v0.4.0+]` | STF |
 | Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` `[v0.4.0+]` | TRF1, TRF3, TRF5, TRF6 |
-| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`) |
+| Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`); TRF3 `[unreleased]` |
 | Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
 | Baixar texto de documentos/pecas | `download_documents()`; `cpopg(download_pecas=True, diretorio=...)` `[v0.4.0+]` | JusBR; PDPJ `[v0.4.0+]`; TRF1/TRF3/TRF5 `[v0.4.0+]`; TJPE `[v0.5.0+]` |
 | Coletar comunicacoes/intimacoes publicadas no DJe | `listar_comunicacoes()` | ComunicaCNJ `[v0.3.0+]` |
@@ -107,9 +107,9 @@ Lista gerada do codigo da `main` do juscraper. Na duvida entre esta lista e algu
 - `cjsg`: TJAC, TJAL, TJAM, TJAP, TJBA, TJCE, TJDFT, TJES, TJGO, TJMG, TJMS, TJMT, TJPA, TJPB, TJPE, TJPI, TJPR, TJRJ, TJRN, TJRO, TJRR, TJRS, TJSC, TJSP, TJTO, TRF3
 - `cjpg`: TJES, TJSP, TJTO
 - `cpopg`: TJPE, TJSP, TRF1, TRF3, TRF5, TRF6, JusBR, PDPJ
-- `cposg`: TJMG, TJSP
-- `baixar_acordao`: TJAC, TJSP
-- `baixar_acordaos`: TJAC, TJSP
+- `cposg`: TJMG, TJSP, TRF3
+- `baixar_acordao`: TJAC, TJCE, TJMS, TJSP
+- `baixar_acordaos`: TJAC, TJCE, TJMS, TJSP
 - `baixar_sentenca`: TJSP
 - `baixar_sentencas`: TJSP
 - `cjsg_ementa`: TJTO
@@ -305,7 +305,7 @@ controle granular sobre arquivos brutos. O metodo sem sufixo combina ambos.
 | Busca por nome de parte / OAB | Nao | Nao | Nao | Nao | Sim (`pesquisa`) |
 | Comunicacoes / DJe | Nao | Nao | Nao | Sim (`listar_comunicacoes`) | Nao |
 | Contagem rapida | eSAJ/TJSP (`count_only=True`) e STF (`contar_decisoes`) `[v0.4.0+]` | Sim (`contar_processos`) | Nao | Sim (campo `count`) | Sim (`contar`) |
-| Autenticacao | Nenhuma (STF: cookie do WAF obtido via Playwright ou `waf_token`) | Nenhuma (key publica) | Obrigatoria (JWT gov.br) | Nenhuma | Obrigatoria (JWT PDPJ) |
+| Autenticacao | Nenhuma (STF: cookie do WAF obtido via Playwright ou `waf_token`) | Nenhuma (key publica) | Obrigatoria (JWT do SSO do PJe) | Nenhuma | Obrigatoria (o mesmo JWT do JusBR) |
 
 Priorize sempre os scrapers diretos quando o tribunal estiver disponivel — eles fornecem
 dados mais ricos (ementas completas, filtros especificos) do que os agregadores. Os
@@ -324,7 +324,7 @@ Se o scraper falhar (timeout, bloqueio, erro HTTP):
 
 **Excecoes a conhecer:**
 
-- **`juscraper.core.exceptions.RetryExhaustedError`** `[v0.4.0+]`: levantada quando 403/429/5xx persistente esgota `max_retries`. Na 0.4.0 vale para o `cjsg` dos 25 tribunais estaduais (e o `cjpg` de TJES/TJTO), o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ. Datajud e JusBR nao a propagam: em falha persistente devolvem `None` internamente (o Datajud com `UserWarning`). Substitui `requests.HTTPError` / `requests.RequestException` nesse cenario. Para codigo defensivo, capture ambas.
+- **`juscraper.core.exceptions.RetryExhaustedError`** `[v0.4.0+]`: levantada quando 403/429/5xx persistente esgota `max_retries`. Desde a 0.4.0, vale para o `cjsg` dos 25 tribunais estaduais (e o `cjpg` de TJES/TJTO), o `cpopg` de TRF1/TRF3/TRF5, o STF e o agregador ComunicaCNJ. O Datajud nao a propaga: em falha persistente devolve `None` com `UserWarning`. No JusBR e no PDPJ `[v0.5.0+]`, a falha vira linha com `motivo_falha`, e so o 401 interrompe o lote (ver `references/agregadores.md` §"JusBR e PDPJ"). Substitui `requests.HTTPError` / `requests.RequestException` nesse cenario. Para codigo defensivo, capture ambas.
 - **STF `ValueError`** `[v0.4.0+]`: pagina que comeca depois do registro 10.000 da busca falha antes de qualquer requisicao. Ver `references/tribunais.md` §STF.
 - **`TypeError` por kwarg desconhecido** `[v0.3.0]`: todos os endpoints com schema pydantic wired (a maioria) rejeitam kwargs nao reconhecidos com mensagem amigavel e sugestao de typo via difflib (`(você quis dizer 'data_julgamento_inicio'?)`). Se aparecer, confira o nome canonico em `references/api.md` §"Aliases de parametros depreciados".
 - **`juscraper.courts.tjsp.exceptions.QueryTooLongError`** `[v0.3.0]`: no TJSP `cjsg`/`cjpg`, `pesquisa` com mais de 120 caracteres levanta erro antes do HTTP (antes, o backend silenciosamente truncava). Priorize os termos mais discriminativos.
