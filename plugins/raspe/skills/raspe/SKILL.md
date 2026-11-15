@@ -63,12 +63,12 @@ Comece identificando a **natureza do dado** que o usuário quer, depois confirme
 | Projetos e legislação federal indexada pelo Senado | `raspe.senado()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
 | Estudos e publicações do IPEA | `raspe.ipea()` | HTTP | `pesquisa` | nenhuma |
 | Artigos acadêmicos no buscador do Portal de Periódicos da CAPES | `raspe.capes()` | HTTP | `pesquisa` | nenhuma |
-| Normas do CFM e conselhos regionais de medicina | `raspe.cfm()` | HTTP | `texto`, `uf`, `ano`, `numero` | nenhuma |
+| Normas do CFM e conselhos regionais de medicina | `raspe.cfm()` | HTTP | `pesquisa`, `uf`, `ano`, `numero` | nenhuma |
 | Notícias da Folha de São Paulo (online/jornal) | `raspe.folha()` | HTTP | `pesquisa`, `site`, `data_inicio`, `data_fim` | nenhuma |
-| Artigos do New York Times por termo/ano/seção | `raspe.nyt(api_key=...)` | HTTP (API) | `texto`, `ano`, `data_inicio`, `data_fim`, `filtro` | API key |
-| Normas sanitárias do Ministério da Saúde (SaudeLegis) | `raspe.saudelegis()` | Playwright | `assunto` (sem `paginas`) | nenhuma, requer `[browser]` |
-| Atos normativos da ANS (plano de saúde) | `raspe.ans()` | Playwright + stealth | `termo` (sem `paginas`) | nenhuma, requer `[browser]` |
-| Atos normativos da ANVISA (vigilância sanitária) | `raspe.anvisa()` | Playwright + stealth | `termo` (sem `paginas`) | nenhuma, requer `[browser]` |
+| Artigos do New York Times por termo/ano/seção | `raspe.nyt(api_key=...)` | HTTP (API) | `pesquisa`, `ano`, `data_inicio`, `data_fim`, `filtro` | API key |
+| Normas sanitárias do Ministério da Saúde (SaudeLegis) | `raspe.saudelegis()` | Playwright | `pesquisa` (sem `paginas`) | nenhuma, requer `[browser]` |
+| Atos normativos da ANS (plano de saúde) | `raspe.ans()` | Playwright + stealth | `pesquisa` (sem `paginas`) | nenhuma, requer `[browser]` |
+| Atos normativos da ANVISA (vigilância sanitária) | `raspe.anvisa()` | Playwright + stealth | `pesquisa` (sem `paginas`) | nenhuma, requer `[browser]` |
 
 Para detalhes de cobertura, limites e quirks de cada fonte, leia a reference correspondente em `references/<fonte>.md` **antes** de gerar código. A matriz completa de colunas retornadas e limites está em `references/fontes.md`.
 
@@ -104,18 +104,11 @@ df = raspe.presidencia().raspar(pesquisa="meio ambiente", paginas=range(1, 4))
 
 O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
-**Coluna `termo_busca`.** Numa busca por string única, a biblioteca só adiciona `termo_busca` quando o parâmetro de busca se chama `pesquisa`, `termo`, `q` ou `query` (nas fontes Playwright, também `assunto`). `cfm` e `nyt`, que usam `texto`, voltam **sem** a coluna. Nas fontes HTTP, se você passar uma lista (`pesquisa=["a", "b"]`, `texto=["a", "b"]`), o scraper roda cada valor, concatena e preenche `termo_busca` com o valor de cada linha, inclusive em `cfm` e `nyt`. As fontes Playwright não aceitam lista.
+**Coluna `termo_busca`.** O DataFrame termina na coluna `termo_busca`, com o valor de `pesquisa`. Nas fontes HTTP, se você passar uma lista (`pesquisa=["a", "b"]`), o scraper roda cada valor, concatena e preenche `termo_busca` com o valor de cada linha. As fontes Playwright recusam lista com `ValidationError`. Busca sem resultado devolve DataFrame vazio com as mesmas colunas da busca com resultado (exceto em `camara` e `senado`, ainda sem schema de saída).
 
-**Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas. **Só nas fontes HTTP.** `saudelegis`, `ans` e `anvisa` ignoram `paginas` sem erro e percorrem todas as páginas que o site informa, até o teto interno `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Detalhes em `references/api.md`.
+**Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas. **Só nas fontes HTTP.** `saudelegis`, `ans` e `anvisa` recusam `paginas` com `ValidationError` e percorrem todas as páginas que o site informa, até o teto interno `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA), com `UserWarning` se o site informar mais. Detalhes em `references/api.md`.
 
-**Nome do parâmetro de busca varia.** A maioria usa `pesquisa`, mas:
-
-- `cfm` usa `texto`
-- `nyt` usa `texto` (e aceita `ano`, `data_inicio`, `data_fim`, `filtro`)
-- `saudelegis` usa `assunto`
-- `ans` e `anvisa` usam `termo`
-
-A reference por fonte tem a assinatura exata.
+**Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos (`texto` em `cfm` e `nyt`, `assunto` em `saudelegis`, `termo` em `ans` e `anvisa`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError` (menos em `camara` e `senado`, ainda sem schema). A reference por fonte tem a assinatura exata.
 
 **Filtros de data.** `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
 
@@ -158,7 +151,7 @@ Padrão geral: se páginas seguintes falharem com timeout ou 5xx, confirme com o
 
 ## O que fazer com os dados coletados
 
-- **Exploração rápida**: `df.head()`, `df.shape` e, se a coluna existir (`if "termo_busca" in df`), `df["termo_busca"].value_counts()`.
+- **Exploração rápida**: `df.head()`, `df.shape` e `df["termo_busca"].value_counts()`.
 - **Salvar para análise**: `df.to_parquet("coleta.parquet")` (melhor para volumes grandes) ou `df.to_excel("coleta.xlsx", index=False)` (compatível com o fluxo Excel da maioria dos pesquisadores).
 - **Múltiplas fontes**: colete em DataFrames separados e concatene com `pd.concat([df1, df2], ignore_index=True)`; as colunas variam entre scrapers, então o concat fica com `NaN` nos campos específicos.
 - **Deduplicação**: `raspe` exporta `raspe.remove_duplicates(df)` para casos comuns.

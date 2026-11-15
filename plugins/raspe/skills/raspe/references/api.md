@@ -13,44 +13,44 @@ Assinaturas públicas exportadas em `raspe/__init__.py`. Todas as factories reto
 | `raspe.senado()` | sem args | `pesquisa: str \| list[str]`, `ano: int = None`, `tipo_materia: str = None`, `paginas: range = None` |
 | `raspe.ipea()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.capes()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
-| `raspe.cfm()` | sem args | `texto: str \| list[str]`, `uf: str = ''`, `revogada: str = ''`, `numero: str = ''`, `ano: str = ''`, `paginas: range = None` |
+| `raspe.cfm()` | sem args | `pesquisa: str \| list[str] = ''`, `uf: str = ''`, `revogada: str = ''`, `numero: str = ''`, `ano: int = None`, `paginas: range = None` |
 | `raspe.folha()` | sem args | `pesquisa: str \| list[str]`, `site: Literal['todos','online','jornal'] = 'todos'`, `data_inicio: str = None`, `data_fim: str = None`, `paginas: range = None` |
-| `raspe.nyt(api_key=...)` | `api_key: str \| None = None` (fallback: env `NYT_API_KEY`) | `texto: str \| list[str]`, `ano: int = None`, `data_inicio: str = None`, `data_fim: str = None`, `sort: Literal['best','newest','oldest','relevance'] = 'newest'`, `filtro: str = ''`, `paginas: range = None` |
+| `raspe.nyt(api_key=...)` | `api_key: str \| None = None` (fallback: env `NYT_API_KEY`) | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `data_inicio: str = None`, `data_fim: str = None`, `sort: Literal['best','newest','oldest','relevance'] = 'newest'`, `filtro: str = ''`, `paginas: range = None` |
 
 ### Fontes Playwright (requerem `raspe[browser]`)
 
 | Factory | Construtor | Parâmetros de `.raspar()` |
 |---|---|---|
-| `raspe.saudelegis()` | `debug: bool = True`, `headless: bool = True` | `assunto: str` |
-| `raspe.ans()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
-| `raspe.anvisa()` | `debug: bool = True`, `headless: bool = True` | `termo: str` |
+| `raspe.saudelegis()` | `debug: bool = True`, `headless: bool = True` | `pesquisa: str` |
+| `raspe.ans()` | `debug: bool = True`, `headless: bool = True` | `pesquisa: str` |
+| `raspe.anvisa()` | `debug: bool = True`, `headless: bool = True` | `pesquisa: str` |
 
-Essas três fontes não usam `paginas`. Se ele for passado, é ignorado sem erro: a coleta percorre todas as páginas que o site informa na primeira tela de resultados, até o teto `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Ao atingir o teto, a coleta para sem warning. O log INFO mostra `Total de páginas: N`, mas esse N já vem cortado por `_max_pages`: N igual ao teto indica que o site pode ter mais páginas. O teto é atributo interno da instância, sem parâmetro público, e é o único controle de volume. Para uma coleta de teste curta:
+Essas três fontes não aceitam `paginas`: passá-lo levanta `ValidationError` antes de abrir o navegador. A coleta percorre todas as páginas que o site informa na primeira tela de resultados, até o teto `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA). Se o site informar mais páginas que o teto, a coleta para nele e emite `UserWarning`. O teto é atributo interno da instância, sem parâmetro público, e é o único controle de volume. Para uma coleta de teste curta:
 
 ```python
 s = raspe.anvisa()
 s._max_pages = 3  # atributo interno; pode mudar em versões futuras
-df = s.raspar(termo="dispositivo médico")
+df = s.raspar(pesquisa="dispositivo médico")
 ```
 
 ## Parâmetros comuns
 
 ### `paginas: range | None`
 
-Controla quantas páginas baixar, **só nas fontes HTTP** (as Playwright ignoram, ver acima). `range(1, 4)` baixa páginas 1, 2, 3 (1-based). Default `None` = todas as páginas disponíveis até o limite da fonte.
+Controla quantas páginas baixar, **só nas fontes HTTP** (nas Playwright, levanta `ValidationError`; ver acima). `range(1, 4)` baixa páginas 1, 2, 3 (1-based). Default `None` = todas as páginas disponíveis até o limite da fonte.
 
 **Sempre passe um range pequeno em buscas novas** para checar o volume antes de expandir.
 
 ### Listas em parâmetros de busca
 
-Nas fontes HTTP, o parâmetro de busca (`pesquisa` ou `texto`) aceita `str` ou `list[str]`. Com lista, o scraper roda a raspagem em sequência para cada valor e concatena, adicionando uma coluna `termo_busca` para rastreabilidade. As fontes Playwright (`saudelegis`, `ans`, `anvisa`) não tratam lista: passe uma string por chamada.
+Todas as fontes buscam por `pesquisa`. Os nomes antigos (`texto` em `cfm` e `nyt`, `assunto` em `saudelegis`, `termo` em `ans` e `anvisa`) ainda são aceitos, com `DeprecationWarning`. Nas fontes HTTP, `pesquisa` aceita `str` ou `list[str]`. Com lista, o scraper roda a raspagem em sequência para cada valor e concatena, adicionando uma coluna `termo_busca` para rastreabilidade. As fontes Playwright (`saudelegis`, `ans`, `anvisa`) recusam lista com `ValidationError`: passe uma string por chamada.
 
 ```python
 df = raspe.senado().raspar(pesquisa=["educação", "saúde"])
 # df['termo_busca'].unique() -> ['educação', 'saúde']
 ```
 
-Não passe mais de **um** parâmetro como lista na mesma chamada — isso levanta `ValueError`.
+Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError` (em `camara` e `senado`, que ainda não têm schema, mais de um parâmetro em lista levanta `ValueError`).
 
 ### Datas
 
@@ -64,13 +64,7 @@ Não passe mais de **um** parâmetro como lista na mesma chamada — isso levant
 
 Sempre `pandas.DataFrame`. As colunas variam por fonte — veja `references/fontes.md` para a matriz completa.
 
-A coluna `termo_busca` não aparece sempre. Regra do código:
-
-- **Busca por lista (só fontes HTTP):** sempre gera `termo_busca`, com o valor de cada iteração, qualquer que seja o nome do parâmetro.
-- **Busca por string única, fontes HTTP:** só gera quando o parâmetro se chama `pesquisa`, `termo`, `q` ou `query`. `cfm` e `nyt` usam `texto` e voltam sem a coluna.
-- **Busca por string única, fontes Playwright:** gera quando o parâmetro é `assunto`, `pesquisa`, `termo`, `q` ou `query`, o que cobre `saudelegis`, `ans` e `anvisa`, desde que haja resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna.
-
-Como a coluna pode faltar, teste antes de usar: `if "termo_busca" in df`.
+Nas fontes com schema de saída (todas menos `camara` e `senado`), o DataFrame sempre termina na coluna `termo_busca`, com o valor de `pesquisa` ou, numa busca com lista, o item de cada linha; as colunas saem na ordem do schema, e uma busca sem resultado devolve DataFrame vazio com essas mesmas colunas. `camara` e `senado` trazem `termo_busca` sempre que recebem `pesquisa`.
 
 ## Utilitários exportados
 

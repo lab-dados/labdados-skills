@@ -54,20 +54,23 @@ import raspe
 #   pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
 #   python -m playwright install chromium
 
-# Coleta de teste com 3 páginas. As fontes Playwright ignoram `paginas`;
-# o volume é limitado pelo atributo interno `_max_pages` (padrão 100).
+# Coleta de teste com 3 páginas. As fontes Playwright não aceitam `paginas`;
+# o volume é limitado pelo atributo interno `_max_pages` (padrão 100), e o
+# UserWarning de teto atingido é esperado aqui.
 # Cada página Playwright leva ~20s.
 scraper = raspe.anvisa()
 scraper._max_pages = 3
-df = scraper.raspar(termo="dispositivo médico")
+df = scraper.raspar(pesquisa="dispositivo médico")
 
 print(f"Total coletado: {len(df)}")
 print(df["situacao"].value_counts(dropna=False))
 
-# Filtra vigentes (a coluna 'situacao' vem com None quando o ato está vigente,
-# ou com um rótulo como 'Revogado'/'Revogado Tacitamente' quando não)
-vigentes = df[df["situacao"].isna()].copy()
-revogados = df[df["situacao"].notna()].copy()
+# Separa os revogados do resto. A coluna 'situacao' traz o rótulo do portal,
+# que varia ('Vigente', 'Vigente com Alterações', 'Revogado', 'Revogado
+# Tacitamente'...): confira os valores no value_counts acima antes de filtrar.
+revogado = df["situacao"].str.startswith("Revogado", na=False)
+vigentes = df[~revogado].copy()
+revogados = df[revogado].copy()
 
 # Export
 with pd.ExcelWriter("anvisa_dispositivo_medico.xlsx") as w:
@@ -106,7 +109,7 @@ df_folha = raspe.folha().raspar(
 )
 
 df_nyt = raspe.nyt().raspar(
-    texto=termo_en,
+    pesquisa=termo_en,
     data_inicio="2024-01-01",
     data_fim="2024-12-31",
     paginas=range(1, 6),  # 5 páginas x 10 = até 50 artigos (NYT é mais lento por rate limit)

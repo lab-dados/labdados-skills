@@ -24,13 +24,13 @@ Todos os 3 scrapers aceitam os mesmos kwargs no construtor:
 
 ```python
 # Execução normal (headless, rápida)
-df = raspe.ans().raspar(termo="doença rara")
+df = raspe.ans().raspar(pesquisa="doença rara")
 
 # Modo visual para debug — você vê o navegador
-df = raspe.ans(headless=False).raspar(termo="doença rara")
+df = raspe.ans(headless=False).raspar(pesquisa="doença rara")
 
 # Mantém HTMLs baixados para inspeção
-df = raspe.anvisa(debug=True).raspar(termo="medicamento órfão")
+df = raspe.anvisa(debug=True).raspar(pesquisa="medicamento órfão")
 ```
 
 ## Cloudflare e `playwright-stealth`
@@ -68,7 +68,7 @@ Você não interage com essas strategies diretamente — elas aparecem em logs d
 | `ans` | 100 | Teto imposto pela lógica de paginação do Datalegis. |
 | `anvisa` | 100 | Idem. |
 
-Se uma busca tiver mais páginas que o limite, a coleta para no limite sem warning. O log INFO mostra `Total de páginas: N` já cortado por `_max_pages`: N igual ao teto indica que o site pode ter mais páginas. `paginas` não tem efeito nessas fontes: o volume é todas as páginas informadas pelo site, até `_max_pages`. Para contornar, refine o `termo` (p. ex. adicione ano: `termo="dispositivo médico 2024"`).
+Se uma busca tiver mais páginas que o limite, a coleta para no limite e emite `UserWarning`. Essas fontes não aceitam `paginas` (levanta `ValidationError`): o volume é todas as páginas informadas pelo site, até `_max_pages`. Para contornar, refine a `pesquisa` (p. ex. adicione ano: `pesquisa="dispositivo médico 2024"`).
 
 ## Tempo de execução e custo
 
@@ -77,7 +77,7 @@ Playwright é **ordens de magnitude mais lento** que `requests`. Ordem de grande
 - HTTP (Folha/Presidência): 2-5s por página.
 - Playwright (ANS/ANVISA): 15-30s por página (Cloudflare + render + SELECT + wait).
 
-Para `ans`/`anvisa` com 100 páginas: planeje ~30-60 minutos de coleta. Avise o usuário. Para iterações de desenvolvimento, **sempre comece com poucas páginas**, baixando o atributo interno `_max_pages` da instância (`s = raspe.ans(); s._max_pages = 2`), já que `paginas` é ignorado.
+Para `ans`/`anvisa` com 100 páginas: planeje ~30-60 minutos de coleta. Avise o usuário. Para iterações de desenvolvimento, **sempre comece com poucas páginas**, baixando o atributo interno `_max_pages` da instância (`s = raspe.ans(); s._max_pages = 2`), já que essas fontes não aceitam `paginas`.
 
 ## Debugging
 
@@ -86,7 +86,7 @@ Quando uma coleta Playwright falha:
 1. **Rode com `headless=False`**: abra o navegador visualmente.
 2. **`debug=True`** (default): deixa os HTMLs em `/tmp/ans_*.html` (ou equivalente) após a coleta. Abra no navegador local para ver o que foi capturado.
 3. **Logs**: cada scraper tem logger próprio, com handler que escreve no stderr e `propagate=False`, então `logging.basicConfig` não muda nada. Com `debug=True` (default), o nível já é DEBUG; `debug=False` sobe para INFO e também apaga os HTMLs baixados.
-4. **Minimal repro**: tente com `termo="teste"` e `_max_pages = 1` na instância. Se falhar na página 1, o problema é o acesso/busca, não paginação.
+4. **Minimal repro**: tente com `pesquisa="teste"` e `_max_pages = 1` na instância. Se falhar na página 1, o problema é o acesso/busca, não paginação.
 
 ## Quando Playwright não é a resposta certa
 

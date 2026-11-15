@@ -11,28 +11,34 @@ Visão comparada das 11 fontes cobertas pela biblioteca. Use este arquivo quando
 | Senado Federal | `raspe.senado()` | www6g.senado.leg.br/busca | HTTP GET | nenhuma | `pesquisa` |
 | IPEA | `raspe.ipea()` | ipea.gov.br/portal/.../busca-publicacoes | HTTP GET | nenhuma | `pesquisa` |
 | CAPES Periódicos | `raspe.capes()` | www.periodicos.capes.gov.br/.../buscador.html | HTTP GET | nenhuma | `pesquisa` |
-| CFM | `raspe.cfm()` | portal.cfm.org.br/buscar-normas-cfm-e-crm | HTTP GET | nenhuma | `texto` |
+| CFM | `raspe.cfm()` | portal.cfm.org.br/buscar-normas-cfm-e-crm | HTTP GET | nenhuma | `pesquisa` |
 | Folha de São Paulo | `raspe.folha()` | search.folha.uol.com.br | HTTP GET | nenhuma | `pesquisa` |
-| New York Times | `raspe.nyt(api_key=...)` | api.nytimes.com (Article Search API) | HTTP GET (JSON) | API key | `texto` |
-| SaudeLegis (Min. Saúde) | `raspe.saudelegis()` | saudelegis.saude.gov.br | Playwright | nenhuma | `assunto` |
-| ANS (ANSLegis) | `raspe.ans()` | anslegis.datalegis.net | Playwright + stealth | nenhuma | `termo` |
-| ANVISA (ANVISALegis) | `raspe.anvisa()` | anvisalegis.datalegis.net | Playwright + stealth | nenhuma | `termo` |
+| New York Times | `raspe.nyt(api_key=...)` | api.nytimes.com (Article Search API) | HTTP GET (JSON) | API key | `pesquisa` |
+| SaudeLegis (Min. Saúde) | `raspe.saudelegis()` | saudelegis.saude.gov.br | Playwright | nenhuma | `pesquisa` |
+| ANS (ANSLegis) | `raspe.ans()` | anslegis.datalegis.net | Playwright + stealth | nenhuma | `pesquisa` |
+| ANVISA (ANVISALegis) | `raspe.anvisa()` | anvisalegis.datalegis.net | Playwright + stealth | nenhuma | `pesquisa` |
 
 ## Colunas retornadas
 
-| Fonte | Colunas (além de `termo_busca`, quando gerada; regra em `references/api.md`) |
+Nas fontes com schema de saída, uma busca sem resultado devolve DataFrame vazio com estas mesmas colunas. A descrição de cada coluna está na reference da fonte.
+
+<!-- colunas-raspe:matriz:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Fonte | Colunas, na ordem do DataFrame |
 |---|---|
-| `presidencia` | `nome`, `link`, `ficha`, `revogacao`, `descricao` |
-| `camara` | `link`, `titulo`, `descricao`, `ementa` |
-| `senado` | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao` |
-| `ipea` | `titulo`, `link`, `autores`, `data`, `assuntos` |
-| `capes` | `id` (OpenAlex Work ID), `tipo`, `titulo`, `link`, `autores`, `ano`, `revista`, `instituicao`, `topicos`, `resumo`, `doi`, `link_editor`, `acesso_aberto`, `producao_nacional`, `revisado_por_pares` |
-| `cfm` | `Tipo`, `UF`, `Nº/Ano`, `Situação`, `Ementa`, `Link` |
-| `folha` | `link`, `titulo`, `resumo`, `data` |
-| `nyt` | `titulo`, `url`, `data_publicacao`, `secao`, `desk`, `tipo`, `resumo`, `autor`, `palavras`, `imagem_url` |
-| `saudelegis` | `tipo_norma`, `numero`, `data_pub`, `origem`, `ementa`, `link_url` |
-| `ans` | `url`, `titulo`, `descricao`, `situacao` |
-| `anvisa` | `url`, `titulo`, `descricao`, `situacao` |
+| `ans` | `url`, `titulo`, `descricao`, `situacao`, `termo_busca` |
+| `anvisa` | `url`, `titulo`, `descricao`, `situacao`, `termo_busca` |
+| `capes` | `id`, `tipo`, `titulo`, `link`, `autores`, `ano`, `revista`, `instituicao`, `topicos`, `resumo`, `doi`, `link_editor`, `acesso_aberto`, `producao_nacional`, `revisado_por_pares`, `termo_busca` |
+| `cfm` | `tipo`, `uf`, `numero_ano`, `situacao`, `ementa`, `link`, `termo_busca` |
+| `folha` | `link`, `titulo`, `resumo`, `data`, `termo_busca` |
+| `ipea` | `titulo`, `link`, `autores`, `data`, `assuntos`, `termo_busca` |
+| `nyt` | `titulo`, `url`, `data_publicacao`, `secao`, `desk`, `tipo`, `resumo`, `autor`, `palavras`, `imagem_url`, `termo_busca` |
+| `presidencia` | `nome`, `link`, `ficha`, `revogacao`, `descricao`, `rotulo`, `termo_busca` |
+| `saudelegis` | `tipo_norma`, `numero`, `data_pub`, `origem`, `ementa`, `link_url`, `termo_busca` |
+| `camara` | sem schema de saída; veja `references/camara.md` |
+| `senado` | sem schema de saída; veja `references/senado.md` |
+
+<!-- colunas-raspe:matriz:fim -->
 
 ## Limites de coleta
 
@@ -68,7 +74,7 @@ Ao aplicar `dataframeit-skill` sobre um DataFrame coletado, identifique o campo 
 | `senado` | `descricao` |
 | `ipea` | `titulo` (não há abstract) |
 | `capes` | `resumo` (fallback: `titulo` + `topicos`) |
-| `cfm` | `Ementa` |
+| `cfm` | `ementa` |
 | `folha` | `resumo` (fallback: `titulo`) |
 | `nyt` | `resumo` (`snippet` em inglês) |
 | `saudelegis` | `ementa` |

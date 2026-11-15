@@ -20,27 +20,31 @@ raspe.saudelegis(
     debug: bool = True,
     headless: bool = True,
 ).raspar(
-    assunto: str,
+    pesquisa: str,
 ) -> pd.DataFrame
 ```
 
-Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
+Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abrir o navegador. O nome antigo do parâmetro de busca, `assunto`, ainda é aceito com `DeprecationWarning`. O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
 
 ## Colunas retornadas
 
-| Coluna | Conteúdo |
-|---|---|
-| `tipo_norma` | Tipo (Portaria, Resolução, Instrução Normativa, etc.). |
-| `numero` | Número da norma. |
-| `data_pub` | Data de publicação. |
-| `origem` | Órgão emissor. |
-| `ementa` | Ementa da norma. |
-| `link_url` | URL para o texto completo. |
-| `termo_busca` | Adicionada quando há resultado. Busca sem resultado devolve DataFrame vazio sem nenhuma coluna. |
+<!-- colunas-raspe:tabela:inicio (gerado por scripts/colunas_raspe.py do docs/colunas.md do raspe; nao editar a mao) -->
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `tipo_norma` | texto | Tipo da norma. | PORTARIA |
+| `numero` | texto | Número e ano da norma. | 123/2024 |
+| `data_pub` | texto | Data de publicação, em DD/MM/AAAA. | 15/01/2024 |
+| `origem` | texto | Órgão de origem. | MS/GM |
+| `ementa` | texto | Ementa da norma. | Define diretrizes para atendimento de doenças raras. |
+| `link_url` | texto | Endereço do texto completo, ou vazio quando o portal não o traz. | /doc/portaria-123-2024.pdf |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
+<!-- colunas-raspe:tabela:fim -->
 
 ## Parâmetros específicos
 
-- **`assunto`** (não `pesquisa` ou `termo`): texto digitado no campo de busca do portal.
+- **`pesquisa`**: texto digitado no campo de busca do portal. Vazia, levanta `ValidationError`.
 - `headless=False` para ver o navegador durante a coleta (debug).
 - `debug=True` mantém HTMLs brutos baixados — útil se precisar inspecionar o conteúdo.
 
@@ -48,7 +52,7 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 
 - **JavaScript obrigatório**: o portal usa PrimeFaces (`form:...`), impossível raspar com `requests`. Por isso Playwright.
 - **Sem Cloudflare**: diferente de ANS/ANVISA. Playwright básico (sem stealth) já funciona.
-- **Limite de 50 páginas** (`_max_pages=50`). Suficiente para a maioria das buscas temáticas.
+- **Limite de 50 páginas** (`_max_pages=50`). Suficiente para a maioria das buscas temáticas; se o site informar mais, a coleta para no teto com `UserWarning`.
 - **Paginação por links numerados** — estratégia `NUMBERED_LINKS`.
 - Tempo de execução típico: ~10-20s por página. Planeje accordingly.
 
@@ -57,12 +61,12 @@ Não aceita lista nem `paginas` (ignorado sem erro). O volume é todas as págin
 ```python
 import raspe
 
-df = raspe.saudelegis().raspar(assunto="doença rara")
+df = raspe.saudelegis().raspar(pesquisa="doença rara")
 print(df[["tipo_norma", "numero", "data_pub", "ementa"]].head())
 ```
 
 Para debug visual:
 
 ```python
-df = raspe.saudelegis(headless=False).raspar(assunto="doença rara")
+df = raspe.saudelegis(headless=False).raspar(pesquisa="doença rara")
 ```
