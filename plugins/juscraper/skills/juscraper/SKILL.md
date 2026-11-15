@@ -284,7 +284,7 @@ Utilitarios para manipulacao: `from juscraper.utils.cnj import clean_cnj, split_
 `paginas=None` = todas (usar com cautela).
 
 **Tipos de retorno**:
-- `cpopg()`/`cposg()` do TJSP: retorna `dict` com DataFrames (no `cpopg`: basicos, partes, movimentacoes, peticoes_diversas). Excecao: `cpopg` dos TRFs e do TJPE `[v0.5.0+]` e `cposg` do TJMG `[v0.5.0+]` retornam DataFrame (uma linha por processo ou recurso), nao dict.
+- `cpopg()` do TJSP: retorna `dict` com DataFrames (basicos, partes, movimentacoes, peticoes_diversas). Os demais `cpopg` (TRFs, TJPE `[v0.5.0+]`) e todo `cposg` (TJSP e TJMG `[v0.5.0+]`) retornam DataFrame (uma linha por processo ou recurso), nao dict. No 0.5.0, o `cposg` do TJSP volta vazio (ver `references/tjsp.md`).
 - `cjsg()`/`cjpg()`: retorna um unico `pandas.DataFrame`
 - `listar_processos()`: retorna `pandas.DataFrame`
 - `download_documents()`: retorna `pandas.DataFrame` com coluna `texto`
@@ -338,7 +338,7 @@ Apos a coleta:
   `df.to_parquet('resultados.parquet')` (parquet e melhor para DataFrames grandes). Desde a
   0.4.0 o juscraper nao instala `pyarrow`: rode `pip install pyarrow` antes do `to_parquet`.
 - **Para combinar tribunais:** colete separadamente e concatene com `pd.concat([df1, df2])`
-- **cpopg/cposg do TJSP retornam dict:** itere com `for tabela, df in resultado.items():`. TRFs, TJPE e TJMG devolvem DataFrame direto.
+- **cpopg do TJSP retorna dict:** itere com `for tabela, df in resultado.items():`. O `cposg` do TJSP e os de TRFs, TJPE e TJMG devolvem DataFrame direto.
 - **Enriquecer decisoes com dados do processo** (valor da causa, partes, classe, vara): merge
   com o `cpopg` pelo CNJ, onde o tribunal tem `cpopg`, e nao regex ou LLM sobre o texto da
   decisao. Ver `references/decisoes-e-processos.md` (validada no TJSP).
@@ -427,6 +427,6 @@ O total de tokens por linha e `_input_tokens + _output_tokens`; a coluna
 `_total_tokens` nao existe desde o dataframeit 0.6.0, e `_reasoning_tokens`
 ja esta contido em `_output_tokens` (nao somar de novo).
 
-O mesmo vale para `cpopg`/`cposg` do TJSP, que retornam um dict de DataFrames —
+O mesmo vale para o `cpopg` do TJSP, que retorna um dict de DataFrames —
 extraia o DataFrame relevante (ex: `dados["movimentacoes"]`) e confirme
 qual coluna contem o texto antes de passar.
