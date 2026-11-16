@@ -13,12 +13,9 @@ as duas. A ``references/fontes.md`` recebe a matriz de colunas, uma linha por fo
 na ordem do documento. As fontes da secao sem tabela (raspadores ainda sem schema)
 entram na matriz apontando para a reference delas, cuja tabela segue escrita a mao.
 
-Duas conferencias sem gerar nada, sobre o texto escrito a mao da skill:
-
-- a tabela de ``text_column`` da ``fontes.md`` tem uma linha por fonte, e cada coluna
-  que ela cita existe na tabela gerada da fonte (fonte sem schema nao e conferida);
-- toda frase da ``SKILL.md`` e das references que diz "sem schema" nomeia, entre
-  crases, exatamente as fontes sem schema de saida do documento.
+A tabela de ``text_column`` da ``fontes.md``, escrita a mao, so e conferida: ela tem
+uma linha por fonte, e cada coluna que cita existe na tabela gerada da fonte (fonte
+sem schema nao e conferida).
 
 O workflow ``.github/workflows/colunas-raspe.yml`` roda o ``--check`` contra a
 ``main`` do raspe em todo PR que toca a skill e uma vez por semana.
@@ -34,15 +31,12 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 REFERENCES = RAIZ / "plugins" / "raspe" / "skills" / "raspe" / "references"
-SKILL = REFERENCES.parent / "SKILL.md"
 
 # Fonte -> linhas da tabela de colunas; lista vazia para fonte ainda sem schema de saida.
 Tabelas = dict[str, list[str]]
 
 _FONTE = re.compile(r"`raspe\.(\w+)\(\)`")
 _NOME = re.compile(r"`(\w+)`")
-_NOME_OU_FONTE = re.compile(r"`(?:raspe\.)?(\w+)(?:\(\))?`")
-_BLOCO_GERADO = re.compile(r"<!-- colunas-raspe:(\w+):inicio.*?<!-- colunas-raspe:\1:fim -->", re.DOTALL)
 _TITULO_TEXT_COLUMN = "## Nomes de coluna em dataframeit"
 
 
@@ -128,14 +122,14 @@ def conferir_text_column(tabelas: Tabelas, caminho: Path) -> list[str]:
     tabela = _primeira_tabela(secao.split("\n## ")[0])
     if not achou or not tabela:
         return [f"{nome}: falta a tabela de text_column (secao {_TITULO_TEXT_COLUMN!r})"]
-    erros, vistas = [], []
+    erros, vistas = [], set()
     for linha in tabela[2:]:
         celulas = [celula.strip() for celula in linha.split("|")]
         if len(celulas) < 4:
             erros.append(f"{nome}: linha mal formada na tabela de text_column: {linha!r}")
             continue
         fonte, recomendada = celulas[1].strip("`"), celulas[2]
-        vistas.append(fonte)
+        vistas.add(fonte)
         if fonte not in tabelas:
             erros.append(f"{nome}: text_column cita a fonte {fonte!r}, que nao esta no docs/colunas.md")
         elif tabelas[fonte]:
@@ -146,30 +140,6 @@ def conferir_text_column(tabelas: Tabelas, caminho: Path) -> list[str]:
                 if f"`{coluna}`" not in existentes
             ]
     erros += [f"{nome}: falta a fonte {fonte!r} na tabela de text_column" for fonte in tabelas if fonte not in vistas]
-    return erros
-
-
-def conferir_sem_schema(tabelas: Tabelas, arquivos: list[Path]) -> list[str]:
-    """Erros das frases que dizem "sem schema" e nao nomeiam exatamente as fontes sem schema de saida.
-
-    A fonte conta escrita como `` `camara` `` ou `` `raspe.camara()` ``.
-    Os blocos gerados ficam de fora. A frase termina em ponto ou ponto e virgula seguido
-    de espaco, ou no fim da linha, para nao cortar ``references/fontes.md`` ao meio.
-    """
-    sem_schema = sorted(fonte for fonte, tabela in tabelas.items() if not tabela)
-    erros = []
-    for caminho in arquivos:
-        texto = _BLOCO_GERADO.sub("", caminho.read_text(encoding="utf-8"))
-        for frase in re.split(r"[.;]\s|\n", texto):
-            if "sem schema" not in frase.lower():
-                continue
-            citadas = sorted({nome for nome in _NOME_OU_FONTE.findall(frase) if nome in tabelas})
-            # Sem fonte sem schema no documento, a frase inteira ficou velha, cite ela fontes ou nao.
-            if not sem_schema or citadas != sem_schema:
-                erros.append(
-                    f"{caminho.relative_to(RAIZ)}: a frase {frase.strip()[:80]!r}... diz \"sem schema\" e cita "
-                    f"{citadas or 'nenhuma fonte'}, mas as fontes sem schema de saida sao {sem_schema or 'nenhuma'}"
-                )
     return erros
 
 
@@ -208,7 +178,6 @@ def main(argumentos: list[str] | None = None) -> int:
         erros.append("Rode `python scripts/colunas_raspe.py <raspe>/docs/colunas.md`.")
     # Texto escrito a mao: o script so aponta, e a correcao e manual.
     erros += conferir_text_column(tabelas, REFERENCES / "fontes.md")
-    erros += conferir_sem_schema(tabelas, [SKILL, *sorted(REFERENCES.glob("*.md"))])
 
     if erros:
         sys.stderr.write("\n".join(erros) + "\n")

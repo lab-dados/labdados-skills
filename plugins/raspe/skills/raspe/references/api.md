@@ -50,7 +50,7 @@ df = raspe.senado().raspar(pesquisa=["educação", "saúde"])
 # df['termo_busca'].unique() -> ['educação', 'saúde']
 ```
 
-Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError` (em `camara` e `senado`, ainda sem schema, mais de um parâmetro em lista levanta `ValueError`).
+Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError`. Nas fontes ainda sem schema (as marcadas "sem schema de saída" na matriz de colunas da `references/fontes.md`), parâmetro desconhecido é ignorado, e mais de um parâmetro em lista levanta `ValueError`.
 
 ### Datas
 
@@ -64,7 +64,7 @@ Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError`
 
 Sempre `pandas.DataFrame`. As colunas variam por fonte — veja `references/fontes.md` para a matriz completa.
 
-Nas fontes com schema de saída, o DataFrame sempre termina na coluna `termo_busca`, com o valor de `pesquisa` ou, numa busca com lista, o item de cada linha; as colunas saem na ordem do schema, e uma busca sem resultado devolve DataFrame vazio com essas mesmas colunas. `camara` e `senado`, ainda sem schema de saída, trazem `termo_busca` sempre que recebem `pesquisa`.
+Nas fontes com schema de saída, o DataFrame sempre termina na coluna `termo_busca`, com o valor de `pesquisa` ou, numa busca com lista, o item de cada linha; as colunas saem na ordem do schema, e uma busca sem resultado devolve DataFrame vazio com essas mesmas colunas. As fontes ainda sem schema trazem `termo_busca` sempre que recebem `pesquisa`.
 
 ## Utilitários exportados
 
@@ -81,19 +81,19 @@ Em `raspe.*`:
 
 ## Exceções
 
-Em `raspe.exceptions` (todas também disponíveis em `raspe.*`). Quando cada uma chega a quem chamou `.raspar()`, e os avisos de resultado incompleto, estão em "Tratamento de erros" na `SKILL.md`.
+Em `raspe.exceptions` (todas também disponíveis em `raspe.*`). O que fazer com cada uma e os avisos de resultado incompleto (`UserWarning`) estão em "Tratamento de erros" na `SKILL.md`.
 
-| Classe | Significado | Atributos |
+| Classe | Quando sobe | Atributos |
 |---|---|---|
-| `ScraperError` | Base de todas as exceções da biblioteca; também levantada sozinha (casos na `SKILL.md`) | — |
-| `APIKeyError` | API key faltando/inválida (só NYT hoje) | — |
-| `RateLimitError` | 429 persistente após `max_retries`, em qualquer página | `retry_after: int \| None` (o header `Retry-After`) |
-| `APIError` | 5xx persistente após `max_retries`, em qualquer página; no NYT, também outro 4xx na página 1 | `status_code: int`, `response_text: str` (truncado em 500 chars) |
-| `ValidationError` | Parâmetro inválido (data mal formatada, valor fora de enum, parâmetro desconhecido) | — |
-| `BrowserError` | Falha em Playwright (elemento/timeout/Cloudflare) | — |
-| `DriverNotInstalledError` | Playwright não instalado; subclasse de `BrowserError` | — |
+| `ScraperError` | Base de todas. Sozinha: resposta inicial que não é página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo); nenhuma página baixada rendeu linhas (a mensagem traz o erro de cada página, e o primeiro fica em `__cause__`); nas fontes Playwright, página da contagem que não abre | — |
+| `APIKeyError` | NYT sem API key (no construtor) ou com key inválida (401) | — |
+| `RateLimitError` | 429 persistente após `max_retries`, em qualquer página | `retry_after: int \| None` (o `Retry-After` do servidor, em segundos) |
+| `APIError` | 5xx persistente após `max_retries`, em qualquer página; no NYT, também outro 4xx na página 1 ou resposta sem a contagem de resultados | `status_code: int`, `response_text: str` (truncado em 500 chars) |
+| `ValidationError` | Parâmetro inválido ou desconhecido (data mal formatada, valor fora de enum, `pesquisa` vazia onde é obrigatória), antes de qualquer requisição | — |
+| `BrowserError` | Falha em Playwright (elemento não encontrado, timeout, bypass de Cloudflare) | — |
+| `DriverNotInstalledError` | Fonte Playwright sem o extra `[browser]`, no `.raspar()`; subclasse de `BrowserError` | — |
 
-`SeleniumError` existe como alias de `BrowserError` para retrocompatibilidade com código antigo. Não use em código novo.
+Fora da hierarquia, sobem `ValueError` (veja "Listas em parâmetros de busca") e os erros do `requests` descritos em "Retry automático". `SeleniumError` existe como alias de `BrowserError` para retrocompatibilidade com código antigo. Não use em código novo.
 
 ## Retry automático
 
@@ -105,7 +105,7 @@ Nas fontes HTTP, toda requisição, da página 1 (que também dá a contagem de 
 - **`ReadTimeout`** (o servidor recebeu o pedido e não respondeu dentro de `timeout`): sobe na hora, sem nova tentativa.
 - **Outro 4xx**: sem nova tentativa; sobe como `requests.HTTPError` (no NYT, na página 1, como `APIKeyError` ou `APIError`).
 
-Qualquer um desses erros interrompe a coleta e sobe para quem chamou `.raspar()`: nenhuma página é pulada. Numa busca com lista, interrompe só a coleta daquele valor, que fica de fora com `UserWarning` (veja "Tratamento de erros" na `SKILL.md`).
+Qualquer um desses erros interrompe a coleta e sobe para quem chamou `.raspar()`: nenhuma página é pulada. Numa busca com lista, interrompe só a coleta daquele valor, que fica de fora com `UserWarning`.
 
 ## Seleção por nome (`scraper_manager`)
 
