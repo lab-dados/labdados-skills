@@ -25,7 +25,7 @@ Complete este checklist antes de qualquer chamada. Fonte a fonte, a instalação
 pip install git+https://github.com/bdcdo/raspe.git
 ```
 
-Python >= 3.10. Verifique com `uv pip show raspe` (com uv) ou `python -c "import raspe; print(raspe.__version__)"`.
+Python >= 3.11. Verifique com `uv pip show raspe` (com uv) ou `python -c "import raspe; print(raspe.__version__)"`.
 
 Cobre: `presidencia`, `camara`, `senado`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
 
@@ -106,9 +106,9 @@ O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
 **Coluna `termo_busca`.** O DataFrame termina na coluna `termo_busca`, com o valor de `pesquisa`. Nas fontes HTTP, se você passar uma lista (`pesquisa=["a", "b"]`), o scraper roda cada valor, concatena e preenche `termo_busca` com o valor de cada linha. As fontes Playwright recusam lista com `ValidationError`. Busca sem resultado devolve DataFrame vazio com as mesmas colunas da busca com resultado (exceto em `camara` e `senado`, ainda sem schema de saída).
 
-**Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas. **Só nas fontes HTTP.** `saudelegis`, `ans` e `anvisa` recusam `paginas` com `ValidationError` e percorrem todas as páginas que o site informa, até o teto interno `_max_pages` (50 no SaudeLegis, 100 em ANS e ANVISA), com `UserWarning` se o site informar mais. Detalhes em `references/api.md`.
+**Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas. **Só nas fontes HTTP.** As fontes Playwright (`saudelegis`, `ans`, `anvisa`) não aceitam `paginas` e coletam todas as páginas até um teto interno; como limitar o volume nelas está em `references/api.md`.
 
-**Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos (`texto` em `cfm` e `nyt`, `assunto` em `saudelegis`, `termo` em `ans` e `anvisa`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError` (menos em `camara` e `senado`, ainda sem schema). A reference por fonte tem a assinatura exata.
+**Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos de cada fonte (lista em `references/api.md`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError` (menos em `camara` e `senado`, ainda sem schema). A reference por fonte tem a assinatura exata.
 
 **Filtros de data.** `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
 
@@ -120,34 +120,34 @@ Sites governamentais são infraestrutura pública — raspagem agressiva derruba
 
 - **Comece pequeno.** Para qualquer busca nova numa fonte HTTP, rode primeiro com `paginas=range(1, 4)`, confira o volume de resultados (há logs indicando "X páginas" após a primeira requisição) e **pergunte ao usuário** se faz sentido expandir. Termos genéricos ("saúde", "educação") podem render dezenas de milhares de registros.
 - **Não toque em `sleep_time`.** O default (2s entre requisições HTTP) já é conservador. Reduzir leva a bloqueio de IP do lado do servidor — o usuário vai ficar horas sem acesso. Se precisar **aumentar** por causa de 429, faça; nunca diminuir.
-- **NYT tem hard limit.** 5 requisições por minuto, 500 por dia, máximo de 1000 resultados por busca (100 páginas). O scraper já aplica `sleep_time=12` automaticamente. Para coletar mais de 1000 resultados, divida por intervalos de datas (`data_inicio`/`data_fim`).
-- **Folha tem teto de 10.000 resultados.** Se uma busca atingir esse número, a própria biblioteca emite warning. Divida em períodos menores.
+- **NYT tem hard limit.** 5 requisições por minuto, 500 por dia, máximo de 1000 resultados por busca (100 páginas; acima disso, `UserWarning`). O scraper já aplica `sleep_time=12` automaticamente. Para coletar mais de 1000 resultados, divida por intervalos de datas (`data_inicio`/`data_fim`).
+- **Folha e Câmara têm teto de 10.000 resultados.** Uma busca que chega ao teto coleta só os 10.000 primeiros e emite `UserWarning`. Divida em períodos menores (na Câmara, por `ano` ou `tipo_materia`).
 - **Snapshot da data da coleta.** Para reprodutibilidade, registre quando você coletou. Sugira salvar junto com os dados: `df.assign(data_coleta=pd.Timestamp.today().isoformat()).to_parquet(...)`.
 - **Republicar dados brutos.** Dados públicos coletados de sites oficiais são livres para pesquisa — mas republicar em datasets abertos merece atenção a direito autoral (conteúdo editorial de Folha/NYT, por exemplo). Em dúvida, publique apenas links e metadados, não o texto integral.
 
 ## Tratamento de erros
 
-Hierarquia de exceções (em `raspe.exceptions`). Nem todas chegam a quem chama `.raspar()`:
+O `raspe` não devolve resultado vazio ou incompleto em silêncio: um erro que impede a coleta sobe para quem chamou `.raspar()`, e um resultado que pode estar incompleto vem com `UserWarning`.
 
-- `ScraperError` — base de tudo.
-  - `APIKeyError` — NYT sem API key (no construtor) ou com key inválida (401 na requisição inicial). Propaga. Mostre ao usuário como cadastrar.
-  - `RateLimitError` — 429 persistente após os retries da requisição inicial. **Não propaga**: a biblioteca registra o erro no log e `.raspar()` devolve DataFrame vazio. O atributo `retry_after` existe, mas não chega ao usuário.
-  - `APIError` — erro HTTP. Atributos: `status_code`, `response_text` (500 chars). Só propaga no NYT, para 4xx diferente de 401 e 429 (401 vira `APIKeyError`) ou resposta com status inválido. 5xx persistente na requisição inicial tem o destino do `RateLimitError`: log e DataFrame vazio.
-  - `ValidationError` — parâmetro inválido (data mal formatada, `site` fora de `{todos, online, jornal}`, `pesquisa` vazia na CAPES etc.). Propaga.
-  - `BrowserError` — falha em Playwright (elemento não encontrado, timeout, bypass de Cloudflare falhou). Propaga.
+Hierarquia de exceções (em `raspe.exceptions`, também em `raspe.*`):
+
+- `ScraperError` — base de tudo. Levantada sozinha quando a resposta inicial não é uma página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo), quando nenhuma página baixada rendeu linhas (a mensagem traz o erro de cada página, e o primeiro fica em `__cause__`) e, nas fontes Playwright, quando uma das páginas da contagem não abre.
+  - `APIKeyError` — NYT sem API key (no construtor) ou com key inválida (401). Mostre ao usuário como cadastrar.
+  - `RateLimitError` — 429 persistente depois das tentativas, em qualquer página. O atributo `retry_after` traz o `Retry-After` do servidor, em segundos, ou `None`.
+  - `APIError` — 5xx persistente depois das tentativas, em qualquer página. No NYT, também 4xx diferente de 401 e 429 na página 1, ou resposta sem a contagem de resultados. Atributos: `status_code`, `response_text` (500 chars).
+  - `ValidationError` — parâmetro inválido ou desconhecido (data mal formatada, `site` fora de `{todos, online, jornal}`, `pesquisa` vazia na CAPES etc.), antes de qualquer requisição.
+  - `BrowserError` — falha em Playwright (elemento não encontrado, timeout, bypass de Cloudflare falhou).
     - `DriverNotInstalledError` — sintoma clássico: usuário chamou `raspe.ans().raspar(...)` sem `[browser]`. O construtor funciona sem Playwright, porque o import é preguiçoso; o erro só sai no `.raspar()`. Solução: `pip install "raspe[browser]"` + `playwright install chromium`.
 
-Fora dessa hierarquia também propagam: `ValueError` (mais de um parâmetro passado como lista), `requests.HTTPError` (4xx diferente de 429 na requisição inicial das demais fontes HTTP) e erros de conexão ou timeout do `requests` na requisição inicial.
+Fora dessa hierarquia também sobem: `ValueError` (mais de um parâmetro em lista, em `camara` e `senado`, ainda sem schema), `requests.HTTPError` (4xx diferente de 429; no NYT, na página 1, vira `APIKeyError` ou `APIError`), `requests.ConnectionError` (falha de conexão depois das tentativas) e `requests.ReadTimeout` (o servidor não respondeu dentro do `timeout`; não há nova tentativa).
 
-**Como detectar a falha silenciosa.** O logger de cada scraper escreve no stderr por padrão. Sinais no log:
+**Página que falha interrompe a coleta.** Nas fontes HTTP, cada página passa pelas mesmas tentativas (veja "Retry automático" em `references/api.md`). Se o erro persiste, a coleta para, o log registra `Coleta interrompida na página N` e o erro sobe. Nenhuma página é pulada, mas as já baixadas também não voltam. Com `debug=False`, a pasta de download é apagada; com `debug=True`, a mensagem diz onde ficaram os arquivos. Confirme com o usuário e rode a busca de novo, de preferência em outro horário (sites governamentais ficam lentos em horário comercial). Em coletas longas, divida `paginas` em blocos (`range(1, 51)`, `range(51, 101)`...) e salve cada um, para que uma falha custe só um bloco.
 
-- DataFrame vazio (`df.empty`) com `ERROR - Erro na requisição inicial`: 429 ou 5xx esgotados na requisição que conta as páginas, não ausência de resultados. Reduzir `paginas` não ajuda, porque foi essa primeira requisição que falhou. Espere alguns minutos ou tente em outro horário e rode a mesma busca de novo.
-- `WARNING - Server error ... ignorando página N`: 5xx numa página seguinte, que foi pulada.
-- `ERROR - Erro ao baixar página N`: erro de rede ou timeout numa página seguinte, que foi pulada.
+**Avisos de resultado incompleto (`UserWarning`).** O DataFrame volta, mas pode faltar dado. Repasse o aviso ao usuário:
 
-Nos dois últimos casos o DataFrame veio incompleto. Um 4xx ou 429 numa página seguinte não deixa rastro: o corpo da resposta de erro é tratado como página e, no NYT, vira zero linhas. Esse é o risco típico do NYT, com limite de 5 requisições por minuto; confira se o número de linhas bate com o esperado (10 por página no NYT).
-
-Padrão geral: se páginas seguintes falharem com timeout ou 5xx, confirme com o usuário e rode de novo só as páginas que faltaram, passando em `paginas` o `range` delas, de preferência em outro horário (sites governamentais ficam lentos em horário comercial).
+- Parte das páginas baixadas não rendeu linhas (erro de leitura, página de bloqueio, layout novo). A mensagem lista as páginas e o erro de cada uma.
+- A busca passou do teto da fonte (Folha e Câmara: 10.000 resultados; NYT: 1.000; fontes Playwright: `_max_pages`). Divida a busca por período ou filtro.
+- Busca com lista: um valor de `pesquisa` falhou e ficou de fora, e os demais voltam no resultado. Depois de um `RateLimitError`, os valores seguintes não são tentados e entram no aviso. Se todos falharem, o primeiro erro sobe.
 
 ## O que fazer com os dados coletados
 
@@ -164,8 +164,8 @@ Padrão geral: se páginas seguintes falharem com timeout ou 5xx, confirme com o
 4. Para cada fonte envolvida, leia `references/<fonte>.md` **antes** de gerar código — assinaturas e colunas mudam por scraper.
 5. Se há dúvida sobre limites/cobertura, leia `references/fontes.md`.
 6. Se for Playwright (ANS/ANVISA/SaudeLegis), leia `references/playwright.md`.
-7. Gere código com `paginas=range(1, 4)` por default e confirme com o usuário se ele quer expandir. Nas fontes Playwright, `paginas` não tem efeito: veja `references/api.md` para limitar o volume.
-8. Execute. Se der erro, consulte "Tratamento de erros" acima.
+7. Gere código com `paginas=range(1, 4)` por default e confirme com o usuário se ele quer expandir. Nas fontes Playwright, não passe `paginas` (levanta `ValidationError`): veja `references/api.md` para limitar o volume.
+8. Execute. Se der erro ou `UserWarning`, consulte "Tratamento de erros" acima.
 9. Sugira `to_parquet` ou `to_excel` para persistir.
 
 ## Arquivos de referência

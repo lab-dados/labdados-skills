@@ -70,14 +70,33 @@ def test_matriz():
     ]
 
 
+TEXT_COLUMN = """## Nomes de coluna em dataframeit / análise textual
+
+| Fonte | `text_column` recomendada |
+|---|---|
+| `ans` | `url` |
+| `anvisa` | `url` |
+| `cfm` | `tipo` (fallback: `termo_busca`) |
+| `camara` | `ementa` |
+| `senado` | `descricao` |
+
+## Quando combinar fontes
+"""
+
+
 def _preparar(tmp_path, monkeypatch, fontes=("fontes", "ans", "anvisa", "cfm")):
     """Skill falsa com blocos vazios em ``fontes`` e o documento em ``colunas.md``."""
     monkeypatch.setattr(colunas_raspe, "RAIZ", tmp_path)
     monkeypatch.setattr(colunas_raspe, "REFERENCES", tmp_path)
+    monkeypatch.setattr(colunas_raspe, "SKILL", tmp_path / "SKILL.md")
+    (tmp_path / "SKILL.md").write_text("Busca vazia (exceto em `camara` e `senado`, ainda sem schema).\n", encoding="utf-8")
     for fonte in fontes:
         inicio, fim = colunas_raspe.marcadores("matriz" if fonte == "fontes" else "tabela")
-        (tmp_path / f"{fonte}.md").write_text(f"# {fonte}\n\n{inicio}\n{fim}\n\nfim\n", encoding="utf-8")
-    documento = tmp_path / "colunas.md"
+        extra = TEXT_COLUMN if fonte == "fontes" else ""
+        (tmp_path / f"{fonte}.md").write_text(f"# {fonte}\n\n{inicio}\n{fim}\n\n{extra}fim\n", encoding="utf-8")
+    # Fora da pasta das references, que a conferencia do "sem schema" le inteira.
+    (tmp_path / "raspe").mkdir()
+    documento = tmp_path / "raspe" / "colunas.md"
     documento.write_text(DOCUMENTO, encoding="utf-8")
     return str(documento)
 
@@ -116,3 +135,54 @@ def test_marcadores_ausentes_nao_grava_nada(tmp_path, monkeypatch):
         colunas_raspe.main([documento])
     # fontes.md vem antes de cfm.md e ficaria gravado se a escrita fosse arquivo a arquivo.
     assert (tmp_path / "fontes.md").read_text(encoding="utf-8") == antes
+
+
+@pytest.mark.parametrize(
+    ("de", "para", "erro"),
+    [
+        ("`tipo` (fallback: `termo_busca`)", "`tipo` (fallback: `ementa`)", "text_column de 'cfm' cita `ementa`"),
+        ("| `anvisa` | `url` |\n", "", "falta a fonte 'anvisa' na tabela de text_column"),
+        ("| `senado` |", "| `folha` |", "text_column cita a fonte 'folha'"),
+        ("## Nomes de coluna em dataframeit", "## Outra secao", "falta a tabela de text_column"),
+    ],
+)
+def test_text_column(tmp_path, monkeypatch, capsys, de, para, erro):
+    documento = _preparar(tmp_path, monkeypatch)
+    assert colunas_raspe.main([documento]) == 0
+    fontes = tmp_path / "fontes.md"
+    fontes.write_text(fontes.read_text(encoding="utf-8").replace(de, para), encoding="utf-8")
+    assert colunas_raspe.main([documento, "--check"]) == 1
+    assert erro in capsys.readouterr().err
+
+
+def test_text_column_de_fonte_sem_schema_nao_e_conferida(tmp_path, monkeypatch):
+    documento = _preparar(tmp_path, monkeypatch)
+    fontes = tmp_path / "fontes.md"
+    fontes.write_text(fontes.read_text(encoding="utf-8").replace("`ementa`", "`qualquer`"), encoding="utf-8")
+    assert colunas_raspe.main([documento]) == 0
+
+
+@pytest.mark.parametrize(
+    "frase",
+    [
+        "Parâmetro desconhecido levanta erro (menos em `camara`, ainda sem schema).",
+        "`camara`, `senado` e `cfm` estão sem schema.",
+        "Fontes sem schema devolvem outro formato.",
+    ],
+)
+def test_frase_sem_schema_com_fontes_erradas(tmp_path, monkeypatch, capsys, frase):
+    documento = _preparar(tmp_path, monkeypatch)
+    (tmp_path / "cfm.md").write_text((tmp_path / "cfm.md").read_text(encoding="utf-8") + frase + "\n", encoding="utf-8")
+    assert colunas_raspe.main([documento]) == 1
+    assert 'cfm.md: a frase' in capsys.readouterr().err
+
+
+def test_frase_sem_schema_termina_no_ponto_seguido_de_espaco(tmp_path, monkeypatch):
+    documento = _preparar(tmp_path, monkeypatch)
+    skill = tmp_path / "SKILL.md"
+    # O ponto de `references/camara.md` nao encerra a frase; o seguido de espaco, sim.
+    skill.write_text(
+        "`camara` e `senado` seguem sem schema, veja `references/camara.md` e `references/senado.md`. A `cfm` tem.\n",
+        encoding="utf-8",
+    )
+    assert colunas_raspe.main([documento]) == 0

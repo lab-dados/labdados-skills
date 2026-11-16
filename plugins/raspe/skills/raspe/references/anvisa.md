@@ -24,7 +24,7 @@ raspe.anvisa(
 ) -> pd.DataFrame
 ```
 
-Não aceita lista nem `paginas`: os dois levantam `ValidationError` antes de abrir o navegador. O nome antigo do parâmetro de busca, `termo`, ainda é aceito com `DeprecationWarning`. O volume é todas as páginas que o site informa, até `_max_pages`; para uma coleta de teste curta, veja `references/api.md`.
+Sem `paginas` e sem lista em `pesquisa`. O que acontece se passá-los, o volume da coleta, a coleta de teste curta e o nome antigo do parâmetro de busca estão em `references/api.md`.
 
 A assinatura é **idêntica** à de `raspe.ans()` — ambos herdam de `ScraperDatalegis`.
 

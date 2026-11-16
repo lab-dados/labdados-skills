@@ -45,13 +45,13 @@ Nas fontes com schema de saída, uma busca sem resultado devolve DataFrame vazio
 | Fonte | Limite | Observação |
 |---|---|---|
 | `presidencia` | nenhum explícito | Sítio tem workaround SSL interno por certificado incompleto |
-| `camara` | nenhum explícito | Sessão estabelecida automaticamente via página inicial |
+| `camara` | **10.000 resultados (500 páginas de 20)** | Acima disso, `UserWarning`; divida por `ano` ou `tipo_materia`. Sessão estabelecida automaticamente via página inicial |
 | `senado` | nenhum explícito | — |
 | `ipea` | nenhum explícito | — |
-| `capes` | nenhum explícito; **`_find_n_pags` arredonda para cima `total / itens por página`**, lendo o tamanho da página do atributo `data-per-page` do `<nav>` (fallback: 20) | Buscas genéricas passam de 1 milhão de páginas: sempre use `paginas=range(1, N)` com N pequeno |
+| `capes` | nenhum explícito; o tamanho da página vem dos itens da página 1 (30 hoje) | Buscas genéricas passam de 1 milhão de páginas: sempre use `paginas=range(1, N)` com N pequeno |
 | `cfm` | 15 itens/página, 1-based | — |
-| `folha` | **10.000 resultados (400 páginas)** | Biblioteca emite warning ao atingir o teto; divida por `data_inicio`/`data_fim` |
-| `nyt` | **1000 resultados (100 páginas), 5 req/min, 500 req/dia** | Scraper já aplica `sleep_time=12s`. Divida por `ano` ou datas |
+| `folha` | **10.000 resultados (400 páginas)** | Biblioteca emite `UserWarning` ao atingir o teto; divida por `data_inicio`/`data_fim` |
+| `nyt` | **1000 resultados (100 páginas), 5 req/min, 500 req/dia** | Scraper já aplica `sleep_time=12s`. Acima de 1000 resultados, `UserWarning`; divida por `ano` ou datas |
 | `saudelegis` | 50 páginas (limite do `_max_pages`) | Paginação por links numerados |
 | `ans` | 100 páginas (limite do `_max_pages`) | Paginação via SELECT dropdown |
 | `anvisa` | 100 páginas (limite do `_max_pages`) | Paginação via SELECT dropdown |
@@ -76,7 +76,7 @@ Ao aplicar `dataframeit-skill` sobre um DataFrame coletado, identifique o campo 
 | `capes` | `resumo` (fallback: `titulo` + `topicos`) |
 | `cfm` | `ementa` |
 | `folha` | `resumo` (fallback: `titulo`) |
-| `nyt` | `resumo` (`snippet` em inglês) |
+| `nyt` | `resumo` (em inglês) |
 | `saudelegis` | `ementa` |
 | `ans` | `descricao` |
 | `anvisa` | `descricao` |
