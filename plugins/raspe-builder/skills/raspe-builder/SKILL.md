@@ -575,12 +575,13 @@ leitura da página").
    `--no-cov` e, antes do PR, a suíte completa para conferir o gate.
    `filterwarnings = ["error"]` está ativo: warning não capturado vira
    falha.
-   Com o schema estável, regere `docs/colunas.md` antes da suíte
-   completa (`tests/schemas/test_documentacao.py` o confere):
+   Regere `docs/colunas.md` antes dos testes, e de novo a cada mudança
+   no schema: `tests/schemas/test_documentacao.py` o confere e roda já
+   na fonte isolada, que inclui `tests/schemas/`:
    ```bash
    cd <RASPE_REPO>
-   pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov
    python -m raspe.schemas.documentacao
+   pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov
    pytest
    ```
 
