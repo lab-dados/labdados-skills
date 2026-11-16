@@ -11,6 +11,8 @@ Assinaturas públicas exportadas em `raspe/__init__.py`. Todas as factories reto
 | `raspe.presidencia()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.camara()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `tipo_materia: str = ''`, `paginas: range = None` |
 | `raspe.senado()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `tipo_materia: str = ''`, `paginas: range = None` |
+| `raspe.camara_proposicoes()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `sigla_tipo: str = ''`, `data_inicio: str = None`, `data_fim: str = None`, `paginas: range = None` |
+| `raspe.senado_processos()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `sigla_tipo: str = ''`, `data_inicio: str = None`, `data_fim: str = None`, `paginas: range = None` |
 | `raspe.ipea()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.capes()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.cfm()` | sem args | `pesquisa: str \| list[str] = ''`, `uf: str = ''`, `revogada: str = ''`, `numero: str = ''`, `ano: int = None`, `paginas: range = None` |
@@ -109,7 +111,7 @@ Qualquer um desses erros interrompe a coleta e sobe para quem chamou `.raspar()`
 
 ## Seleção por nome (`scraper_manager`)
 
-Além das factories, `raspe.scraper_manager.scraper(nome, **kwargs)` devolve o scraper pelo nome, sem diferenciar maiúsculas. Hoje cobre só `PRESIDENCIA`, `IPEA`, `SENADO`, `CAMARA` e `CAPES`; outro nome levanta `ValueError`. Os `kwargs` vão para o construtor, não para `.raspar()`. O módulo não é importado por `import raspe`, então importe-o explicitamente:
+Além das factories, `raspe.scraper_manager.scraper(nome, **kwargs)` devolve o scraper pelo nome, sem diferenciar maiúsculas. Cobre todas as factories, pelo mesmo nome (`"capes"`, `"camara_proposicoes"`); outro nome levanta `ValueError`. Os `kwargs` vão para o construtor, não para `.raspar()`. O módulo não é importado por `import raspe`, então importe-o explicitamente:
 
 ```python
 from raspe.scraper_manager import scraper
