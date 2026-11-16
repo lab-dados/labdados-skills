@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.17] - 2026-11-16
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.11): a `SKILL.md`, a `references/raspe-architecture.md` e a `references/playwright-mcp-recon.md` davam a paginacao da Folha como `rg=0, 25, 50` (multiplier 25, increment -25). Na `main` do raspe, a Folha pagina por `sr=1, 26, 51` (multiplier 25, increment -24), e o contrato da Folha confere `sr=1` e `sr=26` no matcher. As tres passam a dizer `sr`, a tabela de configuracoes separa o offset que comeca em 0 (`posicao=0, 10, 20`, Presidencia) do que comeca em 1 (`sr=1, 26, 51`, Folha), e a skill da a regra geral: o increment e o valor do parametro na pagina 1 menos o multiplier. O mapeamento da Etapa 3 pede esse valor no lugar de "1-based ou 0-based?". Da mesma conferencia: o `tests/test_parse_page_erros.py` do raspe, que confere que o erro de leitura do `_parse_page` chega ao `ScraperError`, so cobre as classes da lista `RASPADORES`, e a skill nao mandava por a fonte nova nela. A Etapa 6 da `SKILL.md`, a `references/test-patterns.md` e a `checklist.md` passam a mandar, para fonte HTTP e Playwright, e o comando de rodar a fonte isolada inclui esse teste. A secao "Encoding" da `SKILL.md` mandava, como alternativa, abrir a pagina com `encoding='latin-1'` no `_parse_page`, mas a base grava toda pagina em UTF-8: em latin-1 os acentos quebram e esse teste reprova. Ela tambem sugeria `r0.encoding` no `_find_n_pags`, que so alcanca a pagina 1. Agora diz que o `_parse_page` le em UTF-8 e que o charset se corrige num `_set_r` sobrescrito, por onde passam todas as paginas (detalhe na `raspe-architecture.md`). O template JSON abre o arquivo com `encoding='utf-8'`, como o `ScraperNYT`.
+
 ## [1.18.16] - 2026-11-16
 
 Corrigido:

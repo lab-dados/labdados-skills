@@ -142,8 +142,9 @@ Veja `references/playwright-mcp-recon.md` para o protocolo detalhado.
 
 5. **Análise de paginação**: clique para ir à página 2 e capture a nova
    requisição. Compare com a página 1 — identifique:
-   - Nome do parâmetro de página: `page`, `pagina`, `offset`, `start`, `rg`, etc.
-   - Tipo: número de página (1, 2, 3) ou offset (0, 10, 20).
+   - Nome do parâmetro de página: `page`, `pagina`, `offset`, `start`, `sr`, etc.
+   - Tipo: número de página ou offset, e o valor do parâmetro na página 1
+     (ex.: `pagina=1`, `page=0`, `sr=1`).
    - Localização: query string ou body.
 
    **Atenção — validar via `requests` antes de escrever o scraper.** A URL
@@ -214,8 +215,9 @@ PAGINAÇÃO:
   - tipo: {numero_pagina | offset}
   - query_page_multiplier: {1 se for número de página direto;
                              N se for offset com step N (ex: 25 para Folha)}
-  - query_page_increment: {0 se 1-based; -1 se 0-based; etc.}
-  - 1-based ou 0-based no site?
+  - query_page_increment: {valor do parâmetro na página 1 menos o
+                           multiplier (tabela em raspe-architecture.md)}
+  - valor do parâmetro na página 1 e na página 2: {…}
   - itens por página: N
   - como obter total: {regex em HTML | campo no JSON | header}
 
@@ -312,9 +314,9 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
         self._type: Literal['HTML'] = 'HTML'
         self._query_page_name = '{nome_param_pagina}'
 
-        # Se o site usa offset com step N (ex: Folha com rg=0,25,50):
+        # Se o site usa offset com step N (ex: Folha com sr=1,26,51):
         # self.query_page_multiplier = 25
-        # self.query_page_increment = -25  # para 1 → 0
+        # self.query_page_increment = -24  # página 1 → sr=1
 
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (...)",
@@ -414,7 +416,7 @@ Diferenças em relação a 4.A:
 - `self._type: Literal['JSON'] = 'JSON'`.
 - `_find_n_pags`: `r0.json()['response']['meta']['hits']` (ou caminho
   equivalente da API), passado a `self._paginas_para`.
-- `_parse_page` lê JSON do disco (`json.load(open(path))`) e itera sobre a
+- `_parse_page` lê JSON do disco (`json.load(open(path, encoding='utf-8'))`) e itera sobre a
   lista de resultados.
 - Se houver API key: valide no `__init__` com `APIKeyError` (importar de
   `raspe.exceptions`) — replique o padrão do `ScraperNYT`.
@@ -561,7 +563,9 @@ contrato, casos mínimos e regras do `CLAUDE.md` do raspe. Modelos:
 
 Com os samples gravados, registre a fonte em `ESPERADOS` de
 `tests/schemas/test_schema_coverage.py` (ver `references/test-patterns.md`,
-seção "Registro do schema"). Sem isso, a suíte reprova.
+seção "Registro do schema"). Sem isso, a suíte reprova. Ponha também a
+classe em `RASPADORES` de `tests/test_parse_page_erros.py` (seção "Erro de
+leitura da página").
 
 ### Etapa 7 — Validação e documentação
 
@@ -575,7 +579,7 @@ seção "Registro do schema"). Sem isso, a suíte reprova.
    completa (`tests/schemas/test_documentacao.py` o confere):
    ```bash
    cd <RASPE_REPO>
-   pytest tests/{fonte}/ tests/schemas/ -v --no-cov
+   pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov
    python -m raspe.schemas.documentacao
    pytest
    ```
@@ -629,12 +633,12 @@ Nome antigo de fonte já publicada vai em `aliases_deprecados`.
 ### Encoding
 
 Muitos sites governamentais brasileiros respondem em latin-1 / iso-8859-1.
-Se o `_parse_page` retornar acentos quebrados, force:
-```python
-r0.encoding = r0.apparent_encoding
-```
-no `_find_n_pags`, ou abra o arquivo de sample com `encoding='latin-1'`
-no `_parse_page`.
+A base grava toda página em UTF-8, qualquer que seja o encoding do site,
+então o `_parse_page` lê sempre com `encoding='utf-8'` (em `latin-1`, os
+acentos quebram e o `tests/test_parse_page_erros.py` reprova). Se o
+arquivo gravado já sai com acento quebrado (só HTTP), corrija o
+`r.encoding` num `_set_r` sobrescrito (`references/raspe-architecture.md`,
+`_set_r`).
 
 ## Ética e operação
 

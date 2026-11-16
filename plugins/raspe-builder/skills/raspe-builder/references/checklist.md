@@ -90,6 +90,8 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] (*) Fonte registrada em `ESPERADOS` de
   `tests/schemas/test_schema_coverage.py` e `docs/colunas.md` regerado
   (`python -m raspe.schemas.documentacao`)
+- [ ] (*) Classe na lista `RASPADORES` de `tests/test_parse_page_erros.py`
+  (HTTP e Playwright), como em `test-patterns.md`
 - [ ] (HTTP) `mocker.patch("time.sleep")` em todos os testes
 - [ ] (Se aplicável) Fluxo multi-etapa com
   `registries.OrderedRegistry`; captcha, token dinâmico ou import lazy
@@ -98,7 +100,8 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
   `tests/<fonte>/test_config.py` testa configuração (`url_base`,
   `pagination_strategy`, `_max_pages`) e `_parse_page` sobre
   `samples/parse/typical.html` e `no_results.html`
-- [ ] (*) `pytest tests/<fonte>/ -v --no-cov` passa 100%, sem warning
+- [ ] (*) `pytest tests/<fonte>/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov`
+  passa 100%, sem warning
   (`filterwarnings = ["error"]`)
 - [ ] (*) `pytest` na suíte completa passa, incluindo o gate de
   cobertura (`fail_under = 80`)
