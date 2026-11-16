@@ -105,7 +105,7 @@ Nas fontes HTTP, toda requisição, da página 1 (que também dá a contagem de 
 - **`ReadTimeout`** (o servidor recebeu o pedido e não respondeu dentro de `timeout`): sobe na hora, sem nova tentativa.
 - **Outro 4xx**: sem nova tentativa; sobe como `requests.HTTPError` (no NYT, na página 1, como `APIKeyError` ou `APIError`).
 
-Qualquer um desses erros interrompe a coleta e sobe para quem chamou `.raspar()`: nenhuma página é pulada.
+Qualquer um desses erros interrompe a coleta e sobe para quem chamou `.raspar()`: nenhuma página é pulada. Numa busca com lista, interrompe só a coleta daquele valor, que fica de fora com `UserWarning` (veja "Tratamento de erros" na `SKILL.md`).
 
 ## Seleção por nome (`scraper_manager`)
 

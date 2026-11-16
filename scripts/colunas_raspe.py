@@ -41,12 +41,18 @@ Tabelas = dict[str, list[str]]
 
 _FONTE = re.compile(r"`raspe\.(\w+)\(\)`")
 _NOME = re.compile(r"`(\w+)`")
+_NOME_OU_FONTE = re.compile(r"`(?:raspe\.)?(\w+)(?:\(\))?`")
 _BLOCO_GERADO = re.compile(r"<!-- colunas-raspe:(\w+):inicio.*?<!-- colunas-raspe:\1:fim -->", re.DOTALL)
 _TITULO_TEXT_COLUMN = "## Nomes de coluna em dataframeit"
 
 
 def _e_linha(linha: str) -> bool:
     return linha.startswith("|")
+
+
+def _primeira_tabela(texto: str) -> list[str]:
+    """Linhas da primeira tabela Markdown de ``texto`` (lista vazia se nao houver)."""
+    return list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), texto.splitlines())))
 
 
 def ler_tabelas(documento: str) -> Tabelas:
@@ -59,7 +65,7 @@ def ler_tabelas(documento: str) -> Tabelas:
     tabelas: Tabelas = {}
     for secao in re.split(r"^## ", documento, flags=re.MULTILINE)[1:]:
         titulo, _, corpo = secao.partition("\n")
-        tabela = list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), corpo.splitlines())))
+        tabela = _primeira_tabela(corpo)
         if tabela:
             tabelas.update(dict.fromkeys(_FONTE.findall(titulo), tabela))
         elif "sem schema" in titulo:
@@ -119,13 +125,16 @@ def conferir_text_column(tabelas: Tabelas, caminho: Path) -> list[str]:
     """Erros da tabela de ``text_column`` da ``fontes.md``: fonte faltando ou sobrando, coluna inexistente."""
     nome = caminho.relative_to(RAIZ)
     _, achou, secao = caminho.read_text(encoding="utf-8").partition(_TITULO_TEXT_COLUMN)
-    tabela = list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), secao.split("\n## ")[0].splitlines())))
+    tabela = _primeira_tabela(secao.split("\n## ")[0])
     if not achou or not tabela:
         return [f"{nome}: falta a tabela de text_column (secao {_TITULO_TEXT_COLUMN!r})"]
     erros, vistas = [], []
     for linha in tabela[2:]:
-        _, fonte, recomendada, *_ = (celula.strip() for celula in linha.split("|"))
-        fonte = fonte.strip("`")
+        celulas = [celula.strip() for celula in linha.split("|")]
+        if len(celulas) < 4:
+            erros.append(f"{nome}: linha mal formada na tabela de text_column: {linha!r}")
+            continue
+        fonte, recomendada = celulas[1].strip("`"), celulas[2]
         vistas.append(fonte)
         if fonte not in tabelas:
             erros.append(f"{nome}: text_column cita a fonte {fonte!r}, que nao esta no docs/colunas.md")
@@ -143,6 +152,7 @@ def conferir_text_column(tabelas: Tabelas, caminho: Path) -> list[str]:
 def conferir_sem_schema(tabelas: Tabelas, arquivos: list[Path]) -> list[str]:
     """Erros das frases que dizem "sem schema" e nao nomeiam exatamente as fontes sem schema de saida.
 
+    A fonte conta escrita como `` `camara` `` ou `` `raspe.camara()` ``.
     Os blocos gerados ficam de fora. A frase termina em ponto ou ponto e virgula seguido
     de espaco, ou no fim da linha, para nao cortar ``references/fontes.md`` ao meio.
     """
@@ -153,8 +163,9 @@ def conferir_sem_schema(tabelas: Tabelas, arquivos: list[Path]) -> list[str]:
         for frase in re.split(r"[.;]\s|\n", texto):
             if "sem schema" not in frase.lower():
                 continue
-            citadas = sorted({nome for nome in _NOME.findall(frase) if nome in tabelas})
-            if citadas != sem_schema:
+            citadas = sorted({nome for nome in _NOME_OU_FONTE.findall(frase) if nome in tabelas})
+            # Sem fonte sem schema no documento, a frase inteira ficou velha, cite ela fontes ou nao.
+            if not sem_schema or citadas != sem_schema:
                 erros.append(
                     f"{caminho.relative_to(RAIZ)}: a frase {frase.strip()[:80]!r}... diz \"sem schema\" e cita "
                     f"{citadas or 'nenhuma fonte'}, mas as fontes sem schema de saida sao {sem_schema or 'nenhuma'}"

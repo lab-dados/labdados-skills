@@ -186,3 +186,26 @@ def test_frase_sem_schema_termina_no_ponto_seguido_de_espaco(tmp_path, monkeypat
         encoding="utf-8",
     )
     assert colunas_raspe.main([documento]) == 0
+
+
+def test_frase_sem_schema_aceita_a_factory(tmp_path, monkeypatch):
+    documento = _preparar(tmp_path, monkeypatch)
+    (tmp_path / "SKILL.md").write_text("`raspe.camara()` e `raspe.senado()` seguem sem schema.\n", encoding="utf-8")
+    assert colunas_raspe.main([documento]) == 0
+
+
+def test_frase_sem_schema_quando_todas_as_fontes_tem_schema(tmp_path, monkeypatch, capsys):
+    documento = _preparar(tmp_path, monkeypatch)
+    sem_tabela = colunas_raspe.ler_tabelas(DOCUMENTO)["cfm"]
+    monkeypatch.setattr(colunas_raspe, "ler_tabelas", lambda _: {"cfm": sem_tabela, "camara": sem_tabela, "senado": sem_tabela})
+    (tmp_path / "SKILL.md").write_text("Fontes ainda sem schema devolvem outro formato.\n", encoding="utf-8")
+    colunas_raspe.main([documento])
+    assert "SKILL.md: a frase" in capsys.readouterr().err
+
+
+def test_linha_mal_formada_no_text_column(tmp_path, monkeypatch, capsys):
+    documento = _preparar(tmp_path, monkeypatch)
+    fontes = tmp_path / "fontes.md"
+    fontes.write_text(fontes.read_text(encoding="utf-8").replace("| `senado` | `descricao` |", "| `senado`"), encoding="utf-8")
+    assert colunas_raspe.main([documento]) == 1
+    assert "linha mal formada" in capsys.readouterr().err

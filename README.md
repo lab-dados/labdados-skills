@@ -116,7 +116,7 @@ abaixo valem trocando `pip install` por `uv add` (num projeto com `pyproject.tom
 
 ### raspe
 
-- Python >= 3.10
+- Python >= 3.11
 - `pip install git+https://github.com/bdcdo/raspe.git`
 - Para ANS/ANVISA/SaudeLegis (Playwright): `pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"` + `python -m playwright install chromium`
 - Para NYT: API key gratuita em <https://developer.nytimes.com/get-started> (variavel `NYT_API_KEY`)
