@@ -13,6 +13,10 @@ as duas. A ``references/fontes.md`` recebe a matriz de colunas, uma linha por fo
 na ordem do documento. As fontes da secao sem tabela (raspadores ainda sem schema)
 entram na matriz apontando para a reference delas, cuja tabela segue escrita a mao.
 
+A tabela de ``text_column`` da ``fontes.md``, escrita a mao, so e conferida: ela tem
+uma linha por fonte, e cada coluna que cita existe na tabela gerada da fonte (fonte
+sem schema nao e conferida).
+
 O workflow ``.github/workflows/colunas-raspe.yml`` roda o ``--check`` contra a
 ``main`` do raspe em todo PR que toca a skill e uma vez por semana.
 """
@@ -32,10 +36,17 @@ REFERENCES = RAIZ / "plugins" / "raspe" / "skills" / "raspe" / "references"
 Tabelas = dict[str, list[str]]
 
 _FONTE = re.compile(r"`raspe\.(\w+)\(\)`")
+_NOME = re.compile(r"`(\w+)`")
+_TITULO_TEXT_COLUMN = "## Nomes de coluna em dataframeit"
 
 
 def _e_linha(linha: str) -> bool:
     return linha.startswith("|")
+
+
+def _primeira_tabela(texto: str) -> list[str]:
+    """Linhas da primeira tabela Markdown de ``texto`` (lista vazia se nao houver)."""
+    return list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), texto.splitlines())))
 
 
 def ler_tabelas(documento: str) -> Tabelas:
@@ -48,7 +59,7 @@ def ler_tabelas(documento: str) -> Tabelas:
     tabelas: Tabelas = {}
     for secao in re.split(r"^## ", documento, flags=re.MULTILINE)[1:]:
         titulo, _, corpo = secao.partition("\n")
-        tabela = list(takewhile(_e_linha, dropwhile(lambda linha: not _e_linha(linha), corpo.splitlines())))
+        tabela = _primeira_tabela(corpo)
         if tabela:
             tabelas.update(dict.fromkeys(_FONTE.findall(titulo), tabela))
         elif "sem schema" in titulo:
@@ -104,13 +115,42 @@ def blocos(tabelas: Tabelas) -> dict[Path, tuple[str, list[str]]]:
     return saida
 
 
+def conferir_text_column(tabelas: Tabelas, caminho: Path) -> list[str]:
+    """Erros da tabela de ``text_column`` da ``fontes.md``: fonte faltando ou sobrando, coluna inexistente."""
+    nome = caminho.relative_to(RAIZ)
+    _, achou, secao = caminho.read_text(encoding="utf-8").partition(_TITULO_TEXT_COLUMN)
+    tabela = _primeira_tabela(secao.split("\n## ")[0])
+    if not achou or not tabela:
+        return [f"{nome}: falta a tabela de text_column (secao {_TITULO_TEXT_COLUMN!r})"]
+    erros, vistas = [], set()
+    for linha in tabela[2:]:
+        celulas = [celula.strip() for celula in linha.split("|")]
+        if len(celulas) < 4:
+            erros.append(f"{nome}: linha mal formada na tabela de text_column: {linha!r}")
+            continue
+        fonte, recomendada = celulas[1].strip("`"), celulas[2]
+        vistas.add(fonte)
+        if fonte not in tabelas:
+            erros.append(f"{nome}: text_column cita a fonte {fonte!r}, que nao esta no docs/colunas.md")
+        elif tabelas[fonte]:
+            existentes = colunas(tabelas[fonte])
+            erros += [
+                f"{nome}: text_column de {fonte!r} cita `{coluna}`, que nao e coluna da fonte"
+                for coluna in _NOME.findall(recomendada)
+                if f"`{coluna}`" not in existentes
+            ]
+    erros += [f"{nome}: falta a fonte {fonte!r} na tabela de text_column" for fonte in tabelas if fonte not in vistas]
+    return erros
+
+
 def main(argumentos: list[str] | None = None) -> int:
     """Reescreve os blocos a partir do ``docs/colunas.md``, ou so confere com ``--check``."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("colunas", type=Path, help="docs/colunas.md de um checkout do raspe")
     parser.add_argument("--check", action="store_true", help="nao grava; sai com 1 se algo divergir")
     opcoes = parser.parse_args(argumentos)
-    gerados = blocos(ler_tabelas(opcoes.colunas.read_text(encoding="utf-8")))
+    tabelas = ler_tabelas(opcoes.colunas.read_text(encoding="utf-8"))
+    gerados = blocos(tabelas)
 
     erros = []
     # Tudo e conferido antes de gravar: marcador quebrado num arquivo nao deixa os outros meio atualizados.
@@ -135,7 +175,12 @@ def main(argumentos: list[str] | None = None) -> int:
             erros.append(f"{caminho.relative_to(RAIZ)}: tem bloco de colunas, mas a fonte nao tem tabela no docs/colunas.md")
 
     if erros:
-        sys.stderr.write("\n".join(erros) + "\nRode `python scripts/colunas_raspe.py <raspe>/docs/colunas.md`.\n")
+        erros.append("Rode `python scripts/colunas_raspe.py <raspe>/docs/colunas.md`.")
+    # Texto escrito a mao: o script so aponta, e a correcao e manual.
+    erros += conferir_text_column(tabelas, REFERENCES / "fontes.md")
+
+    if erros:
+        sys.stderr.write("\n".join(erros) + "\n")
         return 1
     return 0
 

@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.15] - 2026-11-16
+
+Corrigido:
+
+- `raspe` (plugin 1.1.5): a secao "Tratamento de erros" da `SKILL.md` e a "Retry automatico" da `references/api.md` descreviam o raspe antigo, em que 429 e 5xx na requisicao inicial viravam DataFrame vazio e paginas seguintes com erro eram puladas. Na `main` do raspe, toda pagina passa pelas tentativas, e `RateLimitError`, `APIError` e os erros do `requests` sobem para quem chamou `raspar()`, interrompendo a coleta. Pagina que nao rende linhas sai no `UserWarning` com o erro dela, e nenhuma pagina lida vira `ScraperError` com a causa em `__cause__`. Na busca com lista, o valor que falha fica de fora com `UserWarning`. O teto da fonte tambem avisa com `UserWarning`. A skill agora ensina esse comportamento e da a dica de dividir coletas longas em blocos de `paginas`. Correcoes da mesma conferencia: a Camara tem teto de 10.000 resultados (500 paginas de 20, e nao 10 por pagina sem teto), a CAPES le o tamanho da pagina dos itens da pagina 1 (30, e nao o `data-per-page` de 20), o Python minimo e 3.11 e, no passo 7 do workflow, `paginas` levanta `ValidationError` nas fontes Playwright em vez de "nao ter efeito". Os fatos que se repetiam nas references (fontes Playwright recusam `paginas` e lista, nomes antigos do parametro de busca) ficam so na `api.md`; as outras apontam para ela. A prosa deixa de nomear `camara` e `senado` como fontes sem schema, fato que nao era conferido, e aponta para a matriz de colunas da `fontes.md`, gerada do raspe. A lista de excecoes, com quando cada uma sobe, fica so na `api.md`; a `SKILL.md` diz o que fazer com cada uma. O `scripts/colunas_raspe.py` passa a conferir, contra o `docs/colunas.md` do raspe, as colunas citadas na tabela de `text_column` da `fontes.md`.
+
 ## [1.18.14] - 2026-11-15
 
 Corrigido:

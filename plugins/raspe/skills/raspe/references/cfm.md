@@ -17,7 +17,7 @@ raspe.cfm().raspar(
 ) -> pd.DataFrame
 ```
 
-O nome antigo do parâmetro de busca, `texto`, ainda é aceito com `DeprecationWarning`. `pesquisa` vazia busca só pelos demais filtros.
+`pesquisa` vazia busca só pelos demais filtros.
 
 ## Colunas retornadas
 

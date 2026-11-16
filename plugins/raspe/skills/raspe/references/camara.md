@@ -33,7 +33,7 @@ raspe.camara().raspar(
 ## Gotchas
 
 - **Pré-estabelecimento de sessão**: o scraper acessa a página inicial (`camara.leg.br/`) antes de ir para a busca para não ser tratado como bot. Isso já é automático — apenas não instancie e descarte `raspe.camara()` repetidamente em loop.
-- **10 resultados por página**: paginação via `pagina` 1-based.
+- **20 resultados por página**: paginação via `pagina` 1-based. O portal só serve as 500 primeiras páginas (10.000 resultados): uma busca maior coleta só essas e emite `UserWarning`. Divida por `ano` ou `tipo_materia`.
 
 ## Exemplo
 

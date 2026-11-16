@@ -70,13 +70,28 @@ def test_matriz():
     ]
 
 
+TEXT_COLUMN = """## Nomes de coluna em dataframeit / análise textual
+
+| Fonte | `text_column` recomendada |
+|---|---|
+| `ans` | `url` |
+| `anvisa` | `url` |
+| `cfm` | `tipo` (fallback: `termo_busca`) |
+| `camara` | `ementa` |
+| `senado` | `descricao` |
+
+## Quando combinar fontes
+"""
+
+
 def _preparar(tmp_path, monkeypatch, fontes=("fontes", "ans", "anvisa", "cfm")):
     """Skill falsa com blocos vazios em ``fontes`` e o documento em ``colunas.md``."""
     monkeypatch.setattr(colunas_raspe, "RAIZ", tmp_path)
     monkeypatch.setattr(colunas_raspe, "REFERENCES", tmp_path)
     for fonte in fontes:
         inicio, fim = colunas_raspe.marcadores("matriz" if fonte == "fontes" else "tabela")
-        (tmp_path / f"{fonte}.md").write_text(f"# {fonte}\n\n{inicio}\n{fim}\n\nfim\n", encoding="utf-8")
+        extra = TEXT_COLUMN if fonte == "fontes" else ""
+        (tmp_path / f"{fonte}.md").write_text(f"# {fonte}\n\n{inicio}\n{fim}\n\n{extra}fim\n", encoding="utf-8")
     documento = tmp_path / "colunas.md"
     documento.write_text(DOCUMENTO, encoding="utf-8")
     return str(documento)
@@ -116,3 +131,31 @@ def test_marcadores_ausentes_nao_grava_nada(tmp_path, monkeypatch):
         colunas_raspe.main([documento])
     # fontes.md vem antes de cfm.md e ficaria gravado se a escrita fosse arquivo a arquivo.
     assert (tmp_path / "fontes.md").read_text(encoding="utf-8") == antes
+
+
+
+def _trocar(caminho, de, para):
+    caminho.write_text(caminho.read_text(encoding="utf-8").replace(de, para), encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("de", "para", "erro"),
+    [
+        ("`tipo` (fallback: `termo_busca`)", "`tipo` (fallback: `ementa`)", "text_column de 'cfm' cita `ementa`"),
+        ("| `anvisa` | `url` |\n", "", "falta a fonte 'anvisa' na tabela de text_column"),
+        ("| `senado` |", "| `folha` |", "text_column cita a fonte 'folha'"),
+        ("## Nomes de coluna em dataframeit", "## Outra secao", "falta a tabela de text_column"),
+        ("| `senado` | `descricao` |", "| `senado`", "linha mal formada"),
+    ],
+)
+def test_text_column(tmp_path, monkeypatch, capsys, de, para, erro):
+    documento = _preparar(tmp_path, monkeypatch)
+    _trocar(tmp_path / "fontes.md", de, para)
+    assert colunas_raspe.main([documento]) == 1
+    assert erro in capsys.readouterr().err
+
+
+def test_text_column_de_fonte_sem_schema_nao_e_conferida(tmp_path, monkeypatch):
+    documento = _preparar(tmp_path, monkeypatch)
+    _trocar(tmp_path / "fontes.md", "`ementa`", "`qualquer`")
+    assert colunas_raspe.main([documento]) == 0

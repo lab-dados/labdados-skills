@@ -68,7 +68,7 @@ Você não interage com essas strategies diretamente — elas aparecem em logs d
 | `ans` | 100 | Teto imposto pela lógica de paginação do Datalegis. |
 | `anvisa` | 100 | Idem. |
 
-Se uma busca tiver mais páginas que o limite, a coleta para no limite e emite `UserWarning`. Essas fontes não aceitam `paginas` (levanta `ValidationError`): o volume é todas as páginas informadas pelo site, até `_max_pages`. Para contornar, refine a `pesquisa` (p. ex. adicione ano: `pesquisa="dispositivo médico 2024"`).
+Se uma busca tiver mais páginas que o limite, a coleta para no limite e emite `UserWarning`; o controle de volume dessas fontes está em `references/api.md`. Para contornar o limite, refine a `pesquisa` (p. ex. adicione ano: `pesquisa="dispositivo médico 2024"`).
 
 ## Tempo de execução e custo
 
@@ -77,7 +77,7 @@ Playwright é **ordens de magnitude mais lento** que `requests`. Ordem de grande
 - HTTP (Folha/Presidência): 2-5s por página.
 - Playwright (ANS/ANVISA): 15-30s por página (Cloudflare + render + SELECT + wait).
 
-Para `ans`/`anvisa` com 100 páginas: planeje ~30-60 minutos de coleta. Avise o usuário. Para iterações de desenvolvimento, **sempre comece com poucas páginas**, baixando o atributo interno `_max_pages` da instância (`s = raspe.ans(); s._max_pages = 2`), já que essas fontes não aceitam `paginas`.
+Para `ans`/`anvisa` com 100 páginas: planeje ~30-60 minutos de coleta. Avise o usuário. Para iterações de desenvolvimento, **sempre comece com poucas páginas**, baixando o atributo interno `_max_pages` da instância (`s = raspe.ans(); s._max_pages = 2`).
 
 ## Debugging
 

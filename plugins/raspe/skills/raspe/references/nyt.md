@@ -18,8 +18,6 @@ raspe.nyt(api_key: str | None = None).raspar(
 ) -> pd.DataFrame
 ```
 
-O nome antigo do parâmetro de busca, `texto`, ainda é aceito com `DeprecationWarning`.
-
 ## API key
 
 Obrigatória. Obtenção gratuita:
