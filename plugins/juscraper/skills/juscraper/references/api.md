@@ -21,13 +21,14 @@ import juscraper as jus
 scraper = jus.scraper(sigla, **kwargs)
 ```
 
-**Siglas validas (30 tribunais: 25 estaduais + 4 TRFs + STF; e 5 agregadores):**
+**Siglas validas (32 tribunais: 25 estaduais + 4 TRFs + STF, STM e TSE; e 5 agregadores):**
 
 | Categoria | Siglas |
 |---|---|
 | Estaduais (25) | `tjac`, `tjal`, `tjam`, `tjap`, `tjba`, `tjce`, `tjdft`, `tjes`, `tjms`, `tjmt`, `tjpa`, `tjpb`, `tjpe`, `tjpi`, `tjpr`, `tjrn`, `tjro`, `tjrr`, `tjrs`, `tjsc`, `tjsp`, `tjto`, `tjgo`, `tjmg` (requer `txtcaptcha`, via `pip install 'juscraper[tjmg]'`), `tjrj` |
 | Federais `[v0.4.0+]` | `trf1`, `trf3`, `trf5`, `trf6` (TRF6 requer `txtcaptcha`) |
 | Superior `[v0.4.0+]` | `stf` (busca de jurisprudencia; requer extra `stf` ou `waf_token`) |
+| Superiores `[unreleased]` | `stm` (`cjsg` de acordaos), `tse` (so inteiro teor pelo codigo da decisao e catalogos; sem busca) |
 | Agregadores estaveis | `datajud`, `jusbr`, `comunica_cnj` (`[v0.3.0+]`) |
 | Agregador `[v0.4.0+]` | `pdpj` |
 | Agregador `[v0.5.0+]` | `falcao` (jurisprudencia trabalhista do TST e dos TRTs) |
@@ -103,6 +104,15 @@ stf = jus.scraper('stf',
 ```
 
 Instanciar nao faz requisicao nem exige Playwright. Sem `waf_token` e sem o extra `stf` instalado, a primeira chamada de `listar_decisoes`/`contar_decisoes` levanta `ImportError`. Metodos e gotchas em `references/tribunais.md` §STF.
+
+### STM e TSE `[unreleased]`
+
+```python
+stm = jus.scraper('stm', sleep_time=1.0, download_path=None, verbose=0)
+tse = jus.scraper('tse', sleep_time=10, download_path=None, verbose=0)   # 10 s: o servico recusa pedidos proximos
+```
+
+Metodos e gotchas em `references/tribunais.md` §STM e §TSE.
 
 ### Agregadores
 
@@ -204,7 +214,7 @@ df = tjsp.cposg(
 
 ### cjsg — Busca de jurisprudencia (2o grau)
 
-**Disponivel em:** Todos os 25 tribunais estaduais e o TRF3 `[v0.5.0+]` (com parametros diferentes por tribunal). Consulte `references/tribunais.md` para os parametros especificos de cada um. Abaixo apenas os exemplos principais — TJSP, TJRS, TJPR, TJDFT.
+**Disponivel em:** Todos os 25 tribunais estaduais, o TRF3 `[v0.5.0+]` e o STM `[unreleased]` (com parametros diferentes por tribunal). Consulte `references/tribunais.md` para os parametros especificos de cada um. Abaixo apenas os exemplos principais — TJSP, TJRS, TJPR, TJDFT.
 
 #### TJSP
 

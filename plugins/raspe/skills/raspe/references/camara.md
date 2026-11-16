@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Busca de legislação federal no portal da Câmara dos Deputados — `https://www.camara.leg.br/legislacao/busca`. Retorna proposições, projetos de lei e atos com âmbito "Legislação Federal" indexados pela Câmara.
+Busca de legislação federal no portal da Câmara dos Deputados — `https://www.camara.leg.br/legislacao/busca`. Retorna normas já publicadas, com âmbito "Legislação Federal", indexadas pela Câmara. Projetos de lei e demais proposições saem de `raspe.camara_proposicoes()`.
 
 ## Assinatura
 
@@ -19,9 +19,9 @@ raspe.camara().raspar(
 
 | Coluna | Conteúdo |
 |---|---|
-| `link` | URL para a proposição/ato. |
+| `link` | URL para a norma. |
 | `titulo` | Título exibido no resultado de busca. |
-| `descricao` | Descrição curta da proposição. |
+| `descricao` | Descrição curta da norma. |
 | `ementa` | Situação ou ementa resumida. |
 | `termo_busca` | Adicionada automaticamente. |
 

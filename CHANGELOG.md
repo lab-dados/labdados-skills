@@ -4,6 +4,17 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.22] - 2026-11-16
+
+Corrigido:
+
+- `juscraper` (plugin 1.5.7): trechos escritos a mao que ainda contavam 30 tribunais, sem o STM e o TSE da cobertura da 1.5.6; conferido no `_SCRAPERS` da `main` do juscraper (`38ccf44`).
+  - `SKILL.md`: o cabecalho da tabela "scrapers diretos vs agregadores" cita STM e TSE, e a linha de jurisprudencia diz que o STM tem `cjsg` e que o TSE nao busca; as duas linhas de `cjsg` (roteamento e vocabulario) citam o STM.
+  - `references/api.md`: a lista de siglas da factory vai de 30 a 32 tribunais, com `stm` e `tse`; construtores dos dois; o `cjsg` tambem esta disponivel no STM.
+  - `references/agregadores.md`: o alias `STM` do Datajud aponta para o scraper proprio, como o do STF.
+  - `references/versao.md`: o `grep` de siglas da verificacao inclui `stm`, `tse` e `falcao`, que a factory tem e ele nao procurava.
+- `raspe` (plugin 1.1.8): em `references/exemplos.md`, o objetivo do Exemplo 1 dizia "leis e proposicoes" para `presidencia` + `camara` + `senado`, que leem a legislacao ja publicada; o texto diz isso e aponta as proposicoes para `raspe.camara_proposicoes()` e `raspe.senado_processos()`. O codigo do exemplo nao mudou; o classificador sugerido no fim extrai `tipo_norma` no lugar de `fase_processo`. `references/camara.md` e `references/senado.md` tambem diziam que essas fontes retornam proposicoes, no escopo e na descricao das colunas.
+
 ## [1.18.21] - 2026-11-16
 
 Corrigido:

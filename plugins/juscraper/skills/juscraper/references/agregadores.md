@@ -50,7 +50,7 @@ API centralizada baseada em Elasticsearch. Cobre 40+ tribunais.
 - **Superiores:** STF, STJ, TST, TSE. Para jurisprudencia do STF (ementas, texto de decisoes, facetas), use o scraper proprio `jus.scraper('stf')` `[v0.4.0+]`, documentado em `references/tribunais.md` §STF; o alias do Datajud so traz metadados de processos.
 - **Trabalho:** TRT1 a TRT24 — `[v0.3.0]` completou todos os 24 mappings
 - **Eleitoral:** TRE-AC a TRE-TO (27 tribunais) — `[v0.3.0]` completou todos os mappings
-- **Militar:** STM, TJMMG, TJMRS, TJMSP
+- **Militar:** STM, TJMMG, TJMRS, TJMSP. Para acordaos do STM, use o scraper proprio `jus.scraper('stm')` `[unreleased]` (`references/tribunais.md` §STM).
 
 **Deteccao automatica de tribunal**: quando `numero_processo` e fornecido sem `tribunal`, o Datajud extrai o tribunal dos digitos `J.TT` do proprio CNJ.
 
