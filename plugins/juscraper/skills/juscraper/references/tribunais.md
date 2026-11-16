@@ -1,18 +1,20 @@
 # Tribunais — Matriz de Capacidades e Parametros
 
-Esta reference cobre os **30 tribunais com scraper direto** (25 estaduais + 4 TRFs + STF). Para Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao, veja `references/agregadores.md`.
+Esta reference cobre os **32 tribunais com scraper direto** (25 estaduais + 4 TRFs + STF, STM e TSE). Para Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao, veja `references/agregadores.md`.
 
 ## Matriz de capacidades
 
-### Tribunais com scraper direto (30)
+### Tribunais com scraper direto (32)
 
-Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 sao `[unreleased]`: cobertura conferida no snapshot `30eb73c` da `main`, ainda fora da 0.5.0 do PyPI.
+Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar_sentenca`/`baixar_sentencas` (TJSP e TJMS), o `cjpg` do TJMS, o `cposg` do TRF3 e os scrapers do STM e do TSE sao `[unreleased]`: cobertura conferida no snapshot `2fcfaf2` da `main`, ainda fora da 0.5.0 do PyPI.
 
 <!-- cobertura-juscraper:tribunais:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
 
 | Tribunal | cjsg | cjpg | cpopg | cposg | Outros metodos |
 |---|:---:|:---:|:---:|:---:|---|
 | **STF** | - | - | - | - | `contar_decisoes`, `listar_decisoes` |
+| **TSE** | - | - | - | - | `baixar_inteiro_teor`, `baixar_inteiros_teores` |
+| **STM** | sim | - | - | - | - |
 | **TJAC** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
 | **TJAL** | sim | - | - | - | - |
 | **TJAM** | sim | - | - | - | - |
@@ -23,7 +25,7 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar
 | **TJES** | sim | sim | - | - | - |
 | **TJGO** | sim | - | - | - | - |
 | **TJMG** | sim | - | - | sim | - |
-| **TJMS** | sim | - | - | - | `baixar_acordao`, `baixar_acordaos` |
+| **TJMS** | sim | sim | - | - | `baixar_acordao`, `baixar_acordaos`, `baixar_sentenca`, `baixar_sentencas` |
 | **TJMT** | sim | - | - | - | - |
 | **TJPA** | sim | - | - | - | - |
 | **TJPB** | sim | - | - | - | - |
@@ -45,7 +47,7 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar
 
 <!-- cobertura-juscraper:tribunais:fim -->
 
-**Legenda:** `sim` = implementado | `-` = nao implementado ou so stub que levanta `NotImplementedError`. A matriz e gerada do codigo da `main` do juscraper; a versao em que cada recurso entrou esta na tabela seguinte. O STF nao tem `cjsg`: a busca de jurisprudencia e `listar_decisoes`, e a contagem, `contar_decisoes`. O `cjsg_ementa(uuid)` do TJTO baixa a ementa de um documento pelo `uuid` que o `cjsg`/`cjpg` devolvem.
+**Legenda:** `sim` = implementado | `-` = nao implementado ou so stub que levanta `NotImplementedError`. A matriz e gerada do codigo da `main` do juscraper; a versao em que cada recurso entrou esta na tabela seguinte. O STF nao tem `cjsg`: a busca de jurisprudencia e `listar_decisoes`, e a contagem, `contar_decisoes`. O TSE nao tem busca: o `cjsg` dele e stub (o portal exige captcha), e o scraper so baixa inteiro teor pelo codigo da decisao. O `cjsg_ementa(uuid)` do TJTO baixa a ementa de um documento pelo `uuid` que o `cjsg`/`cjpg` devolvem.
 
 #### Plataforma e requisitos
 
@@ -81,6 +83,8 @@ Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP), `baixar
 | **TRF5** | PJe ConsultaPublica | `[v0.4.0+]` |
 | **TRF6** | eproc/SJMG + captcha textual | `[v0.4.0+]`, requer `txtcaptcha` |
 | **STF** | API do portal + AWS WAF | `[v0.4.0+]`, requer extra `stf` ou `waf_token` |
+| **STM** | Consulta Judicial Unificada da JMU (HTML), atras de WAF que recusa por IP | `[unreleased]` |
+| **TSE** | Servicos REST do portal de jurisprudencia (inteiro teor e catalogos) | `[unreleased]` |
 
 Para Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao, ver `references/agregadores.md`.
 
@@ -175,7 +179,7 @@ scraper.cjsg(
 
 **Auto-chunk para janelas longas `[v0.3.0]`:** janelas `data_julgamento_*` que excedem 366 dias sao automaticamente divididas em chunks e concatenadas (com dedup) por `auto_chunk=True` (default). Falhas em janelas individuais viram `UserWarning` e o DataFrame retorna parcial. Para o comportamento antigo (`ValueError` em janelas longas), passar `auto_chunk=False`. Veja `references/tjsp.md` para detalhes.
 
-**Notas TJSP:** no lugar de `origem` o TJSP usa `baixar_sg`, e nao aceita `numero_recurso` nem `data_publicacao_*`; `comarca`, `tipo_decisao` e `count_only=True` (que estima o volume antes da coleta) valem para toda a familia eSAJ, e o `cjpg` do TJSP tambem aceita `count_only`. `cjsg` aceita `pesquisa=""` para buscar so por filtros. Ver `references/tjsp.md`.
+**Notas TJSP:** no lugar de `origem` o TJSP usa `baixar_sg`, e nao aceita `numero_recurso` nem `data_publicacao_*`; `comarca`, `tipo_decisao` e `count_only=True` (que estima o volume antes da coleta) valem para toda a familia eSAJ, e o `cjpg` do TJSP tambem aceita `count_only`. O `cjpg` do TJMS `[unreleased]` tem os filtros, as colunas, o auto-chunk e o `count_only` do `cjpg` do TJSP, sem o limite de 120 caracteres de `pesquisa`, alem de `listar_varas()` e `grau="1"` em `listar_classes()`/`listar_assuntos()`. `cjsg` aceita `pesquisa=""` para buscar so por filtros. Ver `references/tjsp.md`.
 
 **Guard de tamanho de `pesquisa` em TJSP `[v0.3.0]`:** mais de 120 caracteres levanta `QueryTooLongError` (subclasse de `ValueError`) antes do HTTP. Veja `references/tjsp.md`.
 
@@ -630,6 +634,52 @@ contagem = stf.contar_decisoes(pesquisa='pejotização', base='acordaos')
 - Se o WAF desafiar de novo logo apos a renovacao do cookie, o scraper levanta `RuntimeError`; espere alguns minutos antes de tentar outra vez.
 - `classe` recebe a **sigla** da classe processual (`'Rcl'`, `'ADI'`), nao codigo numerico da TPU.
 - Para metadados processuais do STF (sem texto), o Datajud continua servindo; para ementas e decisoes, use este scraper.
+
+### STM (busca de jurisprudencia) `[unreleased]`
+
+Acordaos do Superior Tribunal Militar, pela aba de jurisprudencia da Consulta Judicial Unificada da Justica Militar da Uniao (`jurisprudencia.stm.jus.br`). So `cjsg` (com `cjsg_download`/`cjsg_parse`); a aba de processos do portal e o download do inteiro teor nao estao implementados.
+
+```python
+stm = jus.scraper('stm')          # sleep_time=1.0 entre paginas
+df = stm.cjsg(
+    pesquisa,                     # aceita os operadores do portal: E (padrao), OU, NÃO, aspas, * e ?
+    paginas=None,                 # 100 documentos por pagina; None baixa todas
+    campo='ementa',               # 'ementa' | 'inteiro_teor' | 'numero' (numero do processo)
+    classe=None,                  # valor exato exibido pelo portal, em maiusculas: 'APELAÇÃO'
+    relator=None,                 # 'CARLOS VUYK DE AQUINO'
+    relator_acordao=None,
+    revisor=None,
+    assunto=None,                 # 'PECULATO'
+    data_julgamento_inicio=None, data_julgamento_fim=None,   # DD/MM/AAAA ou AAAA-MM-DD
+    data_publicacao_inicio=None, data_publicacao_fim=None,
+)
+```
+
+**Retorna:** uma linha por acordao, do julgamento mais recente para o mais antigo, com `processo`, `classe`, `relator`, `relator_acordao`, `revisor`, `assunto`, `data_autuacao`, `data_julgamento`, `data_publicacao`, `ementa`, `url_inteiro_teor` e `id_documento`. Busca sem resultados devolve o DataFrame vazio com as mesmas colunas.
+
+**Gotchas:**
+
+- **WAF por IP de origem:** em 16/11/2026 o portal recusou todos os pedidos de um IP de datacenter fora do Brasil e aceitou os de um IP residencial no Brasil. Na recusa, o scraper levanta `BotChallengeBlockedError` (nao devolve busca vazia). Em Colab ou servidor em nuvem, espere esse erro; rode da maquina do usuario.
+- **Filtro de data muda a busca:** com `data_julgamento_*` ou `data_publicacao_*`, a busca vai pela pesquisa avancada do portal, que procura `pesquisa` como **expressao exata** no `campo` (sem `E`, `OU`, `NÃO` nem curingas) e aceita `pesquisa=""` para trazer tudo do intervalo. Termo com mais de uma palavra ou com curinga, fora de aspas, emite `UserWarning`. So um lado do intervalo: o outro e preenchido (01/01/1990 ou hoje), com `UserWarning`.
+- `classe`, `relator`, `relator_acordao`, `revisor` e `assunto` casam com o valor exato que o portal exibe, em maiusculas e com acentos.
+
+### TSE (so inteiro teor e catalogos) `[unreleased]`
+
+O scraper `tse` **nao busca jurisprudencia**: o portal (`jurisprudencia.tse.jus.br`) exige um token de captcha validado no servidor, e `tse.cjsg(...)` levanta `NotImplementedError`. O que existe e o download do PDF do inteiro teor de uma decisao cujo codigo ja se tem, e os catalogos do formulario de pesquisa.
+
+```python
+tse = jus.scraper('tse')                       # sleep_time=10 entre pedidos de inteiro teor
+caminho = tse.baixar_inteiro_teor(3522031)     # <diretorio>/inteiro_teor/<codigo>.pdf; devolve o caminho
+df = tse.baixar_inteiros_teores([2972172, 3522031], diretorio=None)
+
+tse.listar_classes(tribunal='tse')             # tambem listar_relatores, listar_eleicoes e listar_normas
+```
+
+- **`codigo_decisao`** e o `codigoDecisao` do portal, o ultimo trecho do link de inteiro teor (`.../rest/download/pdf/<codigo>`). O mesmo servico atende os TREs: o codigo de uma decisao de TRE baixa igual.
+- **`baixar_inteiros_teores`** devolve `codigo_decisao`, `caminho_inteiro_teor` (`None` na falha) e `motivo_falha` (`None`, `nao_pdf`, `limite_de_requisicoes`, `entrada_invalida`, `erro_de_gravacao` ou um motivo de rede). A falha de uma decisao nao interrompe o lote; duas recusas seguidas por excesso de requisicoes, sim.
+- **Limite de requisicoes:** o servico recusa pedidos proximos (aceitou um a cada 10 s e recusou a 5 s, em 16/11/2026). O default `sleep_time=10` vale entre todas as instancias do scraper no mesmo processo; sao 10 s por decisao. A recusa levanta `LimiteDeRequisicoesError`, e resposta sem PDF (codigo que nao existe), `InteiroTeorIndisponivelError`, as duas de `juscraper.courts.tse.download`; nada e gravado.
+- **Catalogos:** `tribunal` aceita `'tse'` (default), um TRE (`'tre-sp'`) ou `'tres'` (os 27 juntos); valor desconhecido levanta `ValueError`.
+- O PDF vem como o tribunal o publica; a extracao de texto fica por conta de quem usa.
 
 ---
 

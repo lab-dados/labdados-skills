@@ -1,13 +1,13 @@
 ---
 name: juscraper
-description: "Usar quando pedirem dados de tribunal brasileiro, mesmo sem citar \"juscraper\": processo por número CNJ, jurisprudência, acórdão, DJe e comunicações processuais. Tribunais: TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ, TRF1, TRF3, TRF5, TRF6 e STF; agregadores Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao (TST e TRTs). Não confundir com juscraper-builder (escrever raspador novo)."
+description: "Usar quando pedirem dados de tribunal brasileiro, mesmo sem citar \"juscraper\": processo por número CNJ, jurisprudência, acórdão, DJe e comunicações processuais. Tribunais: TJSP, TJRS, TJPR, TJDFT, TJBA, TJCE, TJES, TJMT, TJPA, TJPB, TJPE, TJPI, TJRN, TJRO, TJRR, TJSC, TJTO, TJAC, TJAL, TJAM, TJAP, TJMS, TJGO, TJMG, TJRJ, TRF1, TRF3, TRF5, TRF6, STF, STM e TSE (TSE: só inteiro teor pelo código, sem busca); agregadores Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao (TST e TRTs). Não confundir com juscraper-builder (escrever raspador novo)."
 ---
 
 # JusScraper Skill
 
 juscraper e uma biblioteca Python para raspagem de dados do poder judiciario brasileiro.
 Cobre **25 tribunais estaduais**, **4 tribunais regionais federais** (TRF1, TRF3, TRF5, TRF6),
-o **STF** (busca de jurisprudencia) e **5 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao), permitindo buscar
+o **STF** (busca de jurisprudencia), o **STM** (`cjsg`) e o **TSE** (so download de inteiro teor, sem busca), estes dois `[unreleased]`, e **5 agregadores nacionais** (Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao), permitindo buscar
 jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do DJe.
 
 > **Alinhada ao juscraper 0.5.0 (PyPI, 2026-10-21).**
@@ -21,8 +21,9 @@ jurisprudencia, consultar processos, baixar documentos e coletar comunicacoes do
 - Documentacao: https://jtrecenti.github.io/juscraper/
 
 Os metodos `baixar_acordao`/`baixar_acordaos` (TJAC, TJCE, TJMS e TJSP),
-`baixar_sentenca`/`baixar_sentencas` (TJSP) e o `cposg` do TRF3 da cobertura abaixo sao
-`[unreleased]`, verificados no snapshot `30eb73c` da `main`; nao fazem parte da 0.5.0 do PyPI.
+`baixar_sentenca`/`baixar_sentencas` (TJSP e TJMS), o `cjpg` do TJMS, o `cposg` do TRF3 e os
+scrapers do STM e do TSE da cobertura abaixo sao `[unreleased]`, verificados no snapshot
+`2fcfaf2` da `main`; nao fazem parte da 0.5.0 do PyPI.
 
 ## Antes de comecar
 
@@ -74,9 +75,11 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 | Preciso de... | Metodo | Scrapers disponiveis |
 |---|---|---|
 | Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais; TRF3 `[v0.5.0+]` |
-| Buscar jurisprudencia (1o grau) por texto ou CNJ | `cjpg(pesquisa=...)` ou `cjpg(id_processo=cnj)` | TJSP, TJES, TJTO |
+| Buscar jurisprudencia (1o grau) por texto ou CNJ | `cjpg(pesquisa=...)` ou `cjpg(id_processo=cnj)` | TJSP, TJES, TJTO; TJMS `[unreleased]` |
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP e TJPE `[v0.5.0+]` (diretos), JusBR (qualquer tribunal), PDPJ |
 | Buscar jurisprudencia do STF (acordaos ou decisoes monocraticas) | `listar_decisoes(pesquisa)`; `contar_decisoes()` para total e facetas `[v0.4.0+]` | STF |
+| Buscar jurisprudencia do STM (acordaos) | `cjsg(pesquisa)` `[unreleased]` | STM |
+| Baixar o PDF do inteiro teor de decisao do TSE ou de um TRE, pelo codigo | `baixar_inteiro_teor(codigo_decisao)` / `baixar_inteiros_teores(codigos)` `[unreleased]` | TSE (sem busca: o portal exige captcha) |
 | Dados de processo por numero CNJ (1o grau, federal) | `cpopg(id_cnj)` `[v0.4.0+]` | TRF1, TRF3, TRF5, TRF6 |
 | Dados de processo por numero CNJ (2o grau) | `cposg(id_cnj)` | TJSP (vazio no 0.5.0: usar a `main`, ver `references/tjsp.md`); TJMG `[v0.5.0+]` (aceita CNJ ou o numero TJMG do `cjsg`); TRF3 `[unreleased]` |
 | Listar/contar processos em qualquer tribunal | `listar_processos()` / `contar_processos()` `[v0.3.0]` | Datajud (40+ tribunais) |
@@ -90,9 +93,11 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 - Se o usuario especificou um **tribunal estadual** e ele esta entre os 25 (incluindo **TJGO**, **TJMG** e **TJRJ**; o TJMG requer `txtcaptcha`, via extra `tjmg`) → use o scraper direto.
 - Se o usuario especificou um **tribunal federal** (TRF1, TRF3, TRF5 ou TRF6) `[v0.4.0+]` → use o scraper direto para `cpopg` ou o Datajud para metadados. O TRF3 tem tambem `cjsg` `[v0.5.0+]`. Para baixar pecas junto com `cpopg`, isso existe em TRF1/TRF3/TRF5 (`download_pecas=True`, `diretorio=...`), nao em TRF6.
 - Se o usuario pediu **jurisprudencia do STF** → use o scraper `stf` `[v0.4.0+]` (`listar_decisoes`/`contar_decisoes`). O Datajud tem o alias do STF, mas so devolve metadados de processos, sem ementa nem texto da decisao.
+- Se o usuario pediu **jurisprudencia do STM** → use o scraper `stm` `[unreleased]` (`cjsg`). O portal recusa IP de datacenter fora do Brasil (`BotChallengeBlockedError`); ver `references/tribunais.md` §STM.
+- Se o usuario pediu **jurisprudencia do TSE ou de um TRE** → o juscraper **nao busca** (o portal exige captcha; `cjsg` levanta `NotImplementedError`). O scraper `tse` `[unreleased]` so baixa o PDF do inteiro teor de decisoes cujo codigo o usuario ja tem; ver `references/tribunais.md` §TSE. Para metadados de processos eleitorais, use o Datajud.
 - Se o tribunal estadual nao tem scraper direto (TJMA, TJSE — captcha server-side) → use **Datajud** para metadados ou **JusBR**/**PDPJ** para consultar por CNJ e baixar documentos.
 - Para jurisprudencia sem tribunal especificado → TJSP e o maior e mais completo.
-- Para jurisprudencia de 1o grau → apenas TJSP, TJES ou TJTO suportam `cjpg`; no TJSP, `cjpg(id_processo=cnj)` busca pelo numero CNJ do processo, nao por ID interno do eSAJ.
+- Para jurisprudencia de 1o grau → apenas TJSP, TJES, TJTO e TJMS `[unreleased]` suportam `cjpg`; no TJSP, `cjpg(id_processo=cnj)` busca pelo numero CNJ do processo, nao por ID interno do eSAJ.
 - Para buscar por nome de parte ou numero OAB → use **PDPJ** `[v0.4.0+]` (`pdpj.pesquisa(nome_parte=..., oab_representante=...)`).
 - Para acompanhar publicacoes no DJe sobre um tema → use **ComunicaCNJ** `[v0.3.0+]`.
 - Para jurisprudencia da Justica do Trabalho (TST e TRTs) → use **Falcao** `[v0.5.0+]`.
@@ -104,14 +109,16 @@ Lista gerada do codigo da `main` do juscraper. Na duvida entre esta lista e algu
 
 <!-- cobertura-juscraper:metodos:inicio (gerado por scripts/cobertura_juscraper.py; nao editar a mao) -->
 
-- `cjsg`: TJAC, TJAL, TJAM, TJAP, TJBA, TJCE, TJDFT, TJES, TJGO, TJMG, TJMS, TJMT, TJPA, TJPB, TJPE, TJPI, TJPR, TJRJ, TJRN, TJRO, TJRR, TJRS, TJSC, TJSP, TJTO, TRF3
-- `cjpg`: TJES, TJSP, TJTO
+- `cjsg`: STM, TJAC, TJAL, TJAM, TJAP, TJBA, TJCE, TJDFT, TJES, TJGO, TJMG, TJMS, TJMT, TJPA, TJPB, TJPE, TJPI, TJPR, TJRJ, TJRN, TJRO, TJRR, TJRS, TJSC, TJSP, TJTO, TRF3
+- `cjpg`: TJES, TJMS, TJSP, TJTO
 - `cpopg`: TJPE, TJSP, TRF1, TRF3, TRF5, TRF6, JusBR, PDPJ
 - `cposg`: TJMG, TJSP, TRF3
 - `baixar_acordao`: TJAC, TJCE, TJMS, TJSP
 - `baixar_acordaos`: TJAC, TJCE, TJMS, TJSP
-- `baixar_sentenca`: TJSP
-- `baixar_sentencas`: TJSP
+- `baixar_inteiro_teor`: TSE
+- `baixar_inteiros_teores`: TSE
+- `baixar_sentenca`: TJMS, TJSP
+- `baixar_sentencas`: TJMS, TJSP
 - `cjsg_ementa`: TJTO
 - `contar`: PDPJ
 - `contar_decisoes`: STF
@@ -135,7 +142,7 @@ que nem sempre sao obvios ao implementar a coleta. Mapeamento:
 
 | Termo no artigo | Endpoint juscraper | Observacao |
 |---|---|---|
-| "banco de sentencas" / "decisoes de 1o grau" | `cjpg` | Consulta de Julgados de Primeiro Grau — **publico**, nao precisa login institucional. Disponivel apenas em TJSP, TJES, TJTO |
+| "banco de sentencas" / "decisoes de 1o grau" | `cjpg` | Consulta de Julgados de Primeiro Grau — **publico**, nao precisa login institucional. Disponivel apenas em TJSP, TJES, TJTO e TJMS `[unreleased]` |
 | "jurisprudencia" / "acordaos" | `cjsg` | Consulta de Jurisprudencia (2a instancia). Disponivel em todos os 25 tribunais estaduais com scraper direto e no TRF3 `[v0.5.0+]` |
 | "jurisprudencia trabalhista" / "acordaos do TST/TRT" | `listar_decisoes` via Falcao `[v0.5.0+]` | `colecao=` escolhe acordaos, sentencas, decisoes monocraticas, precedentes ou recursos de revista |
 | "jurisprudencia do STF" / "acordaos do Supremo" / "decisoes monocraticas do STF" | `listar_decisoes` via STF `[v0.4.0+]` | `base='acordaos'` ou `base='decisoes'` (default) |
@@ -364,10 +371,10 @@ Leia a referencia apropriada antes de gerar codigo:
   assinaturas dos metodos principais com parametros, tipos de retorno, tabela de aliases
   depreciados, validacao `extra="forbid"`. Leia antes de qualquer tarefa.
 
-- **`references/tribunais.md`** — Matriz de capacidades (25 estaduais + 4 TRFs + STF),
+- **`references/tribunais.md`** — Matriz de capacidades (25 estaduais + 4 TRFs + STF, STM e TSE),
   parametros especificos de cada tribunal (cada um tem filtros proprios na cjsg),
   plataformas, e gotchas comuns. Leia quando precisar escolher entre tribunais ou entender
-  seus parametros especificos. Inclui as secoes TJGO, TJMG, TJRJ, TRFs e STF.
+  seus parametros especificos. Inclui as secoes TJGO, TJMG, TJRJ, TRFs, STF, STM e TSE.
 
 - **`references/agregadores.md`** — Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao: construtores,
   metodos, autenticacao, gotchas. Leia quando o caso de uso for cross-tribunal,

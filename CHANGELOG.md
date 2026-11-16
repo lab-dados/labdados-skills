@@ -4,6 +4,16 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.20] - 2026-11-16
+
+Corrigido:
+
+- `juscraper` (plugin 1.5.6): cobertura regenerada contra a `main` do juscraper (`2fcfaf2`), que ganhou os scrapers do STM e do TSE e o `cjpg` do TJMS; o `juscraper-cobertura` agendado reprovava.
+  - STM `[unreleased]`: `cjsg` de acordaos, com secao nova em `references/tribunais.md` (filtros, colunas, WAF que recusa IP de datacenter fora do Brasil com `BotChallengeBlockedError`, e a busca por expressao exata quando ha filtro de data).
+  - TSE `[unreleased]`: so `baixar_inteiro_teor`/`baixar_inteiros_teores` pelo codigo da decisao (tambem de TRE) e os catalogos `listar_*`; a busca nao existe (o portal exige captcha, e `cjsg` levanta `NotImplementedError`), e a skill diz isso na `description`, na arvore de decisao e na secao nova.
+  - TJMS `[unreleased]`: `cjpg` e `baixar_sentenca`/`baixar_sentencas`, como no TJSP.
+  - `description` da skill e a do marketplace citam STM e TSE; a contagem de tribunais com scraper direto vai de 30 a 32.
+
 ## [1.18.19] - 2026-11-16
 
 Corrigido:
