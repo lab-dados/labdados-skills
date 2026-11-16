@@ -145,7 +145,11 @@ Funcionalidades já prontas (não duplique):
   como `pag * query_page_multiplier + query_page_increment`.
 - `_set_r(query_atual)` — faz GET ou POST conforme `api_method`. POST
   envia como form-encoded (`data=query_atual`). Se a API exige
-  `application/json`, sobrescreva `_set_r` na subclasse.
+  `application/json`, sobrescreva `_set_r` na subclasse. A página 1 e as
+  demais passam por ele (via `_request_with_retry`), e o `_download_data`
+  grava `r.text` em UTF-8: se o `requests` deduzir o charset errado, ajuste
+  `r.encoding` num `_set_r` sobrescrito. Mudar `r0.encoding` no
+  `_find_n_pags` só alcança a página 1.
 - `_request_with_retry` — retry exponencial para 429 (respeita
   `Retry-After`) e 5xx. Levanta `RateLimitError` ou `APIError`.
 - Paginação 1-based padrão: `paginas=None` baixa todas;
@@ -156,8 +160,12 @@ Funcionalidades já prontas (não duplique):
 | Site responde com... | `query_page_multiplier` | `query_page_increment` |
 |---|---|---|
 | Página numerada 1-based (`pagina=1, 2, 3`) | 1 | 0 |
-| Página numerada 0-based (`page=0, 1, 2`) | 1 | -1 |
-| Offset com step N (`rg=0, 25, 50`) | 25 | -25 |
+| Página numerada 0-based (`page=0, 1, 2`, NYT) | 1 | -1 |
+| Offset que começa em 0 (`posicao=0, 10, 20`, Presidência) | 10 | -10 |
+| Offset que começa em 1 (`sr=1, 26, 51`, Folha) | 25 | -24 |
+
+Em todos os casos, `query_page_increment` é o valor do parâmetro na
+página 1 menos o `query_page_multiplier`.
 
 A primeira página passada ao multiplicador é 1, também na requisição
 que dá a contagem (a base usa `paginas=range(1, n_pags+1)`; no NYT, ela

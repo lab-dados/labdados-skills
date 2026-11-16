@@ -93,8 +93,12 @@ muda:
 | `?pagina=1` → `?pagina=2` | `query_page_name='pagina'`, multiplier=1, increment=0 |
 | `?page=0` → `?page=1` (0-based) | multiplier=1, increment=-1 |
 | `?offset=0` → `?offset=10` | `query_page_name='offset'`, multiplier=10, increment=-10 |
-| `?rg=0` → `?rg=25` | `query_page_name='rg'`, multiplier=25, increment=-25 (estilo Folha) |
+| `?sr=1` → `?sr=26` (offset que começa em 1) | `query_page_name='sr'`, multiplier=25, increment=-24 (estilo Folha) |
 | Token / cursor (`?cursor=abc123`) | Paginação não-numérica — não suportada pelo `BaseScraper` padrão. Considere implementar como single-page e iterar manualmente, ou consultar mantenedores |
+
+Em todos os casos numéricos, increment = valor do parâmetro na página 1
+menos o multiplier (`raspe-architecture.md`, "Configurações comuns para
+paginação").
 
 ## Quando admitir que o caminho HTTP não funciona
 

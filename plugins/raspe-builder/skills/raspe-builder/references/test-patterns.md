@@ -370,6 +370,15 @@ uma fonte análoga (`ScraperIpea` para HTTP, `ScraperNYT` para JSON,
 três classes no topo do arquivo. As docstrings do arquivo explicam os
 campos de `Registro`.
 
+## Erro de leitura da página (`tests/test_parse_page_erros.py`)
+
+Esse teste grava uma página que não é UTF-8 e confere que o erro do
+`_parse_page` chega ao `ScraperError` do `_parse_data`, em vez de virar
+página vazia. Ele só cobre as classes da lista `RASPADORES`, que não é
+montada sozinha: fonte nova, HTTP ou Playwright, entra nela, com o import
+no topo do arquivo. Se o construtor da fonte exige argumento (como o
+`api_key` do NYT), ajuste a linha que instancia a classe.
+
 ## Não testar
 
 - Retry / backoff de 429/5xx — já coberto em
@@ -392,7 +401,7 @@ antes do PR, a suíte completa, que é onde o gate vale:
 
 ```bash
 cd <RASPE_REPO>
-pytest tests/{fonte}/ tests/schemas/ -v --no-cov
+pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov
 pytest
 ```
 
