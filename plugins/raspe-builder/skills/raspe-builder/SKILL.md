@@ -357,33 +357,30 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
             return self._confirmar_busca_vazia(soup)
         total = int(marcador.get_text(strip=True))  # ajustar a extração
         itens_por_pagina = 10
-        return (total + itens_por_pagina - 1) // itens_por_pagina
+        # Teto de resultados da fonte: max_resultados= (ver _paginas_para na raspe-architecture.md)
+        return self._paginas_para(total, itens_por_pagina)
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                html = f.read()
+        # Sem try na página inteira: o erro de leitura sobe (ver _parse_data)
+        with open(path, 'r', encoding='utf-8') as f:
+            html = f.read()
 
-            soup = BeautifulSoup(html, 'html.parser')
-            registros = []
+        soup = BeautifulSoup(html, 'html.parser')
+        registros = []
 
-            for item in soup.select('{seletor dos cards}'):
-                try:
-                    titulo = item.select_one('{seletor titulo}').text.strip()
-                    link = item.select_one('a')['href']
-                    # ... demais campos
-                    registros.append([titulo, link, '...'])
-                except Exception as e:
-                    self.logger.warning(f"Erro parseando item: {e}")
-                    continue
+        for item in soup.select('{seletor dos cards}'):
+            try:
+                titulo = item.select_one('{seletor titulo}').text.strip()
+                link = item.select_one('a')['href']
+                # ... demais campos
+                registros.append([titulo, link, '...'])
+            except Exception as e:
+                self.logger.warning(f"Erro parseando item: {e}")
+                continue
 
-            return pd.DataFrame(registros, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro parseando {path}: {e}")
-            return pd.DataFrame(columns=self.colunas)
+        return pd.DataFrame(registros, columns=self.colunas)
 ```
 
 Regras obrigatórias HTTP/HTML:
@@ -394,9 +391,11 @@ Regras obrigatórias HTTP/HTML:
 - `nome_buscador` em minúsculas curtas (ex: `"ipea"`, `"folha"`, `"nyt"`).
 - Headers `User-Agent` real (Firefox/Chrome) — sites brasileiros bloqueiam
   User-Agents genéricos.
-- `_parse_page` usa `columns=self.colunas`, também no caminho de erro.
+- `_parse_page` usa `columns=self.colunas`, também na página sem itens.
   Não declare `colunas` na classe: com `schema_saida`, a base as tira do
-  schema.
+  schema. Não capture o erro de leitura da página inteira para devolver
+  DataFrame vazio: deixe-o subir (ver `_parse_data` na
+  `raspe-architecture.md`). Só o item que falha é pulado, com aviso no log.
 - Sem o marcador de contagem, `_find_n_pags` devolve
   `self._confirmar_busca_vazia(soup)`, nunca 0 (item 6 de "Estrutura de
   Scrapers" no `CLAUDE.md` do raspe).
@@ -414,7 +413,7 @@ Diferenças em relação a 4.A:
 - Não herde de `HTMLScraper`.
 - `self._type: Literal['JSON'] = 'JSON'`.
 - `_find_n_pags`: `r0.json()['response']['meta']['hits']` (ou caminho
-  equivalente da API).
+  equivalente da API), passado a `self._paginas_para`.
 - `_parse_page` lê JSON do disco (`json.load(open(path))`) e itera sobre a
   lista de resultados.
 - Se houver API key: valide no `__init__` com `APIKeyError` (importar de

@@ -44,8 +44,8 @@ Atributos de classe (declarados no corpo da classe, não no `__init__`):
 - `colunas: list[str]` — colunas que o `_parse_page` devolve, sem
   `termo_busca`. Com `schema_saida`, **não declare**: o
   `__init_subclass__` preenche com `schema_saida.colunas_da_fonte()`. Use
-  `self.colunas` no `_parse_page`, inclusive no DataFrame vazio do
-  caminho de erro. Só fontes antigas sem schema (Câmara, Senado) declaram
+  `self.colunas` no `_parse_page`, inclusive no DataFrame vazio da
+  página sem itens. Só fontes antigas sem schema (Câmara, Senado) declaram
   a lista à mão.
 
 Properties abstratas:
@@ -74,7 +74,19 @@ Métodos concretos:
   temporária, se ficou vazia). As bases chamam quando `debug=False`.
 - `_parse_data(path)` — itera arquivos `*.{type}` em path e concatena
   DataFrames retornados por `_parse_page`. Sem arquivos, devolve
-  `pd.DataFrame(columns=self.colunas)`.
+  `pd.DataFrame(columns=self.colunas)`. A exceção que o `_parse_page`
+  levanta entra na mensagem: página sem linhas vira `UserWarning`, e
+  nenhuma página com linhas, `ScraperError` com a primeira exceção em
+  `__cause__`.
+- `_paginas_para(total, por_pagina, max_resultados=None, dica=...)` —
+  páginas que cobrem `total` resultados (0 sem resultados). Com
+  `max_resultados` (quantos resultados a fonte entrega), conta só as
+  páginas deles e, se `total` passar disso, emite `UserWarning` de
+  resultado incompleto, com `dica` dizendo como dividir a busca (default
+  "por período, por exemplo").
+- `_avisar_teto(total, maximo, dica=...)` — o mesmo `UserWarning`. Chame
+  direto, com `total >= teto`, quando a contagem da fonte para no teto
+  (ex.: Folha, 10.000): aí `total` nunca passa de `max_resultados`.
 - `scrape(**kwargs)` — alias retrocompatível de `raspar()`.
 
 Subclasses podem sobrescrever `_validar_parametros`, mas devem chamar
@@ -110,10 +122,13 @@ Properties abstratas (precisam ser implementadas):
 - `api_method: Literal['GET', 'POST']`.
 
 Métodos abstratos:
-- `_set_query_base(**kwargs) -> dict[str, Any]` — constrói o dict da
-  requisição inicial (sem o param de paginação, que é adicionado pela
-  base).
-- `_find_n_pags(r0: requests.Response) -> int` — total de páginas.
+- `_set_query_base(**kwargs) -> dict[str, Any]` — constrói o dict dos
+  parâmetros comuns a todas as páginas, sem o de paginação: a base o
+  acrescenta em `_set_query_atual`.
+- `_find_n_pags(r0: requests.Response) -> int` — total de páginas, lido
+  da resposta da página 1 (`r0`). Se ela traz o total de resultados,
+  calcule com `self._paginas_para`; se traz o total de páginas (CFM),
+  devolva-o.
 - `_parse_page(path: str) -> pd.DataFrame` — herdado do AbstractScraper.
 
 Funcionalidades já prontas (não duplique):
@@ -121,8 +136,11 @@ Funcionalidades já prontas (não duplique):
   iterar (ex: `pesquisa=["a", "b"]`) e adiciona coluna `termo_busca`
   automaticamente: no modo lista, com o item da lista, qualquer que seja
   o kwarg; na busca única, se algum kwarg for `pesquisa`/`termo`/`q`/`query`.
-- `_download_data` — chama `_set_query_base`, `_get_n_pags`, itera páginas,
-  salva arquivos.
+- `_download_data` — chama `_set_query_base`, pede a página 1
+  (`_set_query_atual(query_base, 1)`, por `_request_with_retry`), passa a
+  resposta ao `_find_n_pags` e itera as páginas de `paginas`, salvando
+  arquivos. A página 1 é pedida uma vez só: a resposta da contagem é a que
+  se grava como página 1.
 - `_set_query_atual(query, pag)` — adiciona `query_page_name` ao dict
   como `pag * query_page_multiplier + query_page_increment`.
 - `_set_r(query_atual)` — faz GET ou POST conforme `api_method`. POST
@@ -141,8 +159,9 @@ Funcionalidades já prontas (não duplique):
 | Página numerada 0-based (`page=0, 1, 2`) | 1 | -1 |
 | Offset com step N (`rg=0, 25, 50`) | 25 | -25 |
 
-A página inicial passada ao multiplicador é 1 (porque a base usa
-`paginas=range(1, n_pags+1)`).
+A primeira página passada ao multiplicador é 1, também na requisição
+que dá a contagem (a base usa `paginas=range(1, n_pags+1)`; no NYT, ela
+vai como `page=0`).
 
 ## Schemas
 

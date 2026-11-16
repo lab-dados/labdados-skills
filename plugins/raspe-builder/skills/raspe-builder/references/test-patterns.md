@@ -107,30 +107,20 @@ class TestRasparContract:
     # não verificaria nada.
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """N resultados → M páginas: 1 request inicial + M requests de página."""
+        """N resultados → 2 páginas: 2 requests, a página 1 trazendo também a contagem."""
         mocker.patch("time.sleep")
 
-        # Request inicial (para _find_n_pags), com matcher dos params
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
-            status=200, content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher(
-                {"{param_busca}": "economia"}, strict_match=False,
-            )],
-        )
-        # Request da página 1 (mesmo conteúdo, segunda chamada)
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("{fonte}", "raspar/page_01.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
-        # Request da página 2
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("{fonte}", "raspar/page_02.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
+        # Página 1 (dá a contagem e é gravada) e página 2, com matcher dos params.
+        # Valores que _set_query_atual envia (tabela de paginação da raspe-architecture.md).
+        for pagina, sample in [("1", "page_01.html"), ("2", "page_02.html")]:
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("{fonte}", f"raspar/{sample}"),
+                status=200, content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher(
+                    {"{nome_param_busca_no_site}": "economia", "{nome_param_pagina}": pagina}, strict_match=False,
+                )],
+            )
 
         df = scraper.raspar(pesquisa="economia")
 
@@ -143,11 +133,6 @@ class TestRasparContract:
     def test_single_page(self, scraper, mocker):
         """Cenário 1 página de resultados."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("{fonte}", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("{fonte}", "raspar/single_page.html"),
@@ -215,13 +200,12 @@ Os três cenários são o mínimo por método público exigido pelo
 
 ## Quantos `responses.add` por teste
 
-`BaseScraper._raspar` faz **2 requisições para a primeira página**:
-- Uma para `_find_n_pags` (descobrir o total).
-- Uma para `_download_data` (baixar a página 1 que será parseada).
-
-Mais 1 requisição por página adicional. Adicione `responses.add` na
-ordem das chamadas. Se o teste falhar com `ConnectionError` ou
-`NoCallableResponses`, conte de novo quantos `add` você adicionou.
+`BaseScraper` faz **1 requisição por página**, e a página 1 é sempre
+pedida, para a contagem (ver `_download_data` na `raspe-architecture.md`),
+mesmo com `paginas` sem ela; com 0 páginas, só ela. Adicione
+`responses.add` na ordem das chamadas. Se o teste falhar com
+`ConnectionError` ou `NoCallableResponses`, conte de novo quantos `add`
+você adicionou.
 
 ## Mockar time.sleep
 
