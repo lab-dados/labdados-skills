@@ -8,9 +8,9 @@ Busca de legislação federal no portal da Câmara dos Deputados — `https://ww
 
 ```python
 raspe.camara().raspar(
-    pesquisa: str | list[str],
+    pesquisa: str | list[str] = "",
     ano: int | None = None,
-    tipo_materia: str | None = None,
+    tipo_materia: str = "",
     paginas: range | None = None,
 ) -> pd.DataFrame
 ```
@@ -27,8 +27,9 @@ raspe.camara().raspar(
 
 ## Parâmetros específicos
 
-- `ano`: filtra por ano (ex.: `ano=2024`).
-- `tipo_materia`: filtra por tipo. Valores aceitos pelo portal incluem `"LEI"`, `"DEC"`, `"MPV"`, `"PLP"`, `"PL"`. Quando em dúvida, omita — o filtro é aplicado apenas se fornecido.
+- `pesquisa`: opcional; vazia, a busca fica só com `ano` e `tipo_materia`. É o único parâmetro que aceita lista, e a coluna `termo_busca` sai sempre, com o valor dela (vazio se não veio). Sem `pesquisa`, `ano` nem `tipo_materia`, a busca cobre toda a coleção: limite com `paginas`.
+- `ano`: ano da norma, com quatro dígitos (ex.: `ano=2024`). Fora disso (`ano=0`, `ano=23`), `ValidationError` antes da busca.
+- `tipo_materia`: tipo de norma escrito por extenso, como no filtro da busca da Câmara: `"Lei Ordinária"`, `"Medida Provisória"`. Sigla (`"LEI"`, `"MPV"`) não casa e dá zero resultados, sem erro. Vazio, não filtra.
 
 ## Gotchas
 

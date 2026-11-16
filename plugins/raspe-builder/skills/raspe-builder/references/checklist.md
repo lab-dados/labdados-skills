@@ -35,12 +35,15 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
   parâmetro de busca `pesquisa` (mixin de pesquisa)
 - [ ] `_parse_page` monta o DataFrame com `columns=self.colunas`, também
   na página sem itens; erro de leitura da página sobe (não vira DataFrame
-  vazio); `colunas` não declarado na classe (sai do `schema_saida`)
+  vazio); item pulado no `try` vai para `self._conferir_itens(path, erros,
+  len(registros))`; `colunas` não declarado na classe (sai do `schema_saida`)
 - [ ] Não sobrescreve `raspar()` (é o da `AbstractScraper`)
 - [ ] Não duplica funcionalidades já fornecidas pela base: `tqdm`,
   `time.sleep`, retry para 429/5xx, criação de diretório temporário
-- [ ] (Playwright) `_pagination_strategy` setado e, se for `NEXT_BUTTON`
-  ou `LOAD_MORE`, o método respectivo sobrescrito
+- [ ] (Playwright) `_pagination_strategy` setado e, fora `NONE` e
+  `INFINITE_SCROLL`, o método respectivo sobrescrito
+  (`_paginar_por_numero` para `NUMBERED_LINKS` e `SELECT_DROPDOWN`), com
+  espera por algo que só existe na página nova
 - [ ] (Playwright) Helpers da base usados quando aplicável
   (`_preencher_campo`, `_clicar_elemento`, `_aguardar_elemento`)
 
@@ -64,7 +67,8 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 
 - [ ] (*) `tests/<fonte>/__init__.py` vazio criado
 - [ ] (*) Script de captura `tests/fixtures/capture/<fonte>.py` criado
-  (Playwright: com `capturar_paginas_lidas`, modelo `saudelegis.py`)
+  (Playwright: com `capturar_paginas_lidas` e a `espera` de cada cenário,
+  modelo `saudelegis.py`)
 - [ ] (*) Samples gravados pelo script de captura em
   `tests/<fonte>/samples/raspar/`, com 1 página no `single_page` e 0 no
   `no_results`, conferidos como em `test-patterns.md`, "Captura dos
@@ -90,8 +94,9 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] (*) Fonte registrada em `ESPERADOS` de
   `tests/schemas/test_schema_coverage.py` e `docs/colunas.md` regerado
   (`python -m raspe.schemas.documentacao`)
-- [ ] (*) Classe na lista `RASPADORES` de `tests/test_parse_page_erros.py`
-  (HTTP e Playwright), como em `test-patterns.md`
+- [ ] (*) Se o `_parse_page` pula itens num `try`, fonte registrada em
+  `ITENS` de `tests/test_parse_page_erros.py`, como em `test-patterns.md`
+  ("Erros de leitura")
 - [ ] (HTTP) `mocker.patch("time.sleep")` em todos os testes
 - [ ] (Se aplicável) Fluxo multi-etapa com
   `registries.OrderedRegistry`; captcha, token dinâmico ou import lazy

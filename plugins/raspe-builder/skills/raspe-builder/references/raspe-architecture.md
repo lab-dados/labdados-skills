@@ -45,16 +45,18 @@ Atributos de classe (declarados no corpo da classe, não no `__init__`):
   `termo_busca`. Com `schema_saida`, **não declare**: o
   `__init_subclass__` preenche com `schema_saida.colunas_da_fonte()`. Use
   `self.colunas` no `_parse_page`, inclusive no DataFrame vazio da
-  página sem itens. Só fontes antigas sem schema (Câmara, Senado) declaram
-  a lista à mão.
+  página sem itens. Só as fontes ainda sem `schema_saida` declaram a
+  lista à mão.
 
 Properties abstratas:
 - `type` → Literal['JSON', 'HTML'].
 
 Métodos abstratos:
 - `_parse_page(path: str) -> pd.DataFrame`.
-- `_raspar(**kwargs) -> pd.DataFrame` — coleta com os kwargs já
-  validados. `BaseScraper` e `PlaywrightScraper` já o implementam.
+- `_download_data(**kwargs) -> str` — baixa as páginas de uma busca numa
+  pasta nova (`_create_download_dir`) e devolve o caminho dela; em erro,
+  apaga a pasta sem `debug` (`_apagar_sem_debug`) antes de relançar.
+  `BaseScraper` e `PlaywrightScraper` já o implementam.
 
 Métodos concretos:
 - `raspar(**kwargs) -> pd.DataFrame` — caminho único de todos os
@@ -64,6 +66,12 @@ Métodos concretos:
   as colunas de `OutputXx.colunas()`; as mesmas colunas em outra ordem
   são reordenadas; colunas diferentes emitem `UserWarning` (que vira
   falha nos testes do raspe). Não sobrescreva `raspar()` na subclasse.
+- `_raspar(**kwargs) -> pd.DataFrame` — o mesmo para HTTP e Playwright:
+  chama `_download_data`, lê a pasta com `_parse_data` e a apaga sem
+  `debug` (`_ler_e_limpar`), e põe a coluna `termo_busca` com o valor do
+  primeiro kwarg entre `pesquisa`, `assunto`, `termo`, `q` e `query`
+  (com `schema_entrada`, `pesquisa` sempre vem). A fonte não o sobrescreve;
+  só o `BaseScraper` o faz, para a busca por lista.
 - `_validar_parametros(**kwargs)` — passa os kwargs pelo `schema_entrada`
   (se houver), depois auto-detecta pares de data
   (`data_inicio`/`data_fim`, `data_inicial`/`data_final`, `inicio`/`fim`,
@@ -71,13 +79,26 @@ Métodos concretos:
   `raspe.utils.validar_intervalo_datas`.
 - `_create_download_dir()` — cria subdir temporário com timestamp.
 - `_limpar_download(path)` — apaga a pasta de uma busca (e a raiz
-  temporária, se ficou vazia). As bases chamam quando `debug=False`.
+  temporária, se ficou vazia).
+- `_apagar_sem_debug(path)` — chama `_limpar_download` quando
+  `debug=False`. É o que o `_download_data` das bases usa no caminho de
+  erro.
+- `_ler_e_limpar(path)` — `_parse_data` e depois `_apagar_sem_debug`,
+  também quando a leitura levanta erro.
 - `_parse_data(path)` — itera arquivos `*.{type}` em path e concatena
   DataFrames retornados por `_parse_page`. Sem arquivos, devolve
   `pd.DataFrame(columns=self.colunas)`. A exceção que o `_parse_page`
   levanta entra na mensagem: página sem linhas vira `UserWarning`, e
   nenhuma página com linhas, `ScraperError` com a primeira exceção em
   `__cause__`.
+- `_conferir_itens(path, erros, lidos)` — para o `_parse_page` que lê cada
+  item num `try` próprio e pula o que quebra: recebe as exceções dos
+  itens pulados e quantos viraram linha. Sem erro, não faz nada; com
+  parte dos itens perdida, `UserWarning`; com todos, `ScraperError` com a
+  primeira exceção em `__cause__`, que o `_parse_data` trata como página
+  sem linhas com erro. As linhas boas das outras páginas continuam. O
+  teste que cobra a chamada está em `test-patterns.md`, "Erros de
+  leitura".
 - `_paginas_para(total, por_pagina, max_resultados=None, dica=...)` —
   páginas que cobrem `total` resultados (0 sem resultados). Com
   `max_resultados` (quantos resultados a fonte entrega), conta só as
@@ -132,10 +153,9 @@ Métodos abstratos:
 - `_parse_page(path: str) -> pd.DataFrame` — herdado do AbstractScraper.
 
 Funcionalidades já prontas (não duplique):
-- `_raspar(**kwargs)` — coleta completa. Aceita kwargs como listas para
-  iterar (ex: `pesquisa=["a", "b"]`) e adiciona coluna `termo_busca`
-  automaticamente: no modo lista, com o item da lista, qualquer que seja
-  o kwarg; na busca única, se algum kwarg for `pesquisa`/`termo`/`q`/`query`.
+- `_raspar(**kwargs)` — sobrescreve o da `AbstractScraper` só para a
+  busca por lista (ex: `pesquisa=["a", "b"]`): roda cada item e preenche
+  `termo_busca` com ele.
 - `_download_data` — chama `_set_query_base`, pede a página 1
   (`_set_query_atual(query_base, 1)`, por `_request_with_retry`), passa a
   resposta ao `_find_n_pags` e itera as páginas de `paginas`, salvando
@@ -239,12 +259,31 @@ Estratégias de paginação (enum `PaginationStrategy` em
 
 | Valor | Quando usar | Método a sobrescrever |
 |---|---|---|
-| `NUMBERED_LINKS` | Site tem links numerados (1, 2, 3...) | `_paginar_por_numero(numero)` opcional — seletor default `a:text-is('{numero}')` |
+| `NUMBERED_LINKS` | Site tem links numerados (1, 2, 3...) | **obrigatório** `_paginar_por_numero(numero)` (default levanta `NotImplementedError`) |
 | `NEXT_BUTTON` | Site tem botão "Próximo" / "Next" | **obrigatório** `_paginar_por_botao_proximo` (default levanta `NotImplementedError`) |
 | `LOAD_MORE` | Botão "Carregar mais" | **obrigatório** `_paginar_por_carregar_mais` (default levanta `NotImplementedError`) |
 | `INFINITE_SCROLL` | Scroll infinito | Default funcional, sobrescreva se precisar custom |
-| `SELECT_DROPDOWN` | Dropdown com número de página | Usa `_paginar_por_numero` |
+| `SELECT_DROPDOWN` | Dropdown com número de página | **obrigatório** `_paginar_por_numero(numero)`, o mesmo de `NUMBERED_LINKS` |
 | `NONE` | Sem paginação | — |
+
+O `_paginar_por_numero` abre a página e só devolve `True` depois de ver
+algo que existe apenas na página nova: sem essa espera, o
+`_salvar_html_pagina` seguinte pode gravar a anterior de novo. A espera
+depende do site. Os dois modelos:
+- `ScraperSaudeLegis` (`NUMBERED_LINKS`): clica no link do número, e a
+  tabela troca por AJAX, sem recarregar; espera o rodapé dizer
+  `Mostrando {primeiro item da página} a`.
+- `ScraperDatalegis` (`SELECT_DROPDOWN`): escolhe o número no combobox
+  (`select_option(label=...)`) e espera a contagem
+  `#numeroRegistroInicial` passar ao primeiro item da página.
+
+Nos dois, o primeiro item da página sai de `_inicio_da_pagina(numero)`,
+que depende do `_por_pagina` gravado por `_paginas_pela_contagem` no
+`_encontrar_total_paginas` (helpers abaixo). Sem essa chamada, o
+`_por_pagina` fica em 1 e a espera da página 2 procura o item 2.
+
+Os dois devolvem `False` no timeout do Playwright, e a base levanta
+`ScraperError` com a página que não abriu, em vez de truncar o resultado.
 
 Helpers disponíveis (já implementados):
 - `_aguardar_elemento(selector, timeout=None, state='visible')`.
@@ -252,14 +291,20 @@ Helpers disponíveis (já implementados):
 - `_preencher_campo(selector, texto)`.
 - `_obter_html()` — `await page.content()`.
 - `_salvar_html_pagina(numero, download_dir)`.
+- `_paginas_pela_contagem(fim, total)` — páginas pela contagem da página
+  1 (como "1 a 10 de 14": `fim="10"`, `total="14"`), via `_paginas_para`;
+  grava `fim` em `_por_pagina`.
+- `_inicio_da_pagina(numero)` — posição do primeiro item da página
+  `numero` (11 na página 2, com 10 por página), pelo `_por_pagina`.
 - `_aguardar_cloudflare(selector_pagina_real=None)` — chamado
   automaticamente pelo `_baixar_async`. Detecta cookie `cf_clearance` ou
   ausência de markers de challenge.
 
 Pipeline interno, com kwargs já validados pelo `raspar()` da
-`AbstractScraper`. O `_raspar()` (sync) chama `_rodar_async`, que roda
-`_baixar_async` com `asyncio.run` (ou num loop próprio em outra thread,
-quando já há um loop ativo, como no Jupyter). O `_baixar_async`:
+`AbstractScraper`. O `_raspar()` da `AbstractScraper` chama o
+`_download_data` (sync) do `PlaywrightScraper`, que roda `_baixar_async`
+com `asyncio.run` (ou num loop próprio em outra thread, quando já há um
+loop ativo, como no Jupyter). O `_baixar_async`:
 1. Cria download dir.
 2. Abre browser com stealth.
 3. `page.goto(url_base)`.
@@ -269,13 +314,16 @@ quando já há um loop ativo, como no Jupyter). O `_baixar_async`:
 7. Com 0 páginas, chama `_confirmar_busca_vazia` no HTML atual
    (`ScraperError` se a página não traz o aviso de busca vazia) e segue
    sem salvar nada. Senão, salva a primeira página e itera até
-   `total_paginas`, navegando via `_navegar_proxima_pagina(pagina - 1)`.
+   `total_paginas`, navegando via `_navegar_proxima_pagina(pagina - 1)`
+   (`ScraperError` se ela devolve `False`).
 
-De volta ao `_raspar()`, fora do loop do asyncio:
-8. `_parse_data(download_dir)` — chama seu `_parse_page` para cada HTML.
-   Com 0 páginas, a pasta está vazia e sai `pd.DataFrame(columns=self.colunas)`.
-9. Adiciona a coluna `termo_busca` com o valor de `pesquisa`.
-10. Com `debug=False`, apaga a pasta de download (`_limpar_download`).
+De volta ao `_download_data`, fora do loop do asyncio:
+8. Se a contagem passou de `_max_pages`, emite o `UserWarning` de teto.
+9. Depois, o `_raspar()` da `AbstractScraper` (acima) lê a pasta com seu
+   `_parse_page`, apaga-a sem `debug` e põe `termo_busca`. Com 0 páginas,
+   sai `pd.DataFrame(columns=self.colunas)`. Aviso e leitura ficam fora do
+   loop porque, dentro dele, os avisos apontariam para o asyncio, e não
+   para quem chamou `raspar()`.
 
 ## Exceções (raspe.exceptions)
 

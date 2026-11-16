@@ -4,6 +4,18 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.19] - 2026-11-16
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.13): alinhada a `main` do raspe (#87, #88, #89).
+  - `references/raspe-architecture.md`: o `_raspar` e concreto e comum na `AbstractScraper` (le, limpa a pasta, poe `termo_busca`), e o contrato abstrato e o `_download_data`; o do `PlaywrightScraper` roda o `_baixar_async` (tambem no Jupyter) e avisa do teto fora do loop, sem o antigo `_rodar_async`. O `_paginar_por_numero` deixou de ter padrao (levanta `NotImplementedError`) e e obrigatorio em `NUMBERED_LINKS` e `SELECT_DROPDOWN`, com espera por algo que so a pagina nova tem; os modelos sao o SaudeLegis (rodape AJAX) e o Datalegis (contagem do combobox), com `_paginas_pela_contagem` e `_inicio_da_pagina`. Novo: `_conferir_itens`.
+  - `SKILL.md`: o template 4.A so registrava no log o item que falhava; agora chama `_conferir_itens` (`UserWarning` com parte dos itens, `ScraperError` com a causa com todos). O template 4.C usava `NUMBERED_LINKS` sem `_paginar_por_numero`, o que quebrava na pagina 2; agora o traz, com placeholders.
+  - `references/test-patterns.md` e `checklist.md`: a lista `RASPADORES` do `tests/test_parse_page_erros.py` sai das fabricas publicas, e a fonte que pula itens entra em `ITENS`. O `capturar_paginas_lidas` recebe a `espera` de cada cenario e nao grava quando a busca da outra coisa; sem resultados, o sample e a pagina que a contagem leu.
+- `raspe` (plugin 1.1.6): alinhada ao raspe #88 e #90.
+  - `references/camara.md`, `senado.md` e `api.md`: `pesquisa` opcional (`termo_busca` sai sempre), `tipo_materia` texto, `ano` de quatro digitos. Os valores de `tipo_materia` documentados (`"LEI"`, `"MPV"`, `"PLS"`) davam zero resultados sem erro (conferido ao vivo com "saude" em 2023): a Camara aceita o nome por extenso (`"Lei Ordinaria"`) e o Senado, `"SIGLA - Nome"` (`"LEI - Lei"`).
+  - `SKILL.md` e `api.md`: toda fonte tem schema de entrada, e parametro desconhecido levanta `ValidationError` (nao e mais ignorado, e o `ValueError` de duas listas saiu). Item ilegivel chega a quem chamou (`UserWarning` ou erro da pagina), e nao fica so no log. O filtro por `ano` vale tambem no CFM.
+
 ## [1.18.18] - 2026-11-16
 
 Corrigido:
