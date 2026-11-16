@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.16] - 2026-11-16
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.10): a `references/raspe-architecture.md` dizia que o `_download_data` do `BaseScraper` chama `_get_n_pags` e que a contagem sai de uma requisicao inicial sem o parametro de pagina. Na `main` do raspe (#86), o `_get_n_pags` nao existe: a contagem vem da propria pagina 1 (`_set_query_atual(query_base, 1)`, que no NYT envia `page=0`), e essa resposta e gravada como pagina 1 sem ser pedida de novo. A reference passa a descrever esse fluxo, e o template de `test_raspar_contract.py` da `references/test-patterns.md` deixa de ter um `responses.add` a mais para a pagina 1: com ele, a pagina 2 recebia o sample da pagina 1 e o teste duplicava linhas. O matcher da paginacao tipica confere tambem o parametro de pagina. O `_find_n_pags` do template HTTP da `SKILL.md` calcula as paginas com `self._paginas_para` (raspe #85), como os raspadores HTTP do raspe que leem o total de resultados, e a reference documenta esse helper e o `_avisar_teto`. Da mesma conferencia: o template do `_parse_page` e a `checklist.md` mandavam capturar o erro de leitura da pagina e devolver DataFrame vazio, o que o raspe deixou de fazer (#84); agora o erro sobe e o `_parse_data` o leva ao `UserWarning` ou ao `ScraperError`.
+
 ## [1.18.15] - 2026-11-16
 
 Corrigido:

@@ -33,10 +33,9 @@ verifique cada item. Itens marcados com (*) são bloqueantes.
 - [ ] (*) `schema_entrada` e `schema_saida` declarados, com os schemas em
   `src/raspe/schemas/<fonte>.py` e exportados em `schemas/__init__.py`;
   parâmetro de busca `pesquisa` (mixin de pesquisa)
-- [ ] `_parse_page` monta o DataFrame com `columns=self.colunas`, mesmo
-  no caminho de erro (não levanta exceção, retorna
-  `pd.DataFrame(columns=self.colunas)`); `colunas` não declarado na
-  classe (sai do `schema_saida`)
+- [ ] `_parse_page` monta o DataFrame com `columns=self.colunas`, também
+  na página sem itens; erro de leitura da página sobe (não vira DataFrame
+  vazio); `colunas` não declarado na classe (sai do `schema_saida`)
 - [ ] Não sobrescreve `raspar()` (é o da `AbstractScraper`)
 - [ ] Não duplica funcionalidades já fornecidas pela base: `tqdm`,
   `time.sleep`, retry para 429/5xx, criação de diretório temporário
