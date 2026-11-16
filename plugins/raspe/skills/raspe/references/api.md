@@ -9,8 +9,8 @@ Assinaturas públicas exportadas em `raspe/__init__.py`. Todas as factories reto
 | Factory | Construtor | Parâmetros de `.raspar()` |
 |---|---|---|
 | `raspe.presidencia()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
-| `raspe.camara()` | sem args | `pesquisa: str \| list[str]`, `ano: int = None`, `tipo_materia: str = None`, `paginas: range = None` |
-| `raspe.senado()` | sem args | `pesquisa: str \| list[str]`, `ano: int = None`, `tipo_materia: str = None`, `paginas: range = None` |
+| `raspe.camara()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `tipo_materia: str = ''`, `paginas: range = None` |
+| `raspe.senado()` | sem args | `pesquisa: str \| list[str] = ''`, `ano: int = None`, `tipo_materia: str = ''`, `paginas: range = None` |
 | `raspe.ipea()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.capes()` | sem args | `pesquisa: str \| list[str]`, `paginas: range = None` |
 | `raspe.cfm()` | sem args | `pesquisa: str \| list[str] = ''`, `uf: str = ''`, `revogada: str = ''`, `numero: str = ''`, `ano: int = None`, `paginas: range = None` |
@@ -50,7 +50,7 @@ df = raspe.senado().raspar(pesquisa=["educação", "saúde"])
 # df['termo_busca'].unique() -> ['educação', 'saúde']
 ```
 
-Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError`. Nas fontes ainda sem schema (as marcadas "sem schema de saída" na matriz de colunas da `references/fontes.md`), parâmetro desconhecido é ignorado, e mais de um parâmetro em lista levanta `ValueError`.
+Só `pesquisa` aceita lista. Lista em outro parâmetro, ou parâmetro desconhecido, levanta `ValidationError`, em todas as fontes.
 
 ### Datas
 
@@ -64,7 +64,7 @@ Só `pesquisa` aceita lista. Lista em outro parâmetro levanta `ValidationError`
 
 Sempre `pandas.DataFrame`. As colunas variam por fonte — veja `references/fontes.md` para a matriz completa.
 
-Nas fontes com schema de saída, o DataFrame sempre termina na coluna `termo_busca`, com o valor de `pesquisa` ou, numa busca com lista, o item de cada linha; as colunas saem na ordem do schema, e uma busca sem resultado devolve DataFrame vazio com essas mesmas colunas. As fontes ainda sem schema trazem `termo_busca` sempre que recebem `pesquisa`.
+Nas fontes com schema de saída, o DataFrame sempre termina na coluna `termo_busca`, com o valor de `pesquisa` ou, numa busca com lista, o item de cada linha; as colunas saem na ordem do schema, e uma busca sem resultado devolve DataFrame vazio com essas mesmas colunas. As fontes ainda sem schema de saída (veja a matriz de colunas da `references/fontes.md`) também terminam em `termo_busca`, vazia quando a busca foi sem `pesquisa`.
 
 ## Utilitários exportados
 
@@ -85,7 +85,7 @@ Em `raspe.exceptions` (todas também disponíveis em `raspe.*`). O que fazer com
 
 | Classe | Quando sobe | Atributos |
 |---|---|---|
-| `ScraperError` | Base de todas. Sozinha: resposta inicial que não é página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo); nenhuma página baixada rendeu linhas (a mensagem traz o erro de cada página, e o primeiro fica em `__cause__`); nas fontes Playwright, página da contagem que não abre | — |
+| `ScraperError` | Base de todas. Sozinha: resposta inicial que não é página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo); nenhuma página baixada rendeu linhas (a mensagem traz o erro de cada página, e o primeiro fica em `__cause__`; página em que nenhum item pôde ser lido conta como sem linhas, com esse erro); nas fontes Playwright, página da contagem que não abre | — |
 | `APIKeyError` | NYT sem API key (no construtor) ou com key inválida (401) | — |
 | `RateLimitError` | 429 persistente após `max_retries`, em qualquer página | `retry_after: int \| None` (o `Retry-After` do servidor, em segundos) |
 | `APIError` | 5xx persistente após `max_retries`, em qualquer página; no NYT, também outro 4xx na página 1 ou resposta sem a contagem de resultados | `status_code: int`, `response_text: str` (truncado em 500 chars) |
@@ -93,7 +93,7 @@ Em `raspe.exceptions` (todas também disponíveis em `raspe.*`). O que fazer com
 | `BrowserError` | Falha em Playwright (elemento não encontrado, timeout, bypass de Cloudflare) | — |
 | `DriverNotInstalledError` | Fonte Playwright sem o extra `[browser]`, no `.raspar()`; subclasse de `BrowserError` | — |
 
-Fora da hierarquia, sobem `ValueError` (veja "Listas em parâmetros de busca") e os erros do `requests` descritos em "Retry automático". `SeleniumError` existe como alias de `BrowserError` para retrocompatibilidade com código antigo. Não use em código novo.
+Fora da hierarquia, sobem os erros do `requests` descritos em "Retry automático". `SeleniumError` existe como alias de `BrowserError` para retrocompatibilidade com código antigo. Não use em código novo.
 
 ## Retry automático
 

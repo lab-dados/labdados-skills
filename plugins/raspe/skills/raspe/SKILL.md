@@ -108,11 +108,11 @@ O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
 **Paginação 1-based via `paginas=range(...)`.** `paginas=range(1, 4)` baixa páginas 1, 2, 3. `paginas=None` (default) baixa todas — **use com cautela**: buscas genéricas podem ter centenas ou milhares de páginas. **Só nas fontes HTTP.** As fontes Playwright (`saudelegis`, `ans`, `anvisa`) não aceitam `paginas` e coletam todas as páginas até um teto interno; como limitar o volume nelas está em `references/api.md`.
 
-**Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos de cada fonte (lista em `references/api.md`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError` (nas fontes com schema; veja `references/api.md`). A reference por fonte tem a assinatura exata.
+**Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos de cada fonte (lista em `references/api.md`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError`, em todas as fontes. A reference por fonte tem a assinatura exata.
 
 **Filtros de data.** `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
 
-**Filtro por ano.** `camara`, `senado` e `nyt` aceitam `ano=2024`.
+**Filtro por ano.** `camara`, `senado`, `cfm` e `nyt` aceitam `ano=2024`.
 
 ## Rate limiting, ética e boas práticas de coleta
 
@@ -134,7 +134,7 @@ As exceções (em `raspe.exceptions`) e quando cada uma sobe estão em `referenc
 - `ValidationError`: parâmetro inválido ou desconhecido, antes de qualquer requisição. Corrija a chamada pela reference da fonte.
 - `RateLimitError` (429) ou `APIError` (5xx) depois das tentativas: o servidor recusou. Espere alguns minutos ou aumente `sleep_time` (nunca diminua) e rode de novo.
 - `APIKeyError`: NYT sem API key ou com key inválida. Mostre ao usuário como cadastrar.
-- `ScraperError` sozinha: a resposta não era uma página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo), nenhuma página baixada rendeu linhas ou, nas fontes Playwright, uma página não abriu. Rode com `debug=True` para guardar os arquivos baixados e olhe o que veio; se persistir, o site mudou.
+- `ScraperError` sozinha: a resposta não era uma página de resultados (manutenção, acesso recusado, verificação anti-robô, layout novo), nenhuma página baixada rendeu linhas (inclusive quando nenhum item delas pôde ser lido) ou, nas fontes Playwright, uma página não abriu. Rode com `debug=True` para guardar os arquivos baixados e olhe o que veio; se persistir, o site mudou.
 - `DriverNotInstalledError`: fonte Playwright sem o extra `[browser]`. O construtor funciona sem Playwright; o erro só sai no `.raspar()`. Solução: `pip install "raspe[browser]"` + `playwright install chromium`.
 
 **Página que falha interrompe a coleta.** Nas fontes HTTP, cada página passa pelas mesmas tentativas (veja "Retry automático" em `references/api.md`). Se o erro persiste, a coleta para, o log registra `Coleta interrompida na página N` e o erro sobe (numa busca com lista, só a coleta daquele valor para, e o erro vai para o aviso descrito abaixo). Nenhuma página é pulada, mas as já baixadas também não voltam. Com `debug=False`, a pasta de download é apagada; com `debug=True`, a mensagem diz onde ficaram os arquivos. Confirme com o usuário e rode a busca de novo, de preferência em outro horário (sites governamentais ficam lentos em horário comercial). Em coletas longas, divida `paginas` em blocos (`range(1, 51)`, `range(51, 101)`...) e salve cada um, para que uma falha custe só um bloco.
@@ -142,6 +142,7 @@ As exceções (em `raspe.exceptions`) e quando cada uma sobe estão em `referenc
 **Avisos de resultado incompleto (`UserWarning`).** O DataFrame volta, mas pode faltar dado. Repasse o aviso ao usuário:
 
 - Parte das páginas baixadas não rendeu linhas (erro de leitura, página de bloqueio, layout novo). A mensagem lista as páginas e o erro de cada uma.
+- Parte dos itens de uma página não pôde ser lida e ficou fora. A mensagem diz a página, quantos itens e o primeiro erro.
 - A busca passou do teto da fonte (limites em `references/fontes.md`). Divida a busca por período ou filtro.
 - Busca com lista: um valor de `pesquisa` falhou e ficou de fora, e os demais voltam no resultado. Depois de um `RateLimitError`, os valores seguintes não são tentados e entram no aviso. Se todos falharem, o primeiro erro sobe.
 

@@ -69,10 +69,14 @@ Fonte Playwright também tem script de captura: copie
 `tests/fixtures/capture/saudelegis.py`, que passa cada cenário a
 `capturar_paginas_lidas` (um arquivo por página lida). Ele abre o
 Chromium: precisa do extra `browser` e de `playwright install chromium`.
-A conferência dele não separa `single_page` de `no_results`, e um
-`ScraperError` (acesso recusado, por exemplo) conta como zero
-resultados: na linha "N linhas, M páginas gravadas" de cada cenário,
-confira que o `no_results` deu 0 linhas sem mensagem de erro antes.
+Cada cenário declara o que a busca tem de dar: `"linhas"` (`page_01` e
+`page_02`, `single_page`), `"vazia"` (`no_results`, zero linhas sem
+erro) ou `"erro"` (`ScraperError`, como o acesso recusado do
+`acesso_negado.html` no `datalegis.py`). Se a busca der outra coisa, ou
+outro número de páginas que o de arquivos do cenário, a função levanta
+`RuntimeError` antes de gravar. No cenário `"vazia"` ou `"erro"`, o
+arquivo gravado é a página que a contagem leu: não há sample da
+confirmação de busca vazia.
 
 ## Template de test_raspar_contract.py
 
@@ -370,14 +374,33 @@ uma fonte análoga (`ScraperIpea` para HTTP, `ScraperNYT` para JSON,
 três classes no topo do arquivo. As docstrings do arquivo explicam os
 campos de `Registro`.
 
-## Erro de leitura da página (`tests/test_parse_page_erros.py`)
+## Erros de leitura (`tests/test_parse_page_erros.py`)
 
-Esse teste grava uma página que não é UTF-8 e confere que o erro do
-`_parse_page` chega ao `ScraperError` do `_parse_data`, em vez de virar
-página vazia. Ele só cobre as classes da lista `RASPADORES`, que não é
-montada sozinha: fonte nova, HTTP ou Playwright, entra nela, com o import
-no topo do arquivo. Se o construtor da fonte exige argumento (como o
-`api_key` do NYT), ajuste a linha que instancia a classe.
+Esse teste confere que o erro de leitura chega a quem chamou, em vez de
+virar página vazia. Ele não se copia por fonte: a fonte nova entra nos
+testes que já existem.
+
+- **Página ilegível:** grava uma página que não é UTF-8 e confere que o
+  erro do `_parse_page` chega ao `ScraperError` do `_parse_data`. Cobre
+  sozinho todo raspador com fábrica pública (`RASPADORES` sai de
+  `descobrir_raspadores` e `fabricas_por_raspador`), então basta a
+  Etapa 5. Se o construtor exige argumento (como o `api_key` do NYT) ou
+  faz requisição (como o da Câmara), ajuste o `_construir`.
+- **Item ilegível:** fonte cujo `_parse_page` tem `except Exception` por
+  item (template 4.A) entra em `ITENS`, com o import da classe no topo
+  do arquivo, a pasta dos samples e a função que quebra os itens do
+  `page_01.html`: `_quebrar_tag` (um
+  método de `Tag` lido uma vez por item, como Câmara e IPEA) ou
+  `_quebrar_metodo` (um método do raspador chamado por item, como CAPES e
+  CFM). `test_todo_raspador_que_pula_item_esta_em_itens` reprova a fonte
+  que pula itens e ficou fora, mas só a reconhece pelo texto
+  `except Exception` no próprio `_parse_page`. Com ela em `ITENS`, a classe
+  `TestErroDeItem` confere os dois casos: um item quebrado dá
+  `UserWarning` e mantém os demais; todos quebrados dão `ScraperError`,
+  com a causa encadeada.
+
+O zero resultado legítimo fica no `test_no_results` do contrato:
+DataFrame vazio, com as colunas do schema e sem erro.
 
 ## Não testar
 

@@ -371,6 +371,7 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
 
         soup = BeautifulSoup(html, 'html.parser')
         registros = []
+        erros: list[Exception] = []
 
         for item in soup.select('{seletor dos cards}'):
             try:
@@ -379,9 +380,11 @@ class Scraper{Fonte}(BaseScraper, HTMLScraper):
                 # ... demais campos
                 registros.append([titulo, link, '...'])
             except Exception as e:
-                self.logger.warning(f"Erro parseando item: {e}")
-                continue
+                self.logger.warning(f"Erro parseando item em {path}: {e}")
+                erros.append(e)
 
+        # Item pulado chega a quem chamou: aviso se parte quebrou, ScraperError se todos
+        self._conferir_itens(path, erros, len(registros))
         return pd.DataFrame(registros, columns=self.colunas)
 ```
 
@@ -397,7 +400,10 @@ Regras obrigatórias HTTP/HTML:
   Não declare `colunas` na classe: com `schema_saida`, a base as tira do
   schema. Não capture o erro de leitura da página inteira para devolver
   DataFrame vazio: deixe-o subir (ver `_parse_data` na
-  `raspe-architecture.md`). Só o item que falha é pulado, com aviso no log.
+  `raspe-architecture.md`). Só o item que falha é pulado, e o erro dele
+  vai para `self._conferir_itens(...)` no fim do `_parse_page`, como no
+  template (ver `_conferir_itens` na `raspe-architecture.md`). Fonte sem
+  `try` por item não o chama.
 - Sem o marcador de contagem, `_find_n_pags` devolve
   `self._confirmar_busca_vazia(soup)`, nunca 0 (item 6 de "Estrutura de
   Scrapers" no `CLAUDE.md` do raspe).
@@ -429,11 +435,9 @@ Modelo: `src/raspe/scrapers/anvisa.py`. Use **apenas** se a Etapa 1
 provou que HTTP não funciona.
 
 ```python
-import asyncio
-from typing import Any
-
 import pandas as pd
 
+from ..exceptions import BrowserError
 from ..playwright_scraper import PaginationStrategy, PlaywrightScraper
 from ..schemas.{fonte} import Input{Fonte}, Output{Fonte}
 
@@ -464,14 +468,17 @@ class Scraper{Fonte}(PlaywrightScraper):
         # Regex ou parsing
         return 1
 
-    # Se pagination_strategy for NEXT_BUTTON ou LOAD_MORE, sobrescreva:
-    async def _paginar_por_botao_proximo(self) -> bool:
+    # NUMBERED_LINKS e SELECT_DROPDOWN (outras estratégias: ver as regras abaixo)
+    async def _paginar_por_numero(self, numero: int) -> bool:
         try:
-            await self._clicar_elemento("{seletor do botão próximo}")
-            await asyncio.sleep(self.between_pages_wait)
-            return True
-        except Exception:
+            # Os dois seletores levam o número da página: monte-os com f-string.
+            # SELECT_DROPDOWN escolhe o número no combobox (select_option), como o Datalegis
+            await self._clicar_elemento("{seletor do link da página numero}")
+            # Espera algo que só existe na página nova, não um tempo fixo
+            await self._aguardar_elemento("{seletor que só existe na página numero}")
+        except BrowserError:
             return False
+        return True
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         # Sync, lê arquivo HTML do disco, retorna DataFrame
@@ -487,10 +494,12 @@ Regras obrigatórias Playwright:
 
 - Cloudflare bypass já é automático (`_aguardar_cloudflare()` é chamado
   pelo `_baixar_async` da base).
-- Estratégia de paginação tem que casar com o que o site oferece. Se for
-  `NEXT_BUTTON` ou `LOAD_MORE`, **sobrescreva** o método correspondente
-  (`_paginar_por_botao_proximo` / `_paginar_por_carregar_mais`) — a base
-  levanta `NotImplementedError` no default.
+- Estratégia de paginação tem que casar com o que o site oferece. Fora
+  `NONE` e `INFINITE_SCROLL`, **sobrescreva** o método correspondente
+  (`_paginar_por_numero` para `NUMBERED_LINKS` e `SELECT_DROPDOWN`,
+  `_paginar_por_botao_proximo` / `_paginar_por_carregar_mais`) — a base
+  levanta `NotImplementedError` no default. O que esperar depois de
+  paginar está sob a tabela de estratégias da `raspe-architecture.md`.
 - `_parse_page` é sync (não `async`); ele lê o arquivo HTML salvo em disco
   por `_salvar_html_pagina`.
 - Usar `self._page` direto (atributo `Optional`, `None` até a
@@ -563,9 +572,10 @@ contrato, casos mínimos e regras do `CLAUDE.md` do raspe. Modelos:
 
 Com os samples gravados, registre a fonte em `ESPERADOS` de
 `tests/schemas/test_schema_coverage.py` (ver `references/test-patterns.md`,
-seção "Registro do schema"). Sem isso, a suíte reprova. Ponha também a
-classe em `RASPADORES` de `tests/test_parse_page_erros.py` (seção "Erro de
-leitura da página").
+seção "Registro do schema"). Sem isso, a suíte reprova. Se o
+`_parse_page` lê os itens num `try` com `except Exception` (template 4.A),
+registre a fonte também em `ITENS` de `tests/test_parse_page_erros.py`
+(seção "Erros de leitura" da `test-patterns.md`).
 
 ### Etapa 7 — Validação e documentação
 
