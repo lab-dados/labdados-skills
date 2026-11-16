@@ -4,9 +4,9 @@ Este arquivo registra ate que versao da biblioteca `juscraper` a skill esta alin
 
 ## Alinhamento atual
 
-A skill **v1.5.5** esta alinhada com o `juscraper` **0.5.0** (PyPI, 2026-10-21); o que entrou esta na tabela abaixo. Os itens da 0.5.0 que corrigem defeitos sem mudar o uso que a skill ensina (TJMG `cjsg` com mais de ~15 paginas, paginacao de TJPI/TJPR, coluna `processo` do TJSC, erros do `cjpg` do TJSP, `None` em colunas de texto, avisos apontando para quem chamou) nao ganharam texto.
+A skill **v1.5.6** esta alinhada com o `juscraper` **0.5.0** (PyPI, 2026-10-21); o que entrou esta na tabela abaixo. Os itens da 0.5.0 que corrigem defeitos sem mudar o uso que a skill ensina (TJMG `cjsg` com mais de ~15 paginas, paginacao de TJPI/TJPR, coluna `processo` do TJSC, erros do `cjpg` do TJSP, `None` em colunas de texto, avisos apontando para quem chamou) nao ganharam texto.
 
-A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI (`.github/workflows/juscraper-cobertura.yml`). A ultima conferencia foi contra o snapshot `30eb73c` (2026-11-15). O que so existe na `main`, sem release no PyPI, aparece inline com a tag `[unreleased]` (`grep -rn 'unreleased\]' SKILL.md references` lista todos).
+A cobertura (a matriz de tribunais, os metodos dos agregadores e a lista "Quem tem cada metodo" da `SKILL.md`) e gerada do codigo da `main` do juscraper por `scripts/cobertura_juscraper.py` e conferida no CI (`.github/workflows/juscraper-cobertura.yml`). A ultima conferencia foi contra o snapshot `2fcfaf2` (2026-11-16). O que so existe na `main`, sem release no PyPI, aparece inline com a tag `[unreleased]` (`grep -rn 'unreleased\]' SKILL.md references` lista todos).
 
 Para confirmar a versao instalada no ambiente do usuario: `python -c "import juscraper; print(juscraper.__version__)"`.
 
@@ -14,6 +14,7 @@ Para confirmar a versao instalada no ambiente do usuario: `python -c "import jus
 
 | Skill | juscraper release | Snapshot de referencia | Principais inclusoes |
 |---|---|---|---|
+| 1.5.6 | 0.5.0 (2026-10-21) + `main` | `2fcfaf2` (main) | Cobertura regenerada: scrapers novos do STM (`cjsg`) e do TSE (`baixar_inteiro_teor`/`baixar_inteiros_teores` e catalogos, sem busca), `cjpg` e `baixar_sentenca`/`baixar_sentencas` no TJMS, todos `[unreleased]` |
 | 1.5.5 | 0.5.0 (2026-10-21) + `main` | wheel do PyPI, tag `v0.5.0` e `30eb73c` (main) | Cobertura regenerada: `cposg` do TRF3 e `baixar_acordao`/`baixar_acordaos` em TJCE e TJMS, `[unreleased]`. Resto da 0.5.0 revisto: JusBR e PDPJ com o mesmo token, carregado de `PDPJ_JWT` ou do cache do `auth_govbr()` (extra `govbr`); `motivo_falha` por linha; `politica=` em JusBR, PDPJ, Datajud e TRF3; `numero_processo` no ComunicaCNJ; `with_text`/`with_binary` keyword-only no PDPJ. Corrigidas a afirmacao de que JusBR e PDPJ usam tokens distintos e a de que o PDPJ aceita token vencido |
 | 1.5.4 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main), nao reconferido | Instalacao sugere o uv, com o pip como alternativa; cobertura sem mudanca |
 | 1.5.3 | 0.5.0 (2026-10-21) + `main` | `3bf8205` (main) | `description` no padrao "Usar quando", com "Nao confundir com juscraper-builder" no lugar de "usar a juscraper-builder"; cobertura sem mudanca |

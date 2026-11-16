@@ -358,7 +358,7 @@ orgaos = tjsp.listar_orgaos(grau='2')
 varas = tjsp.listar_varas(grau='1')  # TJSP cjpg
 ```
 
-`listar_classes`, `listar_assuntos` e `listar_orgaos` existem na familia eSAJ para o grau indicado. `listar_varas` e especifico do TJSP e do `cjpg` de 1o grau. Todos retornam `pd.DataFrame` com arvore de filtros: `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`. Use apenas linhas `selecionavel=True` como filtro final quando o backend exigir nó folha.
+`listar_classes`, `listar_assuntos` e `listar_orgaos` existem na familia eSAJ para o grau indicado. `listar_varas` e especifico do `cjpg` de 1o grau: TJSP e TJMS `[unreleased]`. Todos retornam `pd.DataFrame` com arvore de filtros: `id`, `nome`, `id_pai`, `nivel`, `selecionavel`, `caminho`. Use apenas linhas `selecionavel=True` como filtro final quando o backend exigir nó folha.
 
 ---
 

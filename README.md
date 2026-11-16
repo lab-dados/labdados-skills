@@ -73,7 +73,7 @@ Os zips saem do workflow `release-skills`, a cada tag `v*` empurrada.
 
 | Skill | O que faz | Trigger tipico |
 |-------|-----------|----------------|
-| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 4 TRFs + STF + Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, STF, cjpg por CNJ |
+| [juscraper](plugins/juscraper/skills/juscraper/SKILL.md) | Raspa dados judiciais brasileiros (25 tribunais estaduais + 4 TRFs + STF, STM e TSE + Datajud, JusBR, ComunicaCNJ, PDPJ e Falcao) | Tribunal brasileiro, numero CNJ, acordao, jurisprudencia, STF, cjpg por CNJ |
 | [dataframeit](plugins/dataframeit/skills/dataframeit/SKILL.md) | Enriquece DataFrames com LLMs — extracao estruturada via Pydantic | LLM, enriquecer dados, extrair informacao estruturada, DataFrame |
 | [openalex](plugins/openalex/skills/openalex/SKILL.md) | Busca e baixa artigos academicos do OpenAlex | Revisao sistematica, literatura academica, artigos, DOI |
 | [raspe](plugins/raspe/skills/raspe/SKILL.md) | Raspa dados de fontes oficiais brasileiras (Presidencia, Camara, Senado, IPEA, CAPES, CFM, ANS, ANVISA, SaudeLegis) e imprensa (Folha, NYT) | Legislacao federal, portarias ANVISA/ANS, normas sanitarias, materias de jornal |
