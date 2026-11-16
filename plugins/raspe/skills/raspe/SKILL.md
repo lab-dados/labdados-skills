@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\". Não confundir com openalex (revisão de literatura, bibliometria)."
+description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, projetos de lei e proposições da Câmara e do Senado, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\". Não confundir com openalex (revisão de literatura, bibliometria)."
 ---
 
 # Raspe Skill
@@ -19,7 +19,7 @@ Esta skill cobre **uso** da biblioteca — escolher a fonte certa, chamar o scra
 
 Complete este checklist antes de qualquer chamada. Fonte a fonte, a instalação muda.
 
-### 1. Instalação básica (8 fontes HTTP)
+### 1. Instalação básica (10 fontes HTTP)
 
 ```bash
 pip install git+https://github.com/bdcdo/raspe.git
@@ -27,7 +27,7 @@ pip install git+https://github.com/bdcdo/raspe.git
 
 Python >= 3.11. Verifique com `uv pip show raspe` (com uv) ou `python -c "import raspe; print(raspe.__version__)"`.
 
-Cobre: `presidencia`, `camara`, `senado`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
+Cobre: `presidencia`, `camara`, `senado`, `camara_proposicoes`, `senado_processos`, `ipea`, `cfm`, `folha`, `nyt`, `capes`.
 
 Prefira o [uv](https://docs.astral.sh/uv/): `uv add git+https://github.com/bdcdo/raspe.git` num projeto com `pyproject.toml`, `uv venv` + `uv pip install git+https://github.com/bdcdo/raspe.git` fora dele; vale para todo `pip install` da skill e das references. O pacote fica no `.venv`: rode o Python e o `python -m playwright install chromium` com `uv run`. Sem o uv, sugira instalá-lo ou siga com o pip.
 
@@ -50,7 +50,7 @@ Apenas o scraper do NYT pede credencial:
 - Passe via parâmetro (`raspe.nyt(api_key="...")`) ou exporte `NYT_API_KEY` no ambiente. A biblioteca tenta a variável automaticamente se o argumento for omitido.
 - Sem chave, o construtor levanta `APIKeyError` com o passo a passo no texto da mensagem.
 
-As demais 10 fontes são totalmente públicas e não exigem cadastro.
+As demais 12 fontes são totalmente públicas e não exigem cadastro.
 
 ## Roteamento de decisão — qual fonte usar?
 
@@ -59,8 +59,10 @@ Comece identificando a **natureza do dado** que o usuário quer, depois confirme
 | Quero... | Factory | Tecnologia | Parâmetro-chave | Autenticação |
 |---|---|---|---|---|
 | Leis, decretos, MPs publicadas pela Presidência | `raspe.presidencia()` | HTTP | `pesquisa` | nenhuma |
-| Projetos de lei, proposições da Câmara | `raspe.camara()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
-| Projetos e legislação federal indexada pelo Senado | `raspe.senado()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
+| Legislação federal já publicada, na busca do portal da Câmara | `raspe.camara()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
+| Legislação federal já publicada, na busca do portal do Senado | `raspe.senado()` | HTTP | `pesquisa`, `ano`, `tipo_materia` | nenhuma |
+| Projetos de lei, PECs e demais proposições da Câmara, viradas norma ou não | `raspe.camara_proposicoes()` | HTTP (JSON) | `pesquisa`, `ano`, `sigla_tipo`, `data_inicio`, `data_fim` | nenhuma |
+| Projetos de lei, PECs e demais processos legislativos do Senado e do Congresso | `raspe.senado_processos()` | HTTP (JSON) | `pesquisa`, `ano`, `sigla_tipo`, `data_inicio`, `data_fim` | nenhuma |
 | Estudos e publicações do IPEA | `raspe.ipea()` | HTTP | `pesquisa` | nenhuma |
 | Artigos acadêmicos no buscador do Portal de Periódicos da CAPES | `raspe.capes()` | HTTP | `pesquisa` | nenhuma |
 | Normas do CFM e conselhos regionais de medicina | `raspe.cfm()` | HTTP | `pesquisa`, `uf`, `ano`, `numero` | nenhuma |
@@ -79,7 +81,7 @@ O usuário raramente diz "presidência" ou "câmara" diretamente. Traduza termos
 | O usuário disse... | Factory mais provável |
 |---|---|
 | "legislação federal", "leis publicadas", "decretos", "medidas provisórias", "diário oficial" | `presidencia` (primeira opção) + `camara`/`senado` (fonte original) |
-| "projetos de lei", "proposições em tramitação" | `camara` ou `senado` — pergunte a casa legislativa se não disser |
+| "projetos de lei", "PL", "PEC", "proposições em tramitação", "tramitação no Congresso" | `camara_proposicoes` ou `senado_processos` — pergunte a casa legislativa se não disser |
 | "portarias do Ministério da Saúde", "normas sanitárias federais" | `saudelegis` |
 | "resoluções da ANS", "RN da ANS", "normativo de plano de saúde" | `ans` |
 | "RDC", "resoluções da ANVISA", "portarias ANVISA", "registro sanitário" | `anvisa` |
@@ -110,9 +112,9 @@ O método `.raspar()` sempre retorna `pandas.DataFrame`.
 
 **Parâmetro de busca: sempre `pesquisa`.** Os nomes antigos de cada fonte (lista em `references/api.md`) ainda funcionam, com `DeprecationWarning`; em código novo, use `pesquisa`. Parâmetro desconhecido levanta `ValidationError`, em todas as fontes. A reference por fonte tem a assinatura exata.
 
-**Filtros de data.** `folha` e `nyt` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
+**Filtros de data.** `folha`, `nyt`, `camara_proposicoes` e `senado_processos` aceitam `data_inicio` e `data_fim`. Formatos aceitos: `YYYY-MM-DD`, `DD/MM/YYYY`, `YYYYMMDD`. A biblioteca normaliza internamente.
 
-**Filtro por ano.** `camara`, `senado`, `cfm` e `nyt` aceitam `ano=2024`.
+**Filtro por ano.** `camara`, `senado`, `camara_proposicoes`, `senado_processos`, `cfm` e `nyt` aceitam `ano=2024`. `senado_processos` exige `ano` ou `data_inicio`.
 
 ## Rate limiting, ética e boas práticas de coleta
 
@@ -178,6 +180,8 @@ Leia a referência apropriada **antes** de gerar código. A tabela abaixo indica
 | `references/presidencia.md` | Antes de chamar `raspe.presidencia()`. |
 | `references/camara.md` | Antes de chamar `raspe.camara()`. |
 | `references/senado.md` | Antes de chamar `raspe.senado()`. |
+| `references/camara_proposicoes.md` | Antes de chamar `raspe.camara_proposicoes()` — cobre a busca dividida por período. |
+| `references/senado_processos.md` | Antes de chamar `raspe.senado_processos()` — cobre a exigência de `ano` ou `data_inicio`. |
 | `references/ipea.md` | Antes de chamar `raspe.ipea()`. |
 | `references/capes.md` | Antes de chamar `raspe.capes()` — cobre sintaxe `all:contains(...)` e colunas. |
 | `references/cfm.md` | Antes de chamar `raspe.cfm()`. |
@@ -198,4 +202,4 @@ Leia a referência apropriada **antes** de gerar código. A tabela abaixo indica
 | Revisão de literatura que motiva/dialoga com os dados | **openalex-skill** | Lista de artigos relevantes |
 | Se o pedido for sobre **tribunais, jurisprudência, acórdãos** | **juscraper-skill** | `raspe` não cobre isso — redirecione |
 
-Se o usuário vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (seção "Nomes de coluna em dataframeit / análise textual"), que cobre as 11 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.
+Se o usuário vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (seção "Nomes de coluna em dataframeit / análise textual"), que cobre as 13 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.

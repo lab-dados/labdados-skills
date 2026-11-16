@@ -4,6 +4,16 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.21] - 2026-11-16
+
+Corrigido:
+
+- `raspe` (plugin 1.1.7): alinhada a `main` do raspe (`0be1fb4`), que ganhou as fontes `raspe.camara_proposicoes()` e `raspe.senado_processos()` (APIs oficiais de Dados Abertos da Camara e do Senado); o `colunas-raspe` agendado reprovava.
+  - `references/camara_proposicoes.md` e `references/senado_processos.md`, novas: assinatura (`pesquisa`, `ano`, `sigla_tipo`, `data_inicio`, `data_fim`, `paginas`), colunas geradas do `docs/colunas.md` e as regras de cada API conferidas ao vivo. Na Camara, a busca sem `pesquisa` exige filtro de tempo, o periodo de mais de 3 meses sai em varias consultas e ai `paginas` levanta `ValidationError`. No Senado, a busca exige `ano` ou `data_inicio`, a API nao pagina e, sem `ano`, o periodo sai em consultas de ate um ano.
+  - `references/fontes.md`: matriz de colunas regenerada, e as duas fontes na matriz geral, nos limites, na cobertura, na tabela de `text_column` (`ementa`) e na combinacao de fontes. A cobertura dizia que `camara` e `senado` trazem proposicoes; elas leem a busca de legislacao ja publicada, e as proposicoes saem das fontes novas.
+  - `SKILL.md`: as duas fontes no roteamento, no vocabulario ("projetos de lei" passa a apontar para elas), na instalacao, nos filtros de data e de ano, na tabela de references e na `description`.
+  - `references/api.md`: as duas factories na tabela; o `scraper_manager` cobre todas as fontes, nao so cinco.
+
 ## [1.18.20] - 2026-11-16
 
 Corrigido:
