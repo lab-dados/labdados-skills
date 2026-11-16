@@ -4,7 +4,7 @@ Três workflows realistas. Cada um mostra **instalação → coleta → filtro/t
 
 ## Exemplo 1 — Legislação federal sobre um tema (Presidência + Câmara + Senado)
 
-**Objetivo**: levantar o corpus de leis e proposições sobre "reforma tributária" considerando a Presidência, a Câmara e o Senado, consolidar num DataFrame único e salvar em parquet.
+**Objetivo**: levantar a legislação já publicada sobre "reforma tributária" nas buscas da Presidência, da Câmara e do Senado, consolidar num DataFrame único e salvar em parquet. Projetos de lei e demais proposições saem de `raspe.camara_proposicoes()` e `raspe.senado_processos()`, não destas três fontes.
 
 ```python
 import pandas as pd
@@ -40,7 +40,7 @@ print(df.groupby("fonte").size())
 
 **Saída esperada**: dezenas a centenas de linhas por fonte. A coluna `termo_busca` fica preenchida com "reforma tributária" em todas.
 
-**Próximo passo com `dataframeit-skill`**: rodar um classificador que extraia (`tema_especifico`, `fase_processo`, `ano_provavel`) a partir de `ementa`.
+**Próximo passo com `dataframeit-skill`**: rodar um classificador que extraia (`tema_especifico`, `tipo_norma`, `ano_provavel`) a partir de `ementa`.
 
 ## Exemplo 2 — Atos da ANVISA sobre dispositivo médico (Playwright + filtro por situação)
 

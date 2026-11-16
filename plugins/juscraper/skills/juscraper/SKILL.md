@@ -74,7 +74,7 @@ Prefira o [uv](https://docs.astral.sh/uv/): `uv add juscraper` num projeto com `
 
 | Preciso de... | Metodo | Scrapers disponiveis |
 |---|---|---|
-| Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais; TRF3 `[v0.5.0+]` |
+| Buscar jurisprudencia por palavra-chave (2o grau) | `cjsg(pesquisa)` | Todos os 25 tribunais estaduais; TRF3 `[v0.5.0+]`; STM `[unreleased]` |
 | Buscar jurisprudencia (1o grau) por texto ou CNJ | `cjpg(pesquisa=...)` ou `cjpg(id_processo=cnj)` | TJSP, TJES, TJTO; TJMS `[unreleased]` |
 | Dados de processo por numero CNJ (1o grau, estadual) | `cpopg(id_cnj)` | TJSP e TJPE `[v0.5.0+]` (diretos), JusBR (qualquer tribunal), PDPJ |
 | Buscar jurisprudencia do STF (acordaos ou decisoes monocraticas) | `listar_decisoes(pesquisa)`; `contar_decisoes()` para total e facetas `[v0.4.0+]` | STF |
@@ -143,7 +143,7 @@ que nem sempre sao obvios ao implementar a coleta. Mapeamento:
 | Termo no artigo | Endpoint juscraper | Observacao |
 |---|---|---|
 | "banco de sentencas" / "decisoes de 1o grau" | `cjpg` | Consulta de Julgados de Primeiro Grau — **publico**, nao precisa login institucional. Disponivel apenas em TJSP, TJES, TJTO e TJMS `[unreleased]` |
-| "jurisprudencia" / "acordaos" | `cjsg` | Consulta de Jurisprudencia (2a instancia). Disponivel em todos os 25 tribunais estaduais com scraper direto e no TRF3 `[v0.5.0+]` |
+| "jurisprudencia" / "acordaos" | `cjsg` | Consulta de Jurisprudencia (2a instancia). Disponivel em todos os 25 tribunais estaduais com scraper direto, no TRF3 `[v0.5.0+]` e no STM `[unreleased]` |
 | "jurisprudencia trabalhista" / "acordaos do TST/TRT" | `listar_decisoes` via Falcao `[v0.5.0+]` | `colecao=` escolhe acordaos, sentencas, decisoes monocraticas, precedentes ou recursos de revista |
 | "jurisprudencia do STF" / "acordaos do Supremo" / "decisoes monocraticas do STF" | `listar_decisoes` via STF `[v0.4.0+]` | `base='acordaos'` ou `base='decisoes'` (default) |
 | "portal eletronico do tribunal" | `cjpg` ou `cjsg` (contexto) | Verifique a serie temporal e instancia descrita |
@@ -303,9 +303,9 @@ controle granular sobre arquivos brutos. O metodo sem sufixo combina ambos.
 
 ## Quando usar scrapers diretos vs agregadores
 
-| Criterio | Scrapers diretos (25 estaduais + 4 TRFs + STF) | Datajud | JusBR | ComunicaCNJ `[v0.3.0+]` | PDPJ |
+| Criterio | Scrapers diretos (25 estaduais + 4 TRFs + STF, STM e TSE) | Datajud | JusBR | ComunicaCNJ `[v0.3.0+]` | PDPJ |
 |---|---|---|---|---|---|
-| Jurisprudencia (`cjsg`) | Sim — principal uso; STF via `listar_decisoes` | Nao | Nao | Nao | Nao |
+| Jurisprudencia (`cjsg`) | Sim — principal uso; STF via `listar_decisoes`; STM `[unreleased]`; TSE `[unreleased]` nao busca (so baixa inteiro teor pelo codigo da decisao) | Nao | Nao | Nao | Nao |
 | Consulta por CNJ | TJSP (cpopg/cposg), TJPE (cpopg), TJMG (cposg), TRF1/TRF3/TRF5/TRF6 (cpopg) | Sim (`listar_processos`) | Sim (`cpopg`) | Nao | Sim (`cpopg`) |
 | Cross-tribunal | 1 tribunal por vez | Sim (detecta tribunal pelo CNJ) | Sim | Sim (filtro `siglaTribunal`) | Sim (filtro `tribunal`) |
 | Documentos/pecas | TRF1/TRF3/TRF5 e TJPE via `cpopg(download_pecas=True)` | Nao | Sim (texto) | Nao | Sim (texto e/ou binario) |

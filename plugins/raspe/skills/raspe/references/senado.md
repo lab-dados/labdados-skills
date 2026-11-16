@@ -2,7 +2,7 @@
 
 ## Fonte e escopo
 
-Busca no portal do Senado Federal — `https://www6g.senado.leg.br/busca`. Retorna resultados filtrados pela coleção "Legislação Federal" (proposições e atos).
+Busca no portal do Senado Federal — `https://www6g.senado.leg.br/busca`. Retorna resultados filtrados pela coleção "Legislação Federal" (normas já publicadas). Projetos de lei e demais processos legislativos saem de `raspe.senado_processos()`.
 
 ## Assinatura
 
@@ -19,7 +19,7 @@ raspe.senado().raspar(
 
 | Coluna | Conteúdo |
 |---|---|
-| `titulo` | Título do ato/proposição. |
+| `titulo` | Título da norma. |
 | `link_norma` | URL direto da norma. |
 | `link_detalhes` | URL com metadados de tramitação (pode ser `"NA"` se ausente). |
 | `descricao` | Descrição principal (tipicamente a ementa). |
