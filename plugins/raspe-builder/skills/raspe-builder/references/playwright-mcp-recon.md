@@ -84,21 +84,16 @@ Para a página 2 (só HTTP), repita após paginar. Mesmo arquivo, sufixo
 
 ## Análise de paginação
 
-Compare a requisição da página 1 com a da página 2 e identifique o que
-muda:
+Compare a requisição da página 1 com a da página 2 e anote o nome do
+parâmetro que muda (`page`, `pagina`, `offset`, `posicao`, `sr`…), que vai
+em `query_page_name`, e o valor dele nas duas páginas. Com eles, o
+`query_page_multiplier` e o `query_page_increment` saem da regra e da
+tabela de `raspe-architecture.md`, "Configurações comuns para
+paginação".
 
-| Padrão observado | Configuração no scraper |
-|---|---|
-| `?page=1` → `?page=2` | `query_page_name='page'`, multiplier=1, increment=0 |
-| `?pagina=1` → `?pagina=2` | `query_page_name='pagina'`, multiplier=1, increment=0 |
-| `?page=0` → `?page=1` (0-based) | multiplier=1, increment=-1 |
-| `?offset=0` → `?offset=10` | `query_page_name='offset'`, multiplier=10, increment=-10 |
-| `?sr=1` → `?sr=26` (offset que começa em 1) | `query_page_name='sr'`, multiplier=25, increment=-24 (estilo Folha) |
-| Token / cursor (`?cursor=abc123`) | Paginação não-numérica — não suportada pelo `BaseScraper` padrão. Considere implementar como single-page e iterar manualmente, ou consultar mantenedores |
-
-Em todos os casos numéricos, increment = valor do parâmetro na página 1
-menos o multiplier (`raspe-architecture.md`, "Configurações comuns para
-paginação").
+Token ou cursor (`?cursor=abc123`) é paginação não-numérica, que o
+`BaseScraper` padrão não suporta. Considere implementar como single-page e
+iterar manualmente, ou consultar mantenedores.
 
 ## Quando admitir que o caminho HTTP não funciona
 

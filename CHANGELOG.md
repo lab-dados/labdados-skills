@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.18] - 2026-11-16
+
+Corrigido:
+
+- `raspe-builder` (plugin 1.0.12): o passo 1 da Etapa 7 da `SKILL.md` mandava rodar a fonte isolada (`pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py --no-cov`) antes de regerar o `docs/colunas.md`. Como `tests/schemas/` inclui o `test_documentacao.py`, que compara o `docs/colunas.md` versionado com o gerado pelos schemas, a fonte nova com schema reprovava ali ate a regeracao. Agora o `python -m raspe.schemas.documentacao` vem antes do comando. A secao "Rodar" da `references/test-patterns.md` repetia esse comando sem a regeracao (e mandava rodar a suite completa, que reprova pelo mesmo teste) e passa a apontar para a Etapa 7. A tabela de paginacao da `references/playwright-mcp-recon.md` repetia multiplier e increment da tabela da `references/raspe-architecture.md`; a recon passa a pedir o nome do parametro e o valor dele nas paginas 1 e 2, e aponta para a tabela da architecture, que passa a dizer tambem que o multiplier e a diferenca entre esses valores; a tabela foi conferida na `main` do raspe (Folha `sr=1, 26, 51`, Presidencia `posicao=0, 10, 20`, NYT `page=0, 1, 2`, Camara `pagina=1, 2, 3`). O aviso sobre paginacao por token ou cursor continua na recon.
+
 ## [1.18.17] - 2026-11-16
 
 Corrigido:

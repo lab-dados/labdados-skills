@@ -393,16 +393,4 @@ Testes do scraper devem cobrir só o que é específico dele:
 
 ## Rodar
 
-O `addopts` do `pyproject.toml` liga `--cov=src/raspe` e
-`[tool.coverage.report] fail_under = 80`. Rodando só a pasta da fonte, a
-cobertura medida é a do pacote inteiro, e o comando reprova pelo gate
-mesmo com todos os testes verdes. Rode a fonte isolada com `--no-cov` e,
-antes do PR, a suíte completa, que é onde o gate vale:
-
-```bash
-cd <RASPE_REPO>
-pytest tests/{fonte}/ tests/schemas/ tests/test_parse_page_erros.py -v --no-cov
-pytest
-```
-
-Se as duas passam, vá para a Etapa 7 (validação e sync de skill).
+Com os testes escritos, siga o passo 1 da Etapa 7 do `SKILL.md`.

@@ -164,8 +164,9 @@ Funcionalidades já prontas (não duplique):
 | Offset que começa em 0 (`posicao=0, 10, 20`, Presidência) | 10 | -10 |
 | Offset que começa em 1 (`sr=1, 26, 51`, Folha) | 25 | -24 |
 
-Em todos os casos, `query_page_increment` é o valor do parâmetro na
-página 1 menos o `query_page_multiplier`.
+Em todos os casos, `query_page_multiplier` é a diferença entre o valor
+do parâmetro na página 2 e o da página 1, e `query_page_increment` é o
+valor na página 1 menos o `query_page_multiplier`.
 
 A primeira página passada ao multiplicador é 1, também na requisição
 que dá a contagem (a base usa `paginas=range(1, n_pags+1)`; no NYT, ela
