@@ -19,7 +19,7 @@ IRMAS = {
     "juscraper-builder-captcha": ["juscraper-builder"],
     "raspe-builder": ["raspe", "juscraper-builder"],
     "raspador-builder": ["juscraper", "raspe", "juscraper-builder", "raspe-builder"],
-    # raspe.capes() busca artigos no Portal de Periódicos da CAPES; revisão de literatura é da openalex.
+    # raspe.capes() busca artigos no Portal de Periódicos da CAPES; a openalex só entra quando o usuário cita o OpenAlex.
     "openalex": ["raspe"],
     "raspe": ["openalex"],
 }

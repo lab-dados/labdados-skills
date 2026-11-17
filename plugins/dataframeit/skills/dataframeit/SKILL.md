@@ -263,5 +263,5 @@ Cada reference é independente. Leia apenas quando a tarefa pedir.
 | Se o usuário... | Skill complementar |
 |---|---|
 | ...está codificando decisões judiciais brasileiras | Coleta via **juscraper** (scrapers de tribunais, Datajud, JusBR) |
-| ...precisa de revisão de literatura acadêmica | **openalex** |
+| ...precisa de revisão de literatura acadêmica | busca na web; **openalex** só se o usuário pedir o OpenAlex pelo nome |
 | ...precisa coletar dados de fontes oficiais ou da imprensa | **raspe** |

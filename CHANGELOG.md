@@ -8,7 +8,8 @@ segue [Semantic Versioning](https://semver.org/).
 
 Alterado:
 
-- `openalex` (plugin 1.1.4): a `description` passa a disparar a skill so quando o usuario cita o OpenAlex pelo nome. A versao anterior disparava em qualquer pedido de levantamento de literatura: num pedido de literatura sobre pre-registro, sem mencao ao OpenAlex, o agente carregou a skill, parou na checagem da chave de API e so seguiu com busca na web depois de o usuario mandar. As outras skills (`raspe`, `juscraper`, `dataframeit`) continuam apontando o `openalex` para revisao de literatura; essas indicacoes nao mudaram.
+- `openalex` (plugin 1.1.4): a `description` passa a disparar a skill so quando o usuario cita o OpenAlex pelo nome. A versao anterior disparava em qualquer pedido de levantamento de literatura: num pedido de literatura sobre pre-registro, sem mencao ao OpenAlex, o agente carregou a skill, parou na checagem da chave de API e so seguiu com busca na web depois de o usuario mandar.
+- `raspe` (plugin 1.1.9), `juscraper` (plugin 1.5.8) e `dataframeit` (plugin 1.3.5): as tabelas de encaminhamento mandavam revisao de literatura para o `openalex`, o que contrariava a nova regra. Passam a indicar busca na web e o `openalex` so quando o usuario pede o OpenAlex pelo nome. A `description` do `raspe` continua avisando do `openalex`, agora como skill que so entra quando o usuario cita o OpenAlex, e diz que revisao de literatura ou bibliometria sem citar a CAPES nao e raspe. O cruzamento por ID do OpenAlex em `raspe/references/capes.md` nao mudou.
 
 ## [1.18.22] - 2026-11-16
 

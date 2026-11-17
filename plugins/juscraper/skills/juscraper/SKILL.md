@@ -408,7 +408,7 @@ em direito combina:
 |---|---|---|
 | Coleta de decisoes/processos | **juscraper-skill** (esta) | DataFrame/Parquet com texto de decisoes |
 | Codificacao via LLM (campos estruturados) | **dataframeit-skill** | DataFrame com colunas extraidas + `_input_tokens`/`_output_tokens` |
-| Revisao de literatura | **openalex-skill** | Lista de artigos relevantes |
+| Revisao de literatura | busca na web; **openalex-skill** so se o usuario pedir o OpenAlex pelo nome | Lista de artigos relevantes |
 
 Se o usuario vai codificar o que foi coletado via LLM, lembre-o da
 **dataframeit-skill** e, se ele tem plano Claude Code, do modo
