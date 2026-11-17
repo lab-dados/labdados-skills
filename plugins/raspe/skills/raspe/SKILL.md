@@ -1,6 +1,6 @@
 ---
 name: raspe
-description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, projetos de lei e proposições da Câmara e do Senado, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\". Não confundir com openalex (revisão de literatura, bibliometria)."
+description: "Usar em coleta, para DataFrame, de legislação, atos normativos e diário oficial federais, projetos de lei e proposições da Câmara e do Senado, normas da ANS, ANVISA, SaudeLegis ou CFM, publicações do IPEA, periódicos da CAPES ou notícias da Folha e do NYT, mesmo sem citar \"raspe\". Não confundir com openalex (só quando o usuário cita o OpenAlex); revisão de literatura ou bibliometria sem citar a CAPES não é raspe."
 ---
 
 # Raspe Skill
@@ -88,7 +88,7 @@ O usuário raramente diz "presidência" ou "câmara" diretamente. Traduza termos
 | "código de ética médica", "resolução CFM", "parecer CFM" | `cfm` |
 | "estudo do IPEA", "texto para discussão", "publicação do IPEA" | `ipea` |
 | "Portal de Periódicos da CAPES", "buscador da CAPES", "periódicos da CAPES" | `capes` |
-| "artigo acadêmico", "paper", "periódicos científicos", "revisão de literatura", "revisão sistemática", "bibliometria", sem citar a CAPES | não é raspe: use `openalex-skill` |
+| "artigo acadêmico", "paper", "periódicos científicos", "revisão de literatura", "revisão sistemática", "bibliometria", sem citar a CAPES | não é raspe: use busca na web; `openalex-skill` só se o usuário pedir o OpenAlex pelo nome |
 | "intimação processual", "comunicado oficial do tribunal", "comunicações do CNJ" | não é raspe: a fonte CNJ saiu da biblioteca. Use `juscraper-skill` (ComunicaCNJ, `juscraper.scraper("comunica_cnj")`) |
 | "matéria da Folha", "Folha de São Paulo escreveu sobre" | `folha` |
 | "NYT sobre Brasil", "matéria do New York Times" | `nyt` |
@@ -199,7 +199,7 @@ Leia a referência apropriada **antes** de gerar código. A tabela abaixo indica
 |---|---|---|
 | Coleta em fontes oficiais brasileiras/imprensa | **raspe-skill** (esta) | DataFrame pandas com colunas específicas da fonte |
 | Codificação via LLM (classificar, extrair campos) | **dataframeit-skill** | DataFrame enriquecido com colunas estruturadas + `_input_tokens`, `_output_tokens`, `_reasoning_tokens` (não há `_total_tokens`; para o custo total, some `_input_tokens` e `_output_tokens`) |
-| Revisão de literatura que motiva/dialoga com os dados | **openalex-skill** | Lista de artigos relevantes |
+| Revisão de literatura que motiva/dialoga com os dados | busca na web; **openalex-skill** só se o usuário pedir o OpenAlex pelo nome | Lista de artigos relevantes |
 | Se o pedido for sobre **tribunais, jurisprudência, acórdãos** | **juscraper-skill** | `raspe` não cobre isso — redirecione |
 
 Se o usuário vai codificar/classificar o que foi coletado com LLM, lembre-o da **dataframeit-skill**. A `text_column` recomendada varia por fonte — consulte a tabela em `references/fontes.md` (seção "Nomes de coluna em dataframeit / análise textual"), que cobre as 13 fontes. Sempre passe `text_column=` explicitamente ao chamar `dataframeit`.
