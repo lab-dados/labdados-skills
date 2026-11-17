@@ -4,6 +4,12 @@ Todas as mudanças notaveis deste marketplace serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/); versionamento
 segue [Semantic Versioning](https://semver.org/).
 
+## [1.18.23] - 2026-11-17
+
+Alterado:
+
+- `openalex` (plugin 1.1.4): a `description` passa a disparar a skill so quando o usuario cita o OpenAlex pelo nome. A versao anterior disparava em qualquer pedido de levantamento de literatura: num pedido de literatura sobre pre-registro, sem mencao ao OpenAlex, o agente carregou a skill, parou na checagem da chave de API e so seguiu com busca na web depois de o usuario mandar. As outras skills (`raspe`, `juscraper`, `dataframeit`) continuam apontando o `openalex` para revisao de literatura; essas indicacoes nao mudaram.
+
 ## [1.18.22] - 2026-11-16
 
 Corrigido:
